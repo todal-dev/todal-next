@@ -44,6 +44,7 @@ export function TodoList({ selectedDate = new Date() }: TodoListProps) {
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [newItemName, setNewItemName] = useState('');
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOverId, setDragOverId] = useState<string | null>(null);
 
   // 색상 배열 (상수로 추출)
   const colors = [
@@ -159,23 +160,31 @@ export function TodoList({ selectedDate = new Date() }: TodoListProps) {
   const handleDragStart = (e: React.DragEvent, id: string) => {
     setDraggedId(id);
     e.dataTransfer.effectAllowed = 'move';
+    
+    // 드래그 이미지 설정 (투명한 이미지)
+    const dragImage = new Image();
+    dragImage.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+    e.dataTransfer.setDragImage(dragImage, 0, 0);
   };
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const handleDragOver = (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    setDragOverId(targetId);
   };
 
   const handleDrop = (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
     if (!draggedId || draggedId === targetId) {
       setDraggedId(null);
+      setDragOverId(null);
       return;
     }
 
     const draggedItem = items.find((i) => i.id === draggedId);
     if (!draggedItem) {
       setDraggedId(null);
+      setDragOverId(null);
       return;
     }
 
@@ -188,10 +197,12 @@ export function TodoList({ selectedDate = new Date() }: TodoListProps) {
 
     setItems(newItems);
     setDraggedId(null);
+    setDragOverId(null);
   };
 
   const handleDragEnd = () => {
     setDraggedId(null);
+    setDragOverId(null);
   };
 
   const getChildItems = (parentId: string) =>
@@ -210,23 +221,60 @@ export function TodoList({ selectedDate = new Date() }: TodoListProps) {
 
     return (
       <div className="flex flex-col gap-1">
+        {/* Add Item Input - 카테고리 할일 추가 */}
+        {parentId !== 'category-root' && addingTo === parentId && depth === 0 && (
+          <div className="flex gap-2 py-2 border-b border-neutral-gray-100" style={{ marginLeft: `${marginLeft}px` }}>
+            <Input
+              type="text"
+              placeholder="할일 이름"
+              value={newItemName}
+              onChange={(e) => setNewItemName(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleAddItem()}
+              autoFocus
+              className="flex-1"
+            />
+            <button
+              onClick={handleAddItem}
+              className="px-3 py-1 text-white bg-primary-500 rounded hover:bg-primary-600 transition-colors cursor-pointer text-sm font-medium"
+            >
+              추가
+            </button>
+            <button
+              onClick={() => {
+                setAddingTo(null);
+                setNewItemName('');
+              }}
+              className="px-3 py-1 text-neutral-text-secondary hover:bg-neutral-gray-100 rounded transition-colors cursor-pointer text-sm font-medium"
+            >
+              취소
+            </button>
+          </div>
+        )}
+
         {items_list.map((item) => {
           const hasChildren = items.some(i => i.parentId === item.id);
 
           return (
             <div key={item.id}>
+              {/* Drop Indicator - 위쪽 */}
+              {draggedId && dragOverId === item.id && (
+                <div className="h-0.5 bg-primary-500 mx-3 mb-1" />
+              )}
+
               {/* Item Row */}
               <div
                 className={`
                   flex items-center gap-2 px-3 py-2 rounded-md
                   hover:bg-neutral-gray-100 transition-all cursor-grab active:cursor-grabbing
+                  user-select-none
                   ${item.completed ? 'opacity-60' : ''}
                   ${draggedId === item.id ? 'opacity-50 bg-primary-100 shadow-lg scale-95' : ''}
+                  ${dragOverId === item.id && draggedId ? 'bg-primary-50 border-l-4 border-l-primary-500' : ''}
                 `}
                 style={{ marginLeft: `${marginLeft}px` }}
                 draggable
                 onDragStart={(e) => handleDragStart(e as any, item.id)}
-                onDragOver={handleDragOver}
+                onDragOver={(e) => handleDragOver(e as any, item.id)}
                 onDrop={(e) => handleDrop(e as any, item.id)}
                 onDragEnd={handleDragEnd}
               >
@@ -370,34 +418,7 @@ export function TodoList({ selectedDate = new Date() }: TodoListProps) {
               {/* Category Content */}
               <div className="mt-2 flex flex-col gap-2">
                   {/* Add Item Input */}
-                  {addingTo === category.id && (
-                    <div className="flex gap-2 py-2 border-b border-neutral-gray-100">
-                      <Input
-                        type="text"
-                        placeholder="할일 이름"
-                        value={newItemName}
-                        onChange={(e) => setNewItemName(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleAddItem()}
-                        autoFocus
-                        className="flex-1"
-                      />
-                      <button
-                        onClick={handleAddItem}
-                        className="px-3 py-1 text-white bg-primary-500 rounded hover:bg-primary-600 transition-colors cursor-pointer text-sm font-medium"
-                      >
-                        추가
-                      </button>
-                      <button
-                        onClick={() => {
-                          setAddingTo(null);
-                          setNewItemName('');
-                        }}
-                        className="px-3 py-1 text-neutral-text-secondary hover:bg-neutral-gray-100 rounded transition-colors cursor-pointer text-sm font-medium"
-                      >
-                        취소
-                      </button>
-                    </div>
-                  )}
+                  {/* This block is now handled within renderItemTree */}
 
                   {/* Items */}
                   {dateFilteredItems.length === 0 && !addingTo ? null : renderItemTree(category.id)}
