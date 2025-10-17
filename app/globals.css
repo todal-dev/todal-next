@@ -1,0 +1,119 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.6/dist/web/static/pretendard.css');
+
+@import "tailwindcss";
+
+@theme {
+  --font-pretendard: 'Pretendard Variable', 'Pretendard', sans-serif;
+  
+  --color-primary-50: #E8F5EE;
+  --color-primary-100: #D1EBE1;
+  --color-primary-500: #2D9F6B;
+  --color-primary-600: #248558;
+  --color-primary-700: #1F7A51;
+  
+  --color-secondary: #5B6B8C;
+  --color-secondary-light: #F3F4F6;
+  
+  --color-neutral-white: #FFFFFF;
+  --color-neutral-gray-50: #F9FAFB;
+  --color-neutral-gray-100: #F3F4F6;
+  --color-neutral-gray-300: #E5E7EB;
+  --color-neutral-gray-400: #D1D5DB;
+  --color-neutral-gray-500: #6B7280;
+  --color-neutral-gray-900: #111827;
+  
+  --color-neutral-text-primary: #2B2D36;
+  --color-neutral-text-secondary: #73777F;
+  --color-neutral-text-tertiary: #A7ABB3;
+  
+  --color-status-success: #2D9F6B;
+  --color-status-warning: #FF9F43;
+  --color-status-error: #E74C3C;
+  --color-status-info: #3B82F6;
+}
+
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    background-color: #ffffff;
+    color: #2b2d36;
+    font-family: var(--font-pretendard), system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  ::selection {
+    background-color: #2d9f6b;
+    color: white;
+  }
+}
+
+@layer components {
+  :focus-visible {
+    outline: 2px solid #2d9f6b;
+    outline-offset: 2px;
+  }
+
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(45, 159, 107, 0.1), inset 0 0 0 2px #2d9f6b;
+  }
+
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    transition: all 150ms ease;
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+@layer utilities {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
