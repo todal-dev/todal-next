@@ -10,27 +10,55 @@ interface Todo {
   text: string;
   completed: boolean;
   date: Date;
+  categoryId: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  color: string;
+}
+
+interface TodoByDateCategory {
+  categoryId: string;
+  name: string;
+  color: string;
+  total: number;
+  completed: number;
+}
+
+interface TodoByDate {
+  completed: number;
+  total: number;
+  byCategory: TodoByDateCategory[];
 }
 
 export default function Home() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [activeTab, setActiveTab] = useState<'todo' | 'calendar'>('todo');
 
-  // 샘플 투두 데이터
-  const [todos] = useState<Todo[]>([
-    { id: '1', text: '프로젝트 기획', completed: false, date: new Date(2025, 9, 14) },
-    { id: '2', text: '디자인 시스템', completed: true, date: new Date(2025, 9, 14) },
-    { id: '3', text: '프론트엔드 개발', completed: false, date: new Date(2025, 9, 15) },
-    { id: '4', text: 'API 연동', completed: false, date: new Date(2025, 9, 15) },
-    { id: '5', text: '테스트', completed: true, date: new Date(2025, 9, 15) },
-    { id: '6', text: '배포 준비', completed: false, date: new Date(2025, 9, 16) },
-    { id: '7', text: '문서 작성', completed: true, date: new Date(2025, 9, 17) },
-    { id: '8', text: '회의', completed: false, date: new Date(2025, 9, 17) },
+  // 카테고리
+  const [categories] = useState<Category[]>([
+    { id: 'cat1', name: '업무', color: '#3B82F6' },
+    { id: 'cat2', name: '개인', color: '#A855F7' },
+    { id: 'cat3', name: '학습', color: '#2D9F6B' },
   ]);
 
-  // 날짜별 투두 그룹화
+  // 샘플 투두 데이터
+  const [todos, setTodos] = useState<Todo[]>([
+    { id: '1', text: '프로젝트 기획', completed: false, date: new Date(2025, 9, 14), categoryId: 'cat1' },
+    { id: '2', text: '디자인 시스템', completed: true, date: new Date(2025, 9, 14), categoryId: 'cat3' },
+    { id: '3', text: '프론트엔드 개발', completed: false, date: new Date(2025, 9, 15), categoryId: 'cat1' },
+    { id: '4', text: 'API 연동', completed: false, date: new Date(2025, 9, 15), categoryId: 'cat1' },
+    { id: '5', text: '테스트', completed: true, date: new Date(2025, 9, 15), categoryId: 'cat3' },
+    { id: '6', text: '배포 준비', completed: false, date: new Date(2025, 9, 16), categoryId: 'cat1' },
+    { id: '7', text: '문서 작성', completed: true, date: new Date(2025, 9, 17), categoryId: 'cat2' },
+    { id: '8', text: '회의', completed: false, date: new Date(2025, 9, 17), categoryId: 'cat1' },
+  ]);
+
+  // 날짜별 투두 그룹화 (카테고리별)
   const todosByDate = useMemo(() => {
-    const grouped: Record<string, { completed: number; total: number }> = {};
+    const grouped: Record<string, TodoByDate> = {};
     
     todos.forEach((todo) => {
       const year = todo.date.getFullYear();
@@ -39,17 +67,66 @@ export default function Home() {
       const dateKey = `${year}-${month}-${day}`;
 
       if (!grouped[dateKey]) {
-        grouped[dateKey] = { completed: 0, total: 0 };
+        grouped[dateKey] = { completed: 0, total: 0, byCategory: [] };
       }
       
       grouped[dateKey].total += 1;
       if (todo.completed) {
         grouped[dateKey].completed += 1;
       }
+
+      // 카테고리별 정보 추가
+      const category = categories.find(c => c.id === todo.categoryId);
+      if (category) {
+        const existingCat = grouped[dateKey].byCategory.find(c => c.categoryId === todo.categoryId);
+        if (existingCat) {
+          existingCat.total += 1;
+          if (todo.completed) existingCat.completed += 1;
+        } else {
+          grouped[dateKey].byCategory.push({
+            categoryId: todo.categoryId,
+            name: category.name,
+            color: category.color,
+            total: 1,
+            completed: todo.completed ? 1 : 0,
+          });
+        }
+      }
     });
 
     return grouped;
-  }, [todos]);
+  }, [todos, categories]);
+
+  // 할일 추가
+  const handleAddTodo = (text: string, categoryId: string, date: Date) => {
+    const newTodo: Todo = {
+      id: Date.now().toString(),
+      text,
+      completed: false,
+      date,
+      categoryId,
+    };
+    setTodos([...todos, newTodo]);
+  };
+
+  // 할일 삭제
+  const handleDeleteTodo = (id: string) => {
+    setTodos(todos.filter(todo => todo.id !== id));
+  };
+
+  // 할일 완료 토글
+  const handleToggleTodo = (id: string) => {
+    setTodos(todos.map(todo => 
+      todo.id === id ? { ...todo, completed: !todo.completed } : todo
+    ));
+  };
+
+  // 할일 수정
+  const handleEditTodo = (id: string, text: string) => {
+    setTodos(todos.map(todo => 
+      todo.id === id ? { ...todo, text } : todo
+    ));
+  };
 
   return (
     <div className="flex flex-col h-screen bg-white">
@@ -74,7 +151,15 @@ export default function Home() {
 
             {/* Todo List */}
             <div className="flex-[7.5] overflow-y-auto border-t border-neutral-gray-300">
-              <TodoList selectedDate={selectedDate} />
+              <TodoList 
+                selectedDate={selectedDate} 
+                todos={todos} 
+                categories={categories} 
+                onAddTodo={handleAddTodo} 
+                onDeleteTodo={handleDeleteTodo} 
+                onToggleTodo={handleToggleTodo} 
+                onEditTodo={handleEditTodo} 
+              />
             </div>
           </div>
 
@@ -126,7 +211,15 @@ export default function Home() {
                   <MiniCalendar onDateSelect={setSelectedDate} todosByDate={todosByDate} />
                 </div>
                 <div className="flex-[7.5] overflow-y-auto border-t border-neutral-gray-300">
-                  <TodoList selectedDate={selectedDate} />
+                  <TodoList 
+                    selectedDate={selectedDate} 
+                    todos={todos} 
+                    categories={categories} 
+                    onAddTodo={handleAddTodo} 
+                    onDeleteTodo={handleDeleteTodo} 
+                    onToggleTodo={handleToggleTodo} 
+                    onEditTodo={handleEditTodo} 
+                  />
                 </div>
               </div>
             ) : (
