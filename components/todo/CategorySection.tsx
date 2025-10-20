@@ -86,9 +86,6 @@ export function CategorySection({
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
       className="mb-4"
     >
@@ -165,25 +162,23 @@ export function CategorySection({
 
       <div className="space-y-0.5">
         <SortableContext items={category.items.map((t) => t.id)} strategy={verticalListSortingStrategy}>
-          <AnimatePresence>
-            {category.items.map((todo, idx) => (
-              <TodoItem
-                key={todo.id}
-                todo={todo}
-                level={0}
-                categoryId={category.id}
-                index={idx}
-                siblings={category.items}
-                onToggle={onToggleTodo}
-                onEdit={onEditTodo}
-                onDelete={onDeleteTodo}
-                onUpdateTime={onUpdateTodoTime}
-                onMove={onMoveTodo}
-                onAddTodo={onAddTodo}
-                selectedDate={selectedDate}
-              />
-            ))}
-          </AnimatePresence>
+          {category.items.map((todo, idx) => (
+            <TodoItem
+              key={todo.id}
+              todo={todo}
+              level={0}
+              categoryId={category.id}
+              index={idx}
+              siblings={category.items}
+              onToggle={onToggleTodo}
+              onEdit={onEditTodo}
+              onDelete={onDeleteTodo}
+              onUpdateTime={onUpdateTodoTime}
+              onMove={onMoveTodo}
+              onAddTodo={onAddTodo}
+              selectedDate={selectedDate}
+            />
+          ))}
         </SortableContext>
 
         <TodoInput

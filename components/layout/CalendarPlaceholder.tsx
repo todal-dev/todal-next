@@ -366,9 +366,7 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
                 ${
                   selected
                     ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white font-semibold'
-                    : today && todos && todos.completed === todos.total
-                    ? 'bg-gradient-to-br from-primary-200 to-primary-300'
-                    : today
+                    : today && (!todos || todos.completed < todos.total)
                     ? 'bg-primary-100'
                     : day && todos && todos.completed === todos.total
                     ? 'bg-gradient-to-br from-primary-100 to-primary-200 ring-2 ring-primary-500 hover:from-primary-200 hover:to-primary-300'
