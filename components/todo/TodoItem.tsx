@@ -1,128 +1,288 @@
 'use client';
 
-import { GripVertical, Trash2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { TimePicker } from '@/components/ui/TimePicker';
+import { Clock, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
-interface TodoItemProps {
+interface Todo {
   id: string;
   text: string;
-  completed?: boolean;
-  color?: string;
+  completed: boolean;
+  date: Date;
+  categoryId: string;
+  subtasks?: Todo[];
+  parentId?: string;
+  startTime?: string;
+  endTime?: string;
+}
+
+interface TodoItemProps {
+  todo: Todo;
   level?: number;
-  onToggle?: (id: string) => void;
-  onDelete?: (id: string) => void;
-  onEdit?: (id: string, text: string) => void;
+  categoryId: string;
+  index: number;
+  siblings: Todo[];
+  parentId?: string;
+  onToggle: (id: string) => void;
+  onEdit: (id: string, text: string) => void;
+  onDelete: (id: string) => void;
+  onUpdateTime?: (id: string, startTime?: string, endTime?: string) => void;
+  onMove?: (todoId: string, newCategoryId: string, newParentId?: string, newIndex?: number) => void;
+  onAddTodo: (text: string, categoryId: string, date: Date, parentId?: string) => void;
+  selectedDate: Date;
 }
 
 export function TodoItem({
-  id,
-  text,
-  completed = false,
-  color = 'primary',
+  todo,
   level = 0,
+  categoryId,
+  index,
+  siblings,
+  parentId,
   onToggle,
-  onDelete,
   onEdit,
+  onDelete,
+  onUpdateTime,
+  onMove,
+  onAddTodo,
+  selectedDate,
 }: TodoItemProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [editText, setEditText] = useState(text);
-  const [isHovered, setIsHovered] = useState(false);
+  const [editingTime, setEditingTime] = useState(false);
 
-  const handleSave = () => {
-    if (editText.trim()) {
-      onEdit?.(id, editText.trim());
-      setIsEditing(false);
-    }
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
+    id: todo.id,
+    data: {
+      categoryId,
+      parentId,
+      index,
+    },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSave();
-    } else if (e.key === 'Escape') {
-      setIsEditing(false);
-      setEditText(text);
-    }
-  };
-
-  const colorMap: Record<string, string> = {
-    primary: 'border-l-4 border-l-primary-500',
-    warning: 'border-l-4 border-l-status-warning',
-    error: 'border-l-4 border-l-status-error',
-  };
+  const hasTime = todo.startTime && todo.endTime;
 
   return (
-    <div
-      className={`
-        flex items-center gap-3 px-4 py-3 rounded-md
-        transition-all duration-normal
-        ${colorMap[color]}
-        bg-white
-        ${completed ? 'opacity-60' : ''}
-      `}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{ paddingLeft: `calc(1rem + ${level * 24}px)` }}
-    >
-      {/* Drag Handle - 항상 렌더링, 공간 예약 */}
-      <div className="flex-shrink-0 cursor-grab active:cursor-grabbing text-neutral-text-tertiary invisible w-4 h-4">
-        <GripVertical size={16} />
-      </div>
-
-      {/* Checkbox */}
-      <Checkbox
-        checked={completed}
-        onChange={() => onToggle?.(id)}
-        className="flex-shrink-0"
-      />
-
-      {/* Text Content */}
-      <div className="flex-1 min-w-0">
-        {isEditing ? (
-          <input
-            type="text"
-            value={editText}
-            onChange={(e) => setEditText(e.target.value)}
-            onBlur={handleSave}
-            onKeyDown={handleKeyDown}
-            autoFocus
-            className={`
-              w-full text-body
-              bg-primary-50 border border-primary-500 rounded px-2 py-1
-              placeholder:text-neutral-text-tertiary
-            `}
-          />
-        ) : (
-          <p
-            onClick={() => setIsEditing(true)}
-            className={`
-              text-body cursor-text
-              transition-all duration-normal
-              ${
-                completed
-                  ? 'text-neutral-text-tertiary line-through'
-                  : 'text-neutral-text-primary hover:underline'
-              }
-            `}
-          >
-            {text}
-          </p>
-        )}
-      </div>
-
-      {/* Delete Button */}
-      {isHovered && !isEditing && (
-        <button
-          onClick={() => onDelete?.(id)}
-          className={`
-            flex-shrink-0 p-1.5 rounded transition-colors
-            text-neutral-text-tertiary hover:text-status-error
-            hover:bg-red-50 cursor-pointer
-          `}
-          aria-label="삭제"
+    <div style={{ paddingLeft: `${level * 24}px` }}>
+      <motion.div
+        ref={setNodeRef}
+        style={style}
+        layout
+        initial={{ opacity: 0, height: 0 }}
+        animate={{ opacity: 1, height: 'auto' }}
+        exit={{ opacity: 0, height: 0 }}
+        transition={{ duration: 0.2 }}
+        {...attributes}
+        {...listeners}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neutral-gray-50 transition-colors group cursor-grab active:cursor-grabbing"
+      >
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
         >
-          <Trash2 size={16} />
-        </button>
+          <Checkbox
+            checked={todo.completed}
+            onChange={() => onToggle(todo.id)}
+            className="flex-shrink-0"
+          />
+        </div>
+
+        <input
+          type="text"
+          defaultValue={todo.text}
+          onMouseDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          className={`flex-1 text-sm bg-transparent focus:outline-none border-0 focus:ring-0 ${
+            todo.completed
+              ? 'line-through text-neutral-text-secondary'
+              : 'text-neutral-text-primary'
+          }`}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              const currentText = e.currentTarget.value.trim();
+
+              if (currentText) {
+                // 텍스트가 있으면 저장하고 다음 할일 추가
+                if (currentText !== todo.text) {
+                  onEdit(todo.id, currentText);
+                }
+
+                // 새 할일 추가 (같은 레벨)
+                onAddTodo('', categoryId, selectedDate, parentId);
+
+                setTimeout(() => {
+                  const inputs = Array.from(document.querySelectorAll('input[type="text"]'));
+                  const currentIndex = inputs.indexOf(e.currentTarget);
+                  const nextInput = inputs[currentIndex + 1] as HTMLInputElement;
+                  if (nextInput) {
+                    nextInput.focus();
+                    nextInput.select();
+                  }
+                }, 50);
+              }
+              // 비어있으면 아무것도 안 함
+            } else if (e.key === 'Tab' && !e.shiftKey) {
+              e.preventDefault();
+              const currentText = e.currentTarget.value.trim();
+
+              if (currentText && currentText !== todo.text) {
+                onEdit(todo.id, currentText);
+              }
+
+              if (index > 0 && onMove) {
+                const prevTodo = siblings[index - 1];
+                onMove(todo.id, categoryId, prevTodo.id, 0);
+              }
+            } else if (e.key === 'Tab' && e.shiftKey) {
+              e.preventDefault();
+
+              if (parentId && onMove) {
+                const currentText = e.currentTarget.value.trim();
+
+                if (currentText && currentText !== todo.text) {
+                  onEdit(todo.id, currentText);
+                }
+
+                onMove(todo.id, categoryId, undefined, index);
+              }
+            } else if (e.key === 'Backspace' && e.currentTarget.value === '') {
+              e.preventDefault();
+              onDelete(todo.id);
+              if (index > 0) {
+                const prevTodo = siblings[index - 1];
+                setTimeout(() => {
+                  const inputs = document.querySelectorAll('input[type="text"]');
+                  inputs.forEach((input) => {
+                    if ((input as HTMLInputElement).defaultValue === prevTodo.text) {
+                      (input as HTMLInputElement).focus();
+                    }
+                  });
+                }, 0);
+              }
+            }
+          }}
+          onBlur={(e) => {
+            const newText = e.currentTarget.value.trim();
+            if (newText && newText !== todo.text) {
+              onEdit(todo.id, newText);
+            } else if (!newText) {
+              onDelete(todo.id);
+            }
+          }}
+        />
+
+        <div className="ml-auto flex items-center gap-2 flex-shrink-0">
+          {editingTime ? (
+            <div
+              className="flex items-center gap-1"
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+            >
+              <TimePicker
+                value={todo.startTime}
+                onChange={(time) => {
+                  onUpdateTime?.(todo.id, time, todo.endTime);
+                }}
+                placeholder="start"
+              />
+              <span className="text-xs text-neutral-text-secondary">-</span>
+              <TimePicker
+                value={todo.endTime}
+                onChange={(time) => {
+                  onUpdateTime?.(todo.id, todo.startTime, time);
+                }}
+                placeholder="end"
+              />
+              <button
+                onClick={() => setEditingTime(false)}
+                className="text-xs px-2 py-1 bg-primary-500 text-white rounded hover:bg-primary-600"
+              >
+                Done
+              </button>
+            </div>
+          ) : (
+            <>
+              {hasTime ? (
+                <button
+                  onClick={() => setEditingTime(true)}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  className="text-xs text-neutral-text-tertiary hover:text-primary-500 flex items-center gap-1"
+                >
+                  <Clock size={12} />
+                  <span>
+                    {todo.startTime}-{todo.endTime}
+                  </span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setEditingTime(true);
+                    onUpdateTime?.(todo.id, '09:00', '10:00');
+                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  className="text-xs text-neutral-text-tertiary hover:text-primary-500 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Clock size={12} />
+                  <span>Add time</span>
+                </button>
+              )}
+            </>
+          )}
+
+          <button
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(todo.id);
+            }}
+            className="p-1 hover:bg-red-100 rounded transition-colors text-neutral-text-secondary hover:text-red-600 opacity-0 group-hover:opacity-100"
+            title="Delete"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
+      </motion.div>
+
+      {todo.subtasks && todo.subtasks.length > 0 && (
+        <div>
+          {todo.subtasks.map((subtask, idx) => (
+            <TodoItem
+              key={subtask.id}
+              todo={subtask}
+              level={level + 1}
+              categoryId={categoryId}
+              index={idx}
+              siblings={todo.subtasks!}
+              parentId={todo.id}
+              onToggle={onToggle}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onUpdateTime={onUpdateTime}
+              onMove={onMove}
+              onAddTodo={onAddTodo}
+              selectedDate={selectedDate}
+            />
+          ))}
+        </div>
       )}
     </div>
   );
