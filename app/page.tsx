@@ -13,6 +13,8 @@ interface Todo {
   categoryId: string;
   subtasks?: Todo[];
   parentId?: string;
+  startTime?: string; // 'HH:mm' 형식
+  endTime?: string; // 'HH:mm' 형식
 }
 
 interface Category {
@@ -48,34 +50,38 @@ export default function Home() {
 
   // 샘플 투두 데이터 (하위 할일 예시 포함)
   const [todos, setTodos] = useState<Todo[]>([
-    { 
-      id: '1', 
-      text: '프로젝트 기획', 
-      completed: false, 
-      date: new Date(2025, 9, 14), 
+    {
+      id: '1',
+      text: '프로젝트 기획',
+      completed: false,
+      date: new Date(2025, 9, 14),
       categoryId: 'cat1',
+      startTime: '09:00',
+      endTime: '11:00',
       subtasks: [
         { id: '1-1', text: '요구사항 정리', completed: true, date: new Date(2025, 9, 14), categoryId: 'cat1', subtasks: [] },
         { id: '1-2', text: '일정 계획', completed: false, date: new Date(2025, 9, 14), categoryId: 'cat1', subtasks: [] },
       ]
     },
-    { id: '2', text: '디자인 시스템', completed: true, date: new Date(2025, 9, 14), categoryId: 'cat3', subtasks: [] },
-    { 
-      id: '3', 
-      text: '프론트엔드 개발', 
-      completed: false, 
-      date: new Date(2025, 9, 15), 
+    { id: '2', text: '디자인 시스템', completed: true, date: new Date(2025, 9, 14), categoryId: 'cat3', startTime: '14:00', endTime: '16:00', subtasks: [] },
+    {
+      id: '3',
+      text: '프론트엔드 개발',
+      completed: false,
+      date: new Date(2025, 9, 15),
       categoryId: 'cat1',
+      startTime: '10:00',
+      endTime: '13:00',
       subtasks: [
         { id: '3-1', text: '컴포넌트 구조 설계', completed: false, date: new Date(2025, 9, 15), categoryId: 'cat1', subtasks: [] },
         { id: '3-2', text: 'UI 구현', completed: false, date: new Date(2025, 9, 15), categoryId: 'cat1', subtasks: [] },
       ]
     },
-    { id: '4', text: 'API 연동', completed: false, date: new Date(2025, 9, 15), categoryId: 'cat1', subtasks: [] },
+    { id: '4', text: 'API 연동', completed: false, date: new Date(2025, 9, 15), categoryId: 'cat1', startTime: '14:00', endTime: '17:00', subtasks: [] },
     { id: '5', text: '테스트', completed: true, date: new Date(2025, 9, 15), categoryId: 'cat3', subtasks: [] },
     { id: '6', text: '배포 준비', completed: false, date: new Date(2025, 9, 16), categoryId: 'cat1', subtasks: [] },
     { id: '7', text: '문서 작성', completed: true, date: new Date(2025, 9, 17), categoryId: 'cat2', subtasks: [] },
-    { id: '8', text: '회의', completed: false, date: new Date(2025, 9, 17), categoryId: 'cat1', subtasks: [] },
+    { id: '8', text: '회의', completed: false, date: new Date(2025, 9, 17), categoryId: 'cat1', startTime: '15:00', endTime: '16:00', subtasks: [] },
   ]);
 
   // 날짜별 투두 그룹화 (카테고리별, 최상위 할일만 카운트)
@@ -121,7 +127,7 @@ export default function Home() {
   }, [todos, categories]);
 
   // 할일 추가
-  const handleAddTodo = (text: string, categoryId: string, date: Date, parentId?: string) => {
+  const handleAddTodo = (text: string, categoryId: string, date: Date, parentId?: string, startTime?: string, endTime?: string) => {
     const newTodo: Todo = {
       id: Date.now().toString(),
       text,
@@ -130,6 +136,8 @@ export default function Home() {
       categoryId,
       parentId,
       subtasks: [],
+      startTime,
+      endTime,
     };
 
     if (parentId) {
@@ -246,6 +254,25 @@ export default function Home() {
     setTodos(editRecursively(todos));
   };
 
+  // 할일 시간 업데이트
+  const handleUpdateTodoTime = (id: string, startTime?: string, endTime?: string) => {
+    const updateTimeRecursively = (todoList: Todo[]): Todo[] => {
+      return todoList.map(todo => {
+        if (todo.id === id) {
+          return { ...todo, startTime, endTime };
+        }
+        if (todo.subtasks && todo.subtasks.length > 0) {
+          return {
+            ...todo,
+            subtasks: updateTimeRecursively(todo.subtasks),
+          };
+        }
+        return todo;
+      });
+    };
+    setTodos(updateTimeRecursively(todos));
+  };
+
   // 카테고리 추가
   const handleAddCategory = (name: string, color: string) => {
     const newCategory: Category = {
@@ -284,6 +311,69 @@ export default function Home() {
     setCategories(categories.filter(cat => cat.id !== id));
   };
 
+  // 할일 이동 (드래그앤드롭)
+  const handleMoveTodo = (todoId: string, newCategoryId: string, newParentId?: string, newIndex?: number) => {
+    // 1. 이동할 todo 찾기
+    let movedTodo: Todo | null = null;
+
+    const findAndRemoveTodo = (todoList: Todo[]): Todo[] => {
+      return todoList.filter(todo => {
+        if (todo.id === todoId) {
+          movedTodo = { ...todo, categoryId: newCategoryId, parentId: newParentId };
+          return false;
+        }
+        if (todo.subtasks && todo.subtasks.length > 0) {
+          todo.subtasks = findAndRemoveTodo(todo.subtasks);
+        }
+        return true;
+      });
+    };
+
+    // 2. todo 제거
+    let newTodos = findAndRemoveTodo([...todos]);
+
+    if (!movedTodo) return;
+
+    // 3. 새 위치에 삽입
+    if (newParentId) {
+      // 하위 할일로 이동
+      const addToParent = (todoList: Todo[]): Todo[] => {
+        return todoList.map(todo => {
+          if (todo.id === newParentId) {
+            const subtasks = todo.subtasks || [];
+            const insertIndex = newIndex !== undefined ? Math.min(newIndex, subtasks.length) : subtasks.length;
+            return {
+              ...todo,
+              subtasks: [
+                ...subtasks.slice(0, insertIndex),
+                movedTodo!,
+                ...subtasks.slice(insertIndex),
+              ],
+            };
+          }
+          if (todo.subtasks && todo.subtasks.length > 0) {
+            return {
+              ...todo,
+              subtasks: addToParent(todo.subtasks),
+            };
+          }
+          return todo;
+        });
+      };
+      newTodos = addToParent(newTodos);
+    } else {
+      // 최상위 할일로 이동
+      const insertIndex = newIndex !== undefined ? Math.min(newIndex, newTodos.length) : newTodos.length;
+      newTodos = [
+        ...newTodos.slice(0, insertIndex),
+        movedTodo,
+        ...newTodos.slice(insertIndex),
+      ];
+    }
+
+    setTodos(newTodos);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-white">
       {/* Header */}
@@ -301,31 +391,38 @@ export default function Home() {
           {/* Left Panel - Mini Calendar + Todo List */}
           <div className="flex-[2] border-r border-neutral-gray-300 flex flex-col bg-white">
             {/* Mini Calendar */}
-            <div className="flex-[2.5] overflow-y-auto">
+            <div className="shrink-0">
               <MiniCalendar onDateSelect={setSelectedDate} todosByDate={todosByDate} />
             </div>
 
             {/* Todo List */}
-            <div className="flex-[7.5] overflow-y-auto border-t border-neutral-gray-300">
-              <TodoList 
-                selectedDate={selectedDate} 
-                todos={todos} 
-                categories={categories} 
-                onAddTodo={handleAddTodo} 
-                onDeleteTodo={handleDeleteTodo} 
-                onToggleTodo={handleToggleTodo} 
+            <div className="flex-1 overflow-y-auto border-t border-neutral-gray-300">
+              <TodoList
+                selectedDate={selectedDate}
+                todos={todos}
+                categories={categories}
+                onAddTodo={handleAddTodo}
+                onDeleteTodo={handleDeleteTodo}
+                onToggleTodo={handleToggleTodo}
                 onEditTodo={handleEditTodo}
+                onUpdateTodoTime={handleUpdateTodoTime}
                 onAddCategory={handleAddCategory}
                 onEditCategory={handleEditCategory}
                 onChangeColor={handleChangeColor}
                 onDeleteCategory={handleDeleteCategory}
+                onMoveTodo={handleMoveTodo}
               />
             </div>
           </div>
 
           {/* Right Panel - Big Calendar */}
           <div className="flex-[3] overflow-hidden flex flex-col">
-            <BigCalendar selectedDate={selectedDate} />
+            <BigCalendar
+              selectedDate={selectedDate}
+              todos={todos}
+              categories={categories}
+              onUpdateTodoTime={handleUpdateTodoTime}
+            />
           </div>
         </div>
 
@@ -367,27 +464,34 @@ export default function Home() {
           <div className="flex-1 overflow-hidden">
             {activeTab === 'todo' ? (
               <div className="flex flex-col h-full">
-                <div className="flex-[2.5] overflow-y-auto">
+                <div className="shrink-0">
                   <MiniCalendar onDateSelect={setSelectedDate} todosByDate={todosByDate} />
                 </div>
-                <div className="flex-[7.5] overflow-y-auto border-t border-neutral-gray-300">
-                  <TodoList 
-                    selectedDate={selectedDate} 
-                    todos={todos} 
-                    categories={categories} 
-                    onAddTodo={handleAddTodo} 
-                    onDeleteTodo={handleDeleteTodo} 
-                    onToggleTodo={handleToggleTodo} 
+                <div className="flex-1 overflow-y-auto border-t border-neutral-gray-300">
+                  <TodoList
+                    selectedDate={selectedDate}
+                    todos={todos}
+                    categories={categories}
+                    onAddTodo={handleAddTodo}
+                    onDeleteTodo={handleDeleteTodo}
+                    onToggleTodo={handleToggleTodo}
                     onEditTodo={handleEditTodo}
+                    onUpdateTodoTime={handleUpdateTodoTime}
                     onAddCategory={handleAddCategory}
                     onEditCategory={handleEditCategory}
                     onChangeColor={handleChangeColor}
                     onDeleteCategory={handleDeleteCategory}
+                    onMoveTodo={handleMoveTodo}
                   />
                 </div>
               </div>
             ) : (
-              <BigCalendar selectedDate={selectedDate} />
+              <BigCalendar
+                selectedDate={selectedDate}
+                todos={todos}
+                categories={categories}
+                onUpdateTodoTime={handleUpdateTodoTime}
+              />
             )}
           </div>
         </div>
