@@ -118,23 +118,35 @@ export function TodoItem({
               const currentText = e.currentTarget.value.trim();
 
               if (currentText) {
-                // 텍스트가 있으면 저장하고 다음 할일 추가
+                // 텍스트가 있으면 저장
                 if (currentText !== todo.text) {
                   onEdit(todo.id, currentText);
                 }
 
-                // 새 할일 추가 (같은 레벨)
-                onAddTodo('', categoryId, selectedDate, parentId);
+                // currentElement를 먼저 저장
+                const currentElement = e.currentTarget as HTMLElement;
+                const currentCategory = currentElement.closest('[class*="space-y"]');
 
+                // blur하여 현재 input 정리
+                e.currentTarget.blur();
+
+                // TodoInput의 "Add todo" 버튼 찾아서 클릭
                 setTimeout(() => {
-                  const inputs = Array.from(document.querySelectorAll('input[type="text"]'));
-                  const currentIndex = inputs.indexOf(e.currentTarget);
-                  const nextInput = inputs[currentIndex + 1] as HTMLInputElement;
-                  if (nextInput) {
-                    nextInput.focus();
-                    nextInput.select();
+                  const allButtons = Array.from(document.querySelectorAll('button'));
+                  const addTodoButtons = allButtons.filter(btn =>
+                    btn.textContent?.includes('Add todo')
+                  );
+
+                  // 현재 카테고리의 Add todo 버튼 찾기 (가장 가까운)
+                  if (addTodoButtons.length > 0 && currentCategory) {
+                    for (const btn of addTodoButtons) {
+                      if (currentCategory.contains(btn)) {
+                        (btn as HTMLButtonElement).click();
+                        break;
+                      }
+                    }
                   }
-                }, 50);
+                }, 100);
               }
               // 비어있으면 아무것도 안 함
             } else if (e.key === 'Tab' && !e.shiftKey) {

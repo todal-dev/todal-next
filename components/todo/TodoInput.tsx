@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import { Checkbox } from '@/components/ui/Checkbox';
 
 interface TodoInputProps {
   categoryId: string;
@@ -44,17 +45,17 @@ export function TodoInput({
 
   return (
     <div style={{ paddingLeft: `${level * 24}px` }}>
-      <AnimatePresence mode="wait">
-        {isAdding ? (
+      <AnimatePresence>
+        {isAdding && (
           <motion.div
             key="input"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="flex items-center gap-2 px-3 py-1.5"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neutral-gray-50"
           >
-            <div className="w-4 h-4 flex-shrink-0" />
+            <Checkbox checked={false} onChange={() => {}} className="flex-shrink-0" />
             <input
               ref={inputRef}
               type="text"
@@ -72,29 +73,27 @@ export function TodoInput({
               }}
               onBlur={() => {
                 setTimeout(() => {
-                  if (!value.trim()) {
-                    setIsAdding(false);
-                  }
+                  setIsAdding(false);
+                  setValue('');
                 }, 150);
               }}
               className="flex-1 text-sm bg-transparent text-neutral-text-primary placeholder:text-neutral-text-tertiary focus:outline-none border-0 focus:ring-0"
             />
           </motion.div>
-        ) : (
-          <motion.button
-            key="button"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            onClick={() => setIsAdding(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neutral-gray-50 transition-colors text-neutral-text-tertiary hover:text-primary-500 w-full text-left"
-          >
-            <Plus size={14} />
-            <span className="text-sm">Add todo</span>
-          </motion.button>
         )}
       </AnimatePresence>
+
+      <motion.button
+        key="button"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.15 }}
+        onClick={() => setIsAdding(true)}
+        className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neutral-gray-50 transition-colors text-neutral-text-tertiary hover:text-primary-500 w-full text-left"
+      >
+        <Plus size={14} />
+        <span className="text-sm">Add todo</span>
+      </motion.button>
     </div>
   );
 }
