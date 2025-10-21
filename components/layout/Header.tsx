@@ -1130,6 +1130,9 @@ export function BigCalendar({
                     creatingEvent.date.toDateString() === date.toDateString() &&
                     (() => {
                       const style = getTodoBlockStyle(creatingEvent.startTime, creatingEvent.endTime);
+                      // Use the color of the category that will be assigned (cat-etc)
+                      const defaultCategory = categories.find((c) => c.id === 'cat-etc');
+                      const previewColor = defaultCategory?.color || '#9CA3AF';
 
                       return (
                         <div
@@ -1137,7 +1140,7 @@ export function BigCalendar({
                           style={{
                             ...style,
                             zIndex: 15,
-                            backgroundColor: 'rgba(59, 130, 246, 0.85)',
+                            backgroundColor: previewColor,
                             borderLeft: '4px dashed rgba(255, 255, 255, 0.6)',
                             color: 'white',
                             boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
@@ -1218,6 +1221,9 @@ export function BigCalendar({
                         }}
                         onContextMenu={(e) => handleContextMenu(e, todo.id)}
                         onMouseDown={(e) => {
+                          // Always stop propagation to prevent grid drag from starting
+                          e.stopPropagation();
+
                           // Only start drag if not clicking on resize handles or input
                           const target = e.target as HTMLElement;
                           if (!target.classList.contains('cursor-ns-resize') &&
