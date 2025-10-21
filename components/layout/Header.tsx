@@ -610,6 +610,14 @@ export function BigCalendar({
     e.preventDefault();
     e.stopPropagation();
 
+    // Use local variables to avoid closure issues
+    let currentStartTime = startTime;
+    let currentEndTime = endTime;
+
+    // Get the grid container for coordinate calculations
+    const gridContainer = gridScrollRef.current;
+    if (!gridContainer) return;
+
     setResizingTodo({
       id: todoId,
       type,
@@ -620,35 +628,43 @@ export function BigCalendar({
     });
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!resizingTodo) return;
+      if (!gridContainer) return;
 
-      // Find the hour cell that contains the mouse
-      const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
-      if (!target) return;
+      // Calculate time based on scroll position and mouse Y
+      const gridRect = gridContainer.getBoundingClientRect();
+      const scrollTop = gridContainer.scrollTop;
 
-      const hourCell = target.closest('[data-hour]');
-      if (!hourCell) return;
+      // Mouse Y relative to the visible grid, plus scroll offset
+      const relativeY = moveEvent.clientY - gridRect.top + scrollTop;
 
-      const hour = parseInt(hourCell.getAttribute('data-hour') || '0');
-      const rect = hourCell.getBoundingClientRect();
-      const y = moveEvent.clientY - rect.top;
-      const minuteOffset = Math.floor((y / hourHeight) * 60);
-      let minute = roundToQuarterHour(minuteOffset);
-      let adjustedHour = hour;
+      // Subtract the header height (approximately 73px based on the code)
+      const headerHeight = 73; // Adjust if needed
+      const contentY = relativeY - headerHeight;
 
-      if (minute === 0 && minuteOffset > 45) {
-        adjustedHour = hour + 1;
-        minute = 0;
-      }
+      if (contentY < 0) return;
 
-      const newTime = `${String(adjustedHour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+      // Calculate total minutes from top of grid
+      const totalMinutes = Math.floor((contentY / hourHeight) * 60);
+
+      // Round to 15-minute intervals
+      const roundedMinutes = Math.round(totalMinutes / 15) * 15;
+
+      // Convert to hours and minutes
+      const hours = Math.floor(roundedMinutes / 60);
+      const minutes = roundedMinutes % 60;
+
+      // Clamp to 0-24 hour range
+      if (hours < 0 || hours >= 24) return;
+
+      const newTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 
       if (type === 'bottom') {
         // Resizing bottom: ensure end time is after start time
-        const startMinutes = timeToMinutes(resizingTodo.currentStartTime);
+        const startMinutes = timeToMinutes(currentStartTime);
         const endMinutes = timeToMinutes(newTime);
 
         if (endMinutes > startMinutes) {
+          currentEndTime = newTime;
           setResizingTodo(prev => prev ? {
             ...prev,
             currentEndTime: newTime,
@@ -657,9 +673,10 @@ export function BigCalendar({
       } else {
         // Resizing top: ensure start time is before end time
         const startMinutes = timeToMinutes(newTime);
-        const endMinutes = timeToMinutes(resizingTodo.currentEndTime);
+        const endMinutes = timeToMinutes(currentEndTime);
 
         if (startMinutes < endMinutes) {
+          currentStartTime = newTime;
           setResizingTodo(prev => prev ? {
             ...prev,
             currentStartTime: newTime,
@@ -669,13 +686,11 @@ export function BigCalendar({
     };
 
     const handleMouseUp = () => {
-      if (resizingTodo) {
-        // Apply the resize
-        onEditTodo?.(resizingTodo.id, {
-          startTime: resizingTodo.currentStartTime,
-          endTime: resizingTodo.currentEndTime,
-        });
-      }
+      // Apply the resize using local variables
+      onEditTodo?.(todoId, {
+        startTime: currentStartTime,
+        endTime: currentEndTime,
+      });
       setResizingTodo(null);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -698,6 +713,14 @@ export function BigCalendar({
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
     const offsetY = e.clientY - rect.top;
 
+    // Use local variables to avoid closure issues
+    let currentStartTime = startTime;
+    let currentEndTime = endTime;
+
+    // Get the grid container for coordinate calculations
+    const gridContainer = gridScrollRef.current;
+    if (!gridContainer) return;
+
     setDraggingTodo({
       id: todoId,
       originalStartTime: startTime,
@@ -708,46 +731,48 @@ export function BigCalendar({
     });
 
     const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!draggingTodo) return;
+      if (!gridContainer) return;
 
-      const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
-      if (!target) return;
+      // Calculate time based on scroll position and mouse Y
+      const gridRect = gridContainer.getBoundingClientRect();
+      const scrollTop = gridContainer.scrollTop;
 
-      const hourCell = target.closest('[data-hour]');
-      if (!hourCell) return;
+      // Mouse Y relative to the visible grid, plus scroll offset
+      const relativeY = moveEvent.clientY - gridRect.top + scrollTop;
 
-      const hour = parseInt(hourCell.getAttribute('data-hour') || '0');
-      const rect = hourCell.getBoundingClientRect();
-      const y = moveEvent.clientY - rect.top;
-      const minuteOffset = Math.floor((y / hourHeight) * 60);
-      let minute = roundToQuarterHour(minuteOffset);
-      let adjustedHour = hour;
+      // Subtract the header height
+      const headerHeight = 73;
+      const contentY = relativeY - headerHeight;
 
-      if (minute === 0 && minuteOffset > 45) {
-        adjustedHour = hour + 1;
-        minute = 0;
-      }
+      if (contentY < 0) return;
 
-      const newStartMinutes = adjustedHour * 60 + minute;
-      
+      // Calculate total minutes from top of grid
+      const totalMinutes = Math.floor((contentY / hourHeight) * 60);
+
+      // Round to 15-minute intervals
+      const roundedMinutes = Math.round(totalMinutes / 15) * 15;
+
       // Calculate duration
       const originalStartMinutes = timeToMinutes(startTime);
       const originalEndMinutes = timeToMinutes(endTime);
       const duration = originalEndMinutes - originalStartMinutes;
 
       // Calculate new end time
-      const newEndMinutes = newStartMinutes + duration;
-      
-      // Ensure we don't go past 24:00
-      if (newEndMinutes > 24 * 60) return;
+      const newEndMinutes = roundedMinutes + duration;
 
-      const newStartHour = Math.floor(newStartMinutes / 60);
-      const newStartMin = newStartMinutes % 60;
+      // Ensure we don't go past 24:00
+      if (roundedMinutes < 0 || newEndMinutes > 24 * 60) return;
+
+      const newStartHour = Math.floor(roundedMinutes / 60);
+      const newStartMin = roundedMinutes % 60;
       const newEndHour = Math.floor(newEndMinutes / 60);
       const newEndMin = newEndMinutes % 60;
 
       const newStartTime = `${String(newStartHour).padStart(2, '0')}:${String(newStartMin).padStart(2, '0')}`;
       const newEndTime = `${String(newEndHour).padStart(2, '0')}:${String(newEndMin).padStart(2, '0')}`;
+
+      currentStartTime = newStartTime;
+      currentEndTime = newEndTime;
 
       setDraggingTodo(prev => prev ? {
         ...prev,
@@ -757,13 +782,11 @@ export function BigCalendar({
     };
 
     const handleMouseUp = () => {
-      if (draggingTodo) {
-        // Apply the move
-        onEditTodo?.(draggingTodo.id, {
-          startTime: draggingTodo.currentStartTime,
-          endTime: draggingTodo.currentEndTime,
-        });
-      }
+      // Apply the move using local variables
+      onEditTodo?.(todoId, {
+        startTime: currentStartTime,
+        endTime: currentEndTime,
+      });
       setDraggingTodo(null);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -1056,7 +1079,7 @@ export function BigCalendar({
                                     setEditingText('');
                                   }
                                 }}
-                                className="flex-1 bg-white text-neutral-text-primary rounded px-2 py-0.5 font-semibold outline-none border-2 border-primary-500 min-w-0"
+                                className="flex-1 bg-white/20 text-white placeholder:text-white/70 rounded px-2 py-0.5 font-semibold outline-none border border-white/40 focus:border-white/80 min-w-0"
                                 autoFocus
                               />
                             ) : (
