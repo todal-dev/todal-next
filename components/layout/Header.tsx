@@ -1133,17 +1133,18 @@ export function BigCalendar({
 
                       return (
                         <div
-                          className="absolute px-2 py-1 rounded text-xs overflow-hidden pointer-events-none"
+                          className="absolute py-1 pr-2 pl-1.5 rounded text-xs overflow-hidden pointer-events-none"
                           style={{
                             ...style,
                             zIndex: 15,
-                            backgroundColor: 'rgba(59, 130, 246, 0.3)',
-                            border: '2px dashed rgba(59, 130, 246, 0.8)',
-                            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.2)',
+                            backgroundColor: 'rgba(59, 130, 246, 0.85)',
+                            borderLeft: '4px dashed rgba(255, 255, 255, 0.6)',
+                            color: 'white',
+                            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
                           }}
                         >
-                          <div className="font-semibold text-primary-700">새 일정</div>
-                          <div className="text-xs text-primary-600">
+                          <div className="font-semibold">새 일정</div>
+                          <div className="text-xs opacity-80">
                             {creatingEvent.startTime} - {creatingEvent.endTime}
                           </div>
                         </div>
@@ -1162,19 +1163,19 @@ export function BigCalendar({
 
                       return (
                         <div
-                          className="absolute px-2 py-1 rounded text-xs overflow-visible pointer-events-none"
+                          className="absolute py-1 pr-2 pl-1.5 rounded text-xs overflow-visible pointer-events-none"
                           style={{
                             ...style,
                             backgroundColor: category?.color || '#3B82F6',
+                            borderLeft: `4px dashed rgba(255, 255, 255, 0.6)`,
                             color: 'white',
                             zIndex: 25,
-                            opacity: 0.7,
-                            border: '2px dashed white',
-                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                            opacity: 0.9,
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
                           }}
                         >
                           <div className="font-semibold break-words">{todo.text || '(제목 없음)'}</div>
-                          <div className="text-xs opacity-90">
+                          <div className="text-xs opacity-80">
                             {draggingTodo.currentStartTime} - {draggingTodo.currentEndTime}
                           </div>
                         </div>
@@ -1224,13 +1225,15 @@ export function BigCalendar({
                             handleTodoDragStart(e, todo.id, todo.date, todo.startTime!, todo.endTime!);
                           }
                         }}
-                        className="absolute px-2 py-1 rounded text-xs overflow-visible cursor-move hover:opacity-90 transition-opacity group select-none"
+                        className="absolute py-1 pr-2 pl-1.5 rounded text-xs overflow-visible cursor-move hover:brightness-95 transition-all group select-none"
                         style={{
                           ...style,
                           backgroundColor: category?.color || '#3B82F6',
+                          borderLeft: `4px solid rgba(255, 255, 255, 0.5)`,
                           color: 'white',
+                          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
                           zIndex: isResizing ? 20 : 10,
-                          opacity: isDraggingThis ? 0.3 : 1, // Show original position when dragging on same date
+                          opacity: isDraggingThis ? 0.3 : 1,
                         }}
                         title={`${todo.text} (${displayStartTime} - ${displayEndTime})`}
                       >
@@ -1263,7 +1266,12 @@ export function BigCalendar({
                                     setEditingText('');
                                   }
                                 }}
-                                className="flex-1 bg-white/20 text-white placeholder:text-white/70 rounded px-2 py-0.5 font-semibold outline-none border border-white/40 focus:border-white/80 min-w-0"
+                                style={{
+                                  color: 'white',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                                  borderColor: 'rgba(255, 255, 255, 0.5)',
+                                }}
+                                className="flex-1 rounded px-2 py-0.5 font-semibold outline-none border-2 min-w-0 placeholder-white/70"
                                 autoFocus
                               />
                             ) : (
