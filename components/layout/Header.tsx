@@ -345,16 +345,137 @@ export function BigCalendar({
     return hours * 60 + minutes;
   };
 
+  // Check if two events overlap
+  const eventsOverlap = (event1: Todo, event2: Todo) => {
+    if (!event1.startTime || !event1.endTime || !event2.startTime || !event2.endTime) {
+      return false;
+    }
+    const start1 = timeToMinutes(event1.startTime);
+    const end1 = timeToMinutes(event1.endTime);
+    const start2 = timeToMinutes(event2.startTime);
+    const end2 = timeToMinutes(event2.endTime);
+
+    return start1 < end2 && start2 < end1;
+  };
+
+  // Calculate layout for overlapping events (Google Calendar style)
+  const calculateEventLayout = (todos: Todo[]) => {
+    const layout: Record<string, { width: number; left: number }> = {};
+
+    if (todos.length === 0) return layout;
+
+    // Sort events by start time, then by duration (longer first)
+    const sortedTodos = [...todos].sort((a, b) => {
+      const aStart = timeToMinutes(a.startTime!);
+      const bStart = timeToMinutes(b.startTime!);
+      if (aStart !== bStart) return aStart - bStart;
+
+      const aDuration = timeToMinutes(a.endTime!) - aStart;
+      const bDuration = timeToMinutes(b.endTime!) - bStart;
+      return bDuration - aDuration; // Longer events first
+    });
+
+    // Track which column each event is in
+    const columns: Todo[][] = [];
+
+    // Assign each event to the leftmost available column
+    sortedTodos.forEach((event) => {
+      // Find the first column where this event doesn't overlap with any event already in that column
+      let placed = false;
+
+      for (let colIndex = 0; colIndex < columns.length; colIndex++) {
+        const column = columns[colIndex];
+
+        // Check if event overlaps with any event in this column
+        const hasOverlap = column.some((existingEvent) => eventsOverlap(event, existingEvent));
+
+        if (!hasOverlap) {
+          // Can place in this column
+          column.push(event);
+          placed = true;
+          break;
+        }
+      }
+
+      // If no existing column works, create a new column
+      if (!placed) {
+        columns.push([event]);
+      }
+    });
+
+    // For each event, find how many columns it spans
+    sortedTodos.forEach((event) => {
+      // Find which column this event is in
+      let eventColumn = 0;
+      for (let i = 0; i < columns.length; i++) {
+        if (columns[i].some((e) => e.id === event.id)) {
+          eventColumn = i;
+          break;
+        }
+      }
+
+      // Find the maximum number of columns among all overlapping events
+      let maxColumns = 1;
+
+      // Check all events that overlap with this one
+      sortedTodos.forEach((other) => {
+        if (eventsOverlap(event, other)) {
+          // Count how many columns exist among overlapping events
+          const overlappingColumns = new Set<number>();
+
+          sortedTodos.forEach((e) => {
+            if (eventsOverlap(event, e) || e.id === event.id) {
+              for (let i = 0; i < columns.length; i++) {
+                if (columns[i].some((col) => col.id === e.id)) {
+                  overlappingColumns.add(i);
+                  break;
+                }
+              }
+            }
+          });
+
+          maxColumns = Math.max(maxColumns, overlappingColumns.size);
+        }
+      });
+
+      // Calculate width and position
+      const width = 100 / maxColumns;
+      const left = eventColumn * width;
+
+      layout[event.id] = { width, left };
+    });
+
+    return layout;
+  };
+
   // Calculate todo block position
-  const getTodoBlockStyle = (startTime: string, endTime: string) => {
+  const getTodoBlockStyle = (startTime: string, endTime: string, width?: number, left?: number) => {
     const startMinutes = timeToMinutes(startTime);
     const endMinutes = timeToMinutes(endTime);
     const duration = endMinutes - startMinutes;
 
     const top = (startMinutes / 60) * hourHeight;
-    const height = (duration / 60) * hourHeight;
+    const height = (duration / 60) * hourHeight - 2; // 2px gap between blocks
 
-    return { top: `${top}px`, height: `${height}px` };
+    const style: React.CSSProperties = {
+      top: `${top}px`,
+      height: `${height}px`
+    };
+
+    // Apply width and left if provided (for overlapping events)
+    if (width !== undefined && left !== undefined) {
+      style.width = `calc(${width}% - 4px)`;
+      style.left = `${left}%`;
+      style.marginLeft = '2px';
+      style.marginRight = '2px';
+    } else {
+      style.left = '0';
+      style.right = '0';
+      style.marginLeft = '4px';
+      style.marginRight = '4px';
+    }
+
+    return style;
   };
 
   // Handle drag start for creating events
@@ -765,8 +886,11 @@ export function BigCalendar({
         }
       });
 
+      // Subtract the offset where the user clicked within the block
+      const adjustedY = contentY - offsetY;
+
       // Calculate total minutes from top of grid
-      const totalMinutes = Math.floor((contentY / hourHeight) * 60);
+      const totalMinutes = Math.floor((adjustedY / hourHeight) * 60);
 
       // Round to 15-minute intervals
       const roundedMinutes = Math.round(totalMinutes / 15) * 15;
@@ -906,6 +1030,9 @@ export function BigCalendar({
               const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
               const dayTodos = weekTodos[dateKey] || [];
 
+              // Calculate layout for overlapping events
+              const eventLayout = calculateEventLayout(dayTodos);
+
               const isToday =
                 date.getDate() === currentTime.getDate() &&
                 date.getMonth() === currentTime.getMonth() &&
@@ -1006,7 +1133,7 @@ export function BigCalendar({
 
                       return (
                         <div
-                          className="absolute left-0 right-0 mx-1 px-2 py-1 rounded text-xs overflow-hidden pointer-events-none"
+                          className="absolute px-2 py-1 rounded text-xs overflow-hidden pointer-events-none"
                           style={{
                             ...style,
                             zIndex: 15,
@@ -1035,7 +1162,7 @@ export function BigCalendar({
 
                       return (
                         <div
-                          className="absolute left-0 right-0 mx-1 px-2 py-1 rounded text-xs overflow-visible pointer-events-none"
+                          className="absolute px-2 py-1 rounded text-xs overflow-visible pointer-events-none"
                           style={{
                             ...style,
                             backgroundColor: category?.color || '#3B82F6',
@@ -1046,7 +1173,7 @@ export function BigCalendar({
                             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
                           }}
                         >
-                          <div className="font-semibold truncate">{todo.text || '(제목 없음)'}</div>
+                          <div className="font-semibold break-words">{todo.text || '(제목 없음)'}</div>
                           <div className="text-xs opacity-90">
                             {draggingTodo.currentStartTime} - {draggingTodo.currentEndTime}
                           </div>
@@ -1076,29 +1203,28 @@ export function BigCalendar({
                       displayEndTime = resizingTodo.currentEndTime;
                     }
 
-                    const style = getTodoBlockStyle(displayStartTime, displayEndTime);
+                    // Get layout info for overlapping events
+                    const layout = eventLayout[todo.id] || { width: 100, left: 0 };
+                    const style = getTodoBlockStyle(displayStartTime, displayEndTime, layout.width, layout.left);
                     const isRecurring = !!todo.recurrenceId;
 
                     return (
                       <div
                         key={todo.id}
-                        draggable={!isResizing && !isDraggingThis}
+                        draggable={false}
                         onDragStart={(e) => {
-                          e.dataTransfer.effectAllowed = 'move';
-                          e.dataTransfer.setData(
-                            'text/plain',
-                            JSON.stringify({
-                              id: todo.id,
-                              text: todo.text,
-                              categoryId: todo.categoryId,
-                              date: todo.date.toISOString(),
-                              startTime: todo.startTime,
-                              endTime: todo.endTime,
-                            })
-                          );
+                          e.preventDefault();
                         }}
                         onContextMenu={(e) => handleContextMenu(e, todo.id)}
-                        className="absolute left-0 right-0 mx-1 px-2 py-1 rounded text-xs overflow-visible cursor-move hover:opacity-90 transition-opacity group select-none"
+                        onMouseDown={(e) => {
+                          // Only start drag if not clicking on resize handles or input
+                          const target = e.target as HTMLElement;
+                          if (!target.classList.contains('cursor-ns-resize') &&
+                              target.tagName !== 'INPUT') {
+                            handleTodoDragStart(e, todo.id, todo.date, todo.startTime!, todo.endTime!);
+                          }
+                        }}
+                        className="absolute px-2 py-1 rounded text-xs overflow-visible cursor-move hover:opacity-90 transition-opacity group select-none"
                         style={{
                           ...style,
                           backgroundColor: category?.color || '#3B82F6',
@@ -1117,18 +1243,8 @@ export function BigCalendar({
                           onMouseDown={(e) => handleResizeStart(e, todo.id, 'top', todo.startTime!, todo.endTime!)}
                         />
 
-                        {/* Content - draggable area */}
-                        <div
-                          className="relative"
-                          onMouseDown={(e) => {
-                            // Only start drag if not clicking on resize handles or input
-                            const target = e.target as HTMLElement;
-                            if (!target.classList.contains('cursor-ns-resize') &&
-                                target.tagName !== 'INPUT') {
-                              handleTodoDragStart(e, todo.id, todo.date, todo.startTime!, todo.endTime!);
-                            }
-                          }}
-                        >
+                        {/* Content */}
+                        <div className="relative">
                           <div className="flex items-center gap-1">
                             {isRecurring && <Repeat size={12} className="flex-shrink-0" />}
                             {editingTodoId === todo.id ? (
@@ -1152,7 +1268,7 @@ export function BigCalendar({
                               />
                             ) : (
                               <div
-                                className="font-semibold truncate cursor-text hover:underline"
+                                className="font-semibold cursor-text hover:underline break-words"
                                 onDoubleClick={(e) => {
                                   e.stopPropagation();
                                   setEditingTodoId(todo.id);
