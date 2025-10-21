@@ -1224,6 +1224,13 @@ export function BigCalendar({
                           // Always stop propagation to prevent grid drag from starting
                           e.stopPropagation();
 
+                          // Finish any pending edit before interacting with this todo
+                          if (editingTodoId && editingTodoId !== todo.id) {
+                            handleFinishEdit();
+                            // Don't start drag when finishing an edit, just let the click happen
+                            return;
+                          }
+
                           // Only start drag if not clicking on resize handles or input
                           const target = e.target as HTMLElement;
                           if (!target.classList.contains('cursor-ns-resize') &&
