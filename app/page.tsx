@@ -41,11 +41,12 @@ export default function Home() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [activeTab, setActiveTab] = useState<'todo' | 'calendar'>('todo');
 
-  // 카테고리
+  // 카테고리 (기타 카테고리는 항상 존재하고 맨 하단에 위치)
   const [categories, setCategories] = useState<Category[]>([
     { id: 'cat1', name: '업무', color: '#3B82F6' },
     { id: 'cat2', name: '개인', color: '#A855F7' },
     { id: 'cat3', name: '학습', color: '#2D9F6B' },
+    { id: 'cat-etc', name: '기타', color: '#9CA3AF' },
   ]);
 
   // 샘플 투두 데이터 (하위 할일 예시 포함)
@@ -285,7 +286,11 @@ export default function Home() {
 
   // 카테고리 이름 수정
   const handleEditCategory = (id: string, name: string) => {
-    setCategories(categories.map(cat => 
+    // 기타 카테고리는 이름 수정 불가
+    if (id === 'cat-etc') {
+      return;
+    }
+    setCategories(categories.map(cat =>
       cat.id === id ? { ...cat, name } : cat
     ));
   };
@@ -299,6 +304,12 @@ export default function Home() {
 
   // 카테고리 삭제
   const handleDeleteCategory = (id: string) => {
+    // 기타 카테고리는 삭제 불가
+    if (id === 'cat-etc') {
+      alert('기타 카테고리는 삭제할 수 없습니다.');
+      return;
+    }
+
     // 해당 카테고리의 할일이 있는지 확인
     const hasTodos = todos.some(todo => todo.categoryId === id);
     if (hasTodos) {
@@ -421,7 +432,69 @@ export default function Home() {
               selectedDate={selectedDate}
               todos={todos}
               categories={categories}
-              onUpdateTodoTime={handleUpdateTodoTime}
+              onUpdateTodoDateTime={(id, date, startTime, endTime) => {
+                // Update date
+                const updateDateRecursively = (todoList: Todo[]): Todo[] => {
+                  return todoList.map(todo => {
+                    if (todo.id === id) {
+                      return { ...todo, date, startTime, endTime };
+                    }
+                    if (todo.subtasks && todo.subtasks.length > 0) {
+                      return {
+                        ...todo,
+                        subtasks: updateDateRecursively(todo.subtasks),
+                      };
+                    }
+                    return todo;
+                  });
+                };
+                setTodos(updateDateRecursively(todos));
+              }}
+              onAddTodo={(todo, callback) => {
+                const newTodo: Todo = {
+                  ...todo,
+                  id: Date.now().toString(),
+                  subtasks: [],
+                };
+                setTodos([...todos, newTodo]);
+                // Call the callback with the new todo's id if provided
+                callback?.(newTodo.id);
+              }}
+              onEditTodo={(id, updates) => {
+                const editRecursively = (todoList: Todo[]): Todo[] => {
+                  return todoList.map(todo => {
+                    if (todo.id === id) {
+                      return { ...todo, ...updates };
+                    }
+                    if (todo.subtasks && todo.subtasks.length > 0) {
+                      return {
+                        ...todo,
+                        subtasks: editRecursively(todo.subtasks),
+                      };
+                    }
+                    return todo;
+                  });
+                };
+                setTodos(editRecursively(todos));
+              }}
+              onDeleteTodo={handleDeleteTodo}
+              onMoveTodo={(id, newDate) => {
+                const updateDateRecursively = (todoList: Todo[]): Todo[] => {
+                  return todoList.map(todo => {
+                    if (todo.id === id) {
+                      return { ...todo, date: newDate };
+                    }
+                    if (todo.subtasks && todo.subtasks.length > 0) {
+                      return {
+                        ...todo,
+                        subtasks: updateDateRecursively(todo.subtasks),
+                      };
+                    }
+                    return todo;
+                  });
+                };
+                setTodos(updateDateRecursively(todos));
+              }}
             />
           </div>
         </div>
@@ -490,7 +563,69 @@ export default function Home() {
                 selectedDate={selectedDate}
                 todos={todos}
                 categories={categories}
-                onUpdateTodoTime={handleUpdateTodoTime}
+                onUpdateTodoDateTime={(id, date, startTime, endTime) => {
+                  // Update date
+                  const updateDateRecursively = (todoList: Todo[]): Todo[] => {
+                    return todoList.map(todo => {
+                      if (todo.id === id) {
+                        return { ...todo, date, startTime, endTime };
+                      }
+                      if (todo.subtasks && todo.subtasks.length > 0) {
+                        return {
+                          ...todo,
+                          subtasks: updateDateRecursively(todo.subtasks),
+                        };
+                      }
+                      return todo;
+                    });
+                  };
+                  setTodos(updateDateRecursively(todos));
+                }}
+                onAddTodo={(todo, callback) => {
+                  const newTodo: Todo = {
+                    ...todo,
+                    id: Date.now().toString(),
+                    subtasks: [],
+                  };
+                  setTodos([...todos, newTodo]);
+                  // Call the callback with the new todo's id if provided
+                  callback?.(newTodo.id);
+                }}
+                onEditTodo={(id, updates) => {
+                  const editRecursively = (todoList: Todo[]): Todo[] => {
+                    return todoList.map(todo => {
+                      if (todo.id === id) {
+                        return { ...todo, ...updates };
+                      }
+                      if (todo.subtasks && todo.subtasks.length > 0) {
+                        return {
+                          ...todo,
+                          subtasks: editRecursively(todo.subtasks),
+                        };
+                      }
+                      return todo;
+                    });
+                  };
+                  setTodos(editRecursively(todos));
+                }}
+                onDeleteTodo={handleDeleteTodo}
+                onMoveTodo={(id, newDate) => {
+                  const updateDateRecursively = (todoList: Todo[]): Todo[] => {
+                    return todoList.map(todo => {
+                      if (todo.id === id) {
+                        return { ...todo, date: newDate };
+                      }
+                      if (todo.subtasks && todo.subtasks.length > 0) {
+                        return {
+                          ...todo,
+                          subtasks: updateDateRecursively(todo.subtasks),
+                        };
+                      }
+                      return todo;
+                    });
+                  };
+                  setTodos(updateDateRecursively(todos));
+                }}
               />
             )}
           </div>

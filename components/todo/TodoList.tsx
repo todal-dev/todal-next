@@ -92,11 +92,18 @@ export function TodoList({
            todo.date.getDate() === selectedDate.getDate();
   });
 
-  // 카테고리별로 그룹화
-  const todosByCategory = categories.map(cat => ({
-    ...cat,
-    items: filteredTodos.filter(todo => todo.categoryId === cat.id),
-  }));
+  // 카테고리별로 그룹화 (기타 카테고리는 항상 맨 하단)
+  const todosByCategory = categories
+    .map(cat => ({
+      ...cat,
+      items: filteredTodos.filter(todo => todo.categoryId === cat.id),
+    }))
+    .sort((a, b) => {
+      // '기타' 카테고리는 항상 맨 하단
+      if (a.id === 'cat-etc') return 1;
+      if (b.id === 'cat-etc') return -1;
+      return 0;
+    });
 
   // 드래그 중인 Todo 찾기
   const findTodo = (id: string, todoList: Todo[]): Todo | null => {

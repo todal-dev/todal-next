@@ -131,7 +131,10 @@ export function CategorySection({
         <input
           type="text"
           defaultValue={category.name}
-          className="flex-1 font-semibold text-sm bg-transparent text-neutral-text-primary focus:outline-none border-0 focus:ring-0"
+          disabled={category.id === 'cat-etc'}
+          className={`flex-1 font-semibold text-sm bg-transparent text-neutral-text-primary focus:outline-none border-0 focus:ring-0 ${
+            category.id === 'cat-etc' ? 'cursor-default' : ''
+          }`}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
               e.currentTarget.blur();
@@ -151,13 +154,16 @@ export function CategorySection({
           {completedCount}/{totalCount}
         </span>
 
-        <button
-          onClick={() => onDeleteCategory(category.id)}
-          className="flex-shrink-0 p-1 hover:bg-red-100 rounded transition-colors text-neutral-text-secondary hover:text-red-600 opacity-0 group-hover:opacity-100"
-          title="Delete category"
-        >
-          <Trash2 size={14} />
-        </button>
+        {/* "기타" 카테고리는 삭제 불가 */}
+        {category.id !== 'cat-etc' && (
+          <button
+            onClick={() => onDeleteCategory(category.id)}
+            className="flex-shrink-0 p-1 hover:bg-red-100 rounded transition-colors text-neutral-text-secondary hover:text-red-600 opacity-0 group-hover:opacity-100"
+            title="Delete category"
+          >
+            <Trash2 size={14} />
+          </button>
+        )}
       </div>
 
       <div className="space-y-0.5">

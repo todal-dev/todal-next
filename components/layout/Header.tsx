@@ -1,7 +1,18 @@
 'use client';
 
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, Repeat } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { RecurringEventDialog } from '@/components/ui/RecurringEventDialog';
+import { ContextMenu } from '@/components/ui/ContextMenu';
+import { CategoryChangeDialog } from '@/components/ui/CategoryChangeDialog';
+import { DateMoveDialog } from '@/components/ui/DateMoveDialog';
+import { DuplicateDialog } from '@/components/ui/DuplicateDialog';
+
+interface RecurrenceRule {
+  frequency: 'daily' | 'weekly' | 'monthly';
+  interval: number;
+  endDate?: Date;
+}
 
 interface Todo {
   id: string;
@@ -13,6 +24,8 @@ interface Todo {
   parentId?: string;
   startTime?: string;
   endTime?: string;
+  recurrenceRule?: RecurrenceRule;
+  recurrenceId?: string;
 }
 
 interface Category {
@@ -25,16 +38,141 @@ interface BigCalendarProps {
   selectedDate?: Date;
   todos?: Todo[];
   categories?: Category[];
-  onUpdateTodoTime?: (id: string, startTime?: string, endTime?: string) => void;
+  onUpdateTodoDateTime?: (id: string, date: Date, startTime?: string, endTime?: string) => void;
+  onAddTodo?: (todo: Omit<Todo, 'id'>, callback?: (id: string) => void) => void;
+  onEditTodo?: (id: string, updates: Partial<Todo>) => void;
+  onDeleteTodo?: (id: string) => void;
+  onMoveTodo?: (id: string, newDate: Date) => void;
 }
 
-export function BigCalendar({ selectedDate = new Date(), todos = [], categories = [], onUpdateTodoTime }: BigCalendarProps) {
+export function BigCalendar({
+  selectedDate = new Date(),
+  todos = [],
+  categories = [],
+  onUpdateTodoDateTime,
+  onAddTodo,
+  onEditTodo,
+  onDeleteTodo,
+  onMoveTodo,
+}: BigCalendarProps) {
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const date = new Date(selectedDate);
     const day = date.getDay();
     const diff = date.getDate() - day;
     return new Date(date.setDate(diff));
   });
+
+  // Hour height with localStorage (default 40px, min 33px, max 200px)
+  const [hourHeight, setHourHeight] = useState(40);
+
+  // Load from localStorage after mount to avoid hydration mismatch
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('calendar-hour-height');
+      if (saved) {
+        const parsedHeight = parseInt(saved, 10);
+        if (!isNaN(parsedHeight)) {
+          setHourHeight(Math.max(33, Math.min(200, parsedHeight)));
+        }
+      }
+    }
+  }, []);
+
+  // Current time tracking
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, []);
+
+  // Drag state for Google Calendar-style creation
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{ date: Date; hour: number; minute: number } | null>(null);
+  const [creatingEvent, setCreatingEvent] = useState<{
+    date: Date;
+    hour: number;
+    tempId: string;
+    startTime: string;
+    endTime: string;
+  } | null>(null);
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    isOpen: boolean;
+    x: number;
+    y: number;
+    todoId: string;
+  }>({ isOpen: false, x: 0, y: 0, todoId: '' });
+
+  // Dialog states
+  const [categoryDialog, setCategoryDialog] = useState<{
+    isOpen: boolean;
+    todoId: string;
+    currentCategoryId: string;
+  }>({ isOpen: false, todoId: '', currentCategoryId: '' });
+
+  const [dateDialog, setDateDialog] = useState<{
+    isOpen: boolean;
+    todoId: string;
+    currentDate: Date;
+  }>({ isOpen: false, todoId: '', currentDate: new Date() });
+
+  const [duplicateDialog, setDuplicateDialog] = useState<{
+    isOpen: boolean;
+    todoId: string;
+    todoName: string;
+  }>({ isOpen: false, todoId: '', todoName: '' });
+
+  const [recurringDialog, setRecurringDialog] = useState<{
+    isOpen: boolean;
+    todoId: string;
+    action: 'edit' | 'delete' | null;
+  }>({ isOpen: false, todoId: '', action: null });
+
+  // Inline editing state
+  const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState('');
+
+  // Resize state
+  const [resizingTodo, setResizingTodo] = useState<{
+    id: string;
+    originalStartTime: string;
+    originalEndTime: string;
+    currentStartTime: string;
+    currentEndTime: string;
+  } | null>(null);
+
+  // Ctrl+Wheel zoom functionality
+  useEffect(() => {
+    const handleWheel = (e: Event) => {
+      const wheelEvent = e as WheelEvent;
+      if (wheelEvent.ctrlKey || wheelEvent.metaKey) {
+        wheelEvent.preventDefault();
+
+        const target = wheelEvent.target as HTMLElement;
+        const calendarGrid = document.querySelector('.calendar-grid');
+
+        if (calendarGrid && calendarGrid.contains(target)) {
+          const delta = wheelEvent.deltaY;
+          const zoomFactor = delta > 0 ? 0.9 : 1.1;
+
+          setHourHeight((prev) => {
+            const newHeight = Math.round(prev * zoomFactor);
+            const clampedHeight = Math.max(33, Math.min(200, newHeight));
+            localStorage.setItem('calendar-hour-height', clampedHeight.toString());
+            return clampedHeight;
+          });
+        }
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, []);
 
   const getWeekDays = (startDate: Date) => {
     const days = [];
@@ -65,13 +203,84 @@ export function BigCalendar({ selectedDate = new Date(), todos = [], categories 
   const monthName = currentWeekStart.toLocaleString('ko-KR', { month: 'long' });
   const year = currentWeekStart.getFullYear();
 
-  // 주간 할일 필터링 및 그룹화
+  // Helper function: round to 15-minute intervals, never return 60
+  const roundToQuarterHour = (minutes: number) => {
+    const rounded = Math.round(minutes / 15) * 15;
+    return rounded >= 60 ? 0 : rounded;
+  };
+
+  // Generate recurring events for the week
+  const generateRecurringEvents = (todo: Todo): Todo[] => {
+    if (!todo.recurrenceRule) return [todo];
+
+    const events: Todo[] = [];
+    const { frequency, interval, endDate } = todo.recurrenceRule;
+
+    weekDays.forEach((weekDay) => {
+      // Check if this day should have a recurring event
+      let shouldInclude = false;
+
+      if (frequency === 'daily') {
+        const daysDiff = Math.floor(
+          (weekDay.getTime() - todo.date.getTime()) / (1000 * 60 * 60 * 24)
+        );
+        shouldInclude = daysDiff >= 0 && daysDiff % interval === 0;
+      } else if (frequency === 'weekly') {
+        const weeksDiff = Math.floor(
+          (weekDay.getTime() - todo.date.getTime()) / (1000 * 60 * 60 * 24 * 7)
+        );
+        shouldInclude =
+          weekDay.getDay() === todo.date.getDay() &&
+          weeksDiff >= 0 &&
+          weeksDiff % interval === 0;
+      } else if (frequency === 'monthly') {
+        const monthsDiff =
+          (weekDay.getFullYear() - todo.date.getFullYear()) * 12 +
+          (weekDay.getMonth() - todo.date.getMonth());
+        shouldInclude =
+          weekDay.getDate() === todo.date.getDate() &&
+          monthsDiff >= 0 &&
+          monthsDiff % interval === 0;
+      }
+
+      // Check end date (inclusive)
+      if (endDate) {
+        const endDateEnd = new Date(endDate);
+        endDateEnd.setHours(23, 59, 59, 999);
+        if (weekDay > endDateEnd) {
+          shouldInclude = false;
+        }
+      }
+
+      if (shouldInclude) {
+        events.push({
+          ...todo,
+          id: `${todo.id}-${weekDay.toISOString()}`,
+          date: weekDay,
+        });
+      }
+    });
+
+    return events;
+  };
+
+  // Filter and group todos for the week
   const weekTodos = useMemo(() => {
     const grouped: Record<string, Todo[]> = {};
 
+    // Expand recurring events
+    const allTodos: Todo[] = [];
+    todos.forEach((todo) => {
+      if (todo.recurrenceRule) {
+        allTodos.push(...generateRecurringEvents(todo));
+      } else {
+        allTodos.push(todo);
+      }
+    });
+
     weekDays.forEach((day) => {
       const dateKey = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
-      grouped[dateKey] = todos.filter(todo => {
+      grouped[dateKey] = allTodos.filter((todo) => {
         const todoDateKey = `${todo.date.getFullYear()}-${String(todo.date.getMonth() + 1).padStart(2, '0')}-${String(todo.date.getDate()).padStart(2, '0')}`;
         return todoDateKey === dateKey && todo.startTime && todo.endTime;
       });
@@ -80,22 +289,327 @@ export function BigCalendar({ selectedDate = new Date(), todos = [], categories 
     return grouped;
   }, [todos, weekDays]);
 
-  // 시간을 분 단위로 변환
+  // Convert time to minutes
   const timeToMinutes = (time: string) => {
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + minutes;
   };
 
-  // 할일 블록 위치 계산 (시간당 64px)
+  // Calculate todo block position
   const getTodoBlockStyle = (startTime: string, endTime: string) => {
     const startMinutes = timeToMinutes(startTime);
     const endMinutes = timeToMinutes(endTime);
     const duration = endMinutes - startMinutes;
 
-    const top = (startMinutes / 60) * 64; // 64px per hour
-    const height = (duration / 60) * 64;
+    const top = (startMinutes / 60) * hourHeight;
+    const height = (duration / 60) * hourHeight;
 
     return { top: `${top}px`, height: `${height}px` };
+  };
+
+  // Handle drag start for creating events
+  const handleDragStart = (date: Date, hour: number, e: React.MouseEvent) => {
+    e.preventDefault();
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const minuteOffset = Math.floor((y / hourHeight) * 60);
+    const roundedMinute = roundToQuarterHour(minuteOffset);
+
+    let startHour = hour;
+    let startMinute = roundedMinute;
+
+    // If rounding caused overflow to next hour
+    if (roundedMinute === 0 && minuteOffset > 45) {
+      startHour = hour + 1;
+      startMinute = 0;
+    }
+
+    // Ensure we don't go past 23:59
+    if (startHour >= 24) {
+      startHour = 23;
+      startMinute = 45;
+    }
+
+    const startTime = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
+
+    // Default 1 hour duration
+    let endTotalMinutes = startHour * 60 + startMinute + 60;
+    if (endTotalMinutes > 24 * 60) {
+      endTotalMinutes = 24 * 60;
+    }
+    const endHour = Math.floor(endTotalMinutes / 60);
+    const endMinute = endTotalMinutes % 60;
+    const endTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
+
+    setIsDragging(true);
+    setDragStart({ date, hour: startHour, minute: startMinute });
+
+    // Immediately create the event block
+    setCreatingEvent({
+      date,
+      hour: startHour,
+      tempId: `temp-${Date.now()}`,
+      startTime,
+      endTime,
+    });
+  };
+
+  const handleDragMove = (date: Date, hour: number, e: React.MouseEvent) => {
+    if (!isDragging || !dragStart || !creatingEvent) return;
+
+    // Only allow dragging on the same day
+    if (date.toDateString() !== dragStart.date.toDateString()) return;
+
+    const rect = e.currentTarget.getBoundingClientRect();
+    const y = e.clientY - rect.top;
+    const minuteOffset = Math.floor((y / hourHeight) * 60);
+    let endMinute = roundToQuarterHour(minuteOffset);
+    let endHour = hour;
+
+    // If rounding caused overflow to next hour
+    if (endMinute === 0 && minuteOffset > 45) {
+      endHour = hour + 1;
+      endMinute = 0;
+    }
+
+    const endTotalMinutes = endHour * 60 + endMinute;
+    const startTotalMinutes = dragStart.hour * 60 + dragStart.minute;
+
+    // Ensure end is after start (minimum 15 minutes)
+    if (endTotalMinutes <= startTotalMinutes) {
+      return;
+    }
+
+    const startTime = `${String(dragStart.hour).padStart(2, '0')}:${String(dragStart.minute).padStart(2, '0')}`;
+    const endTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
+
+    // Update creating event with new end time for real-time preview
+    setCreatingEvent({
+      ...creatingEvent,
+      startTime,
+      endTime,
+    });
+  };
+
+  const handleDragEnd = () => {
+    if (!isDragging || !creatingEvent) return;
+
+    let { startTime, endTime } = creatingEvent;
+
+    // Normalize times to prevent 60 minutes
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
+
+    const normalizedStartMinute = startMinute >= 60 ? 0 : startMinute;
+    const normalizedStartHour = startMinute >= 60 ? startHour + 1 : startHour;
+
+    const normalizedEndMinute = endMinute >= 60 ? 0 : endMinute;
+    const normalizedEndHour = endMinute >= 60 ? endHour + 1 : endHour;
+
+    startTime = `${String(normalizedStartHour).padStart(2, '0')}:${String(normalizedStartMinute).padStart(2, '0')}`;
+    endTime = `${String(normalizedEndHour).padStart(2, '0')}:${String(normalizedEndMinute).padStart(2, '0')}`;
+
+    // Add the new todo with empty text and automatically enter edit mode
+    onAddTodo?.({
+      text: '',
+      completed: false,
+      date: creatingEvent.date,
+      categoryId: 'cat-etc',
+      startTime,
+      endTime,
+    }, (newId) => {
+      // Automatically enter edit mode for the new todo
+      setEditingTodoId(newId);
+      setEditingText('');
+    });
+
+    setIsDragging(false);
+    setDragStart(null);
+    setCreatingEvent(null);
+  };
+
+  // Context menu handlers
+  const handleContextMenu = (e: React.MouseEvent, todoId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      isOpen: true,
+      x: e.clientX,
+      y: e.clientY,
+      todoId,
+    });
+  };
+
+  const handleDuplicate = () => {
+    const todo = todos.find((t) => t.id === contextMenu.todoId);
+    if (!todo) return;
+
+    setDuplicateDialog({
+      isOpen: true,
+      todoId: todo.id,
+      todoName: todo.text,
+    });
+  };
+
+  const handleConfirmDuplicate = () => {
+    const todo = todos.find((t) => t.id === duplicateDialog.todoId);
+    if (!todo) return;
+
+    onAddTodo?.({
+      text: todo.text,
+      completed: false,
+      date: todo.date,
+      categoryId: todo.categoryId,
+      startTime: todo.startTime,
+      endTime: todo.endTime,
+    });
+  };
+
+  const handleDelete = () => {
+    const todo = todos.find((t) => t.id === contextMenu.todoId);
+    if (!todo) return;
+
+    if (todo.recurrenceId) {
+      setRecurringDialog({
+        isOpen: true,
+        todoId: todo.id,
+        action: 'delete',
+      });
+    } else {
+      onDeleteTodo?.(todo.id);
+    }
+  };
+
+  const handleMove = () => {
+    const todo = todos.find((t) => t.id === contextMenu.todoId);
+    if (!todo) return;
+
+    setDateDialog({
+      isOpen: true,
+      todoId: todo.id,
+      currentDate: todo.date,
+    });
+  };
+
+  const handleConfirmMove = (newDate: Date) => {
+    onMoveTodo?.(dateDialog.todoId, newDate);
+  };
+
+  const handleChangeCategory = () => {
+    const todo = todos.find((t) => t.id === contextMenu.todoId);
+    if (!todo) return;
+
+    setCategoryDialog({
+      isOpen: true,
+      todoId: todo.id,
+      currentCategoryId: todo.categoryId,
+    });
+  };
+
+  const handleConfirmCategoryChange = (categoryId: string) => {
+    onEditTodo?.(categoryDialog.todoId, { categoryId });
+  };
+
+  const handleRename = () => {
+    const todo = todos.find((t) => t.id === contextMenu.todoId);
+    if (!todo) return;
+
+    setEditingTodoId(todo.id);
+    setEditingText(todo.text);
+  };
+
+  const handleSetRecurrence = () => {
+    // This would open a recurrence settings dialog
+    // For now, just placeholder
+    console.log('Set recurrence for', contextMenu.todoId);
+  };
+
+  // Inline editing handlers
+  const handleFinishEdit = () => {
+    if (editingTodoId) {
+      const trimmedText = editingText.trim();
+      if (trimmedText) {
+        // Update todo with new text
+        onEditTodo?.(editingTodoId, { text: trimmedText });
+      } else {
+        // Delete todo if text is empty (like Google Calendar)
+        onDeleteTodo?.(editingTodoId);
+      }
+    }
+    setEditingTodoId(null);
+    setEditingText('');
+  };
+
+  // Resize handlers
+  const handleResizeStart = (
+    e: React.MouseEvent,
+    todoId: string,
+    startTime: string,
+    endTime: string
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    setResizingTodo({
+      id: todoId,
+      originalStartTime: startTime,
+      originalEndTime: endTime,
+      currentStartTime: startTime,
+      currentEndTime: endTime,
+    });
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!resizingTodo) return;
+
+      // Find the hour cell that contains the mouse
+      const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
+      if (!target) return;
+
+      const hourCell = target.closest('[data-hour]');
+      if (!hourCell) return;
+
+      const hour = parseInt(hourCell.getAttribute('data-hour') || '0');
+      const rect = hourCell.getBoundingClientRect();
+      const y = moveEvent.clientY - rect.top;
+      const minuteOffset = Math.floor((y / hourHeight) * 60);
+      let minute = roundToQuarterHour(minuteOffset);
+      let adjustedHour = hour;
+
+      if (minute === 0 && minuteOffset > 45) {
+        adjustedHour = hour + 1;
+        minute = 0;
+      }
+
+      const newEndTime = `${String(adjustedHour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+
+      // Ensure end time is after start time
+      const startMinutes = timeToMinutes(startTime);
+      const endMinutes = timeToMinutes(newEndTime);
+
+      if (endMinutes > startMinutes) {
+        setResizingTodo(prev => prev ? {
+          ...prev,
+          currentEndTime: newEndTime,
+        } : null);
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (resizingTodo) {
+        // Apply the resize
+        onEditTodo?.(resizingTodo.id, {
+          startTime: resizingTodo.currentStartTime,
+          endTime: resizingTodo.currentEndTime,
+        });
+      }
+      setResizingTodo(null);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
   };
 
   return (
@@ -127,7 +641,7 @@ export function BigCalendar({ selectedDate = new Date(), todos = [], categories 
       <div className="flex border-b border-neutral-gray-300">
         <div className="w-16 bg-neutral-gray-50 border-r border-neutral-gray-300" />
         {weekDays.map((date, index) => {
-          const isToday = 
+          const isToday =
             date.getDate() === new Date().getDate() &&
             date.getMonth() === new Date().getMonth() &&
             date.getFullYear() === new Date().getFullYear();
@@ -142,7 +656,11 @@ export function BigCalendar({ selectedDate = new Date(), todos = [], categories 
               <div className="text-xs text-neutral-text-secondary font-medium">
                 {dayNames[date.getDay()]}
               </div>
-              <div className={`text-lg font-semibold ${isToday ? 'text-primary-500' : 'text-neutral-text-primary'}`}>
+              <div
+                className={`text-lg font-semibold ${
+                  isToday ? 'text-primary-500' : 'text-neutral-text-primary'
+                }`}
+              >
                 {date.getDate()}
               </div>
             </div>
@@ -151,14 +669,15 @@ export function BigCalendar({ selectedDate = new Date(), todos = [], categories 
       </div>
 
       {/* Time Grid */}
-      <div className="flex-1 overflow-auto">
-        <div className="flex min-w-full">
+      <div className="flex-1 overflow-auto calendar-grid">
+        <div className="flex min-w-full" style={{ height: `${hourHeight * 24}px` }}>
           {/* Time Column */}
           <div className="w-16 bg-neutral-gray-50 border-r border-neutral-gray-300 shrink-0 sticky left-0 z-10">
             {hours.map((hour) => (
               <div
                 key={hour}
-                className="h-16 border-b border-neutral-gray-200 text-xs text-neutral-text-secondary pt-1 text-center font-medium bg-neutral-gray-50"
+                className="border-b border-neutral-gray-200 text-xs text-neutral-text-secondary pt-1 text-center font-medium bg-neutral-gray-50"
+                style={{ height: `${hourHeight}px` }}
               >
                 {String(hour).padStart(2, '0')}:00
               </div>
@@ -171,13 +690,26 @@ export function BigCalendar({ selectedDate = new Date(), todos = [], categories 
               const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
               const dayTodos = weekTodos[dateKey] || [];
 
+              const isToday =
+                date.getDate() === currentTime.getDate() &&
+                date.getMonth() === currentTime.getMonth() &&
+                date.getFullYear() === currentTime.getFullYear();
+
               return (
-                <div key={dayIndex} className="flex-1 border-r border-neutral-gray-300 min-w-[100px] relative">
+                <div
+                  key={dayIndex}
+                  className="flex-1 border-r border-neutral-gray-300 min-w-[100px] relative"
+                >
                   {/* Time Grid Background */}
                   {hours.map((hour) => (
                     <div
                       key={`${dayIndex}-${hour}`}
-                      className="h-16 border-b border-neutral-gray-200 hover:bg-neutral-gray-50 transition-colors cursor-pointer"
+                      data-hour={hour}
+                      className="border-b border-neutral-gray-200 hover:bg-neutral-gray-50 transition-colors cursor-pointer"
+                      style={{ height: `${hourHeight}px` }}
+                      onMouseDown={(e) => handleDragStart(date, hour, e)}
+                      onMouseMove={(e) => handleDragMove(date, hour, e)}
+                      onMouseUp={handleDragEnd}
                       onDragOver={(e) => {
                         e.preventDefault();
                         e.currentTarget.classList.add('bg-primary-100');
@@ -193,23 +725,35 @@ export function BigCalendar({ selectedDate = new Date(), todos = [], categories 
                           const data = JSON.parse(e.dataTransfer.getData('text/plain'));
                           const todoId = data.id;
 
-                          // 드롭된 시간 계산
-                          const rect = e.currentTarget.getBoundingClientRect();
-                          const y = e.clientY - rect.top;
-                          const minuteOffset = Math.round((y / 64) * 60);
-                          const totalMinutes = hour * 60 + minuteOffset;
+                          // Preserve existing time if available, otherwise calculate new time
+                          let startTime = data.startTime;
+                          let endTime = data.endTime;
 
-                          const startHour = Math.floor(totalMinutes / 60);
-                          const startMinute = totalMinutes % 60;
-                          const startTime = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
+                          if (!startTime || !endTime) {
+                            // Calculate drop time only if no existing time
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            const y = e.clientY - rect.top;
+                            const minuteOffset = Math.round((y / hourHeight) * 60);
+                            const roundedMinute = roundToQuarterHour(minuteOffset);
 
-                          // 기본 1시간 지속
-                          const endTotalMinutes = totalMinutes + 60;
-                          const endHour = Math.floor(endTotalMinutes / 60);
-                          const endMinute = endTotalMinutes % 60;
-                          const endTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
+                            let startHour = hour;
+                            let startMinute = roundedMinute;
 
-                          onUpdateTodoTime?.(todoId, startTime, endTime);
+                            if (roundedMinute === 0 && minuteOffset > 45) {
+                              startHour = hour + 1;
+                              startMinute = 0;
+                            }
+
+                            startTime = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
+
+                            // Default 1 hour duration
+                            const endTotalMinutes = startHour * 60 + startMinute + 60;
+                            const endHour = Math.floor(endTotalMinutes / 60);
+                            const endMinute = endTotalMinutes % 60;
+                            endTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
+                          }
+
+                          onUpdateTodoDateTime?.(todoId, date, startTime, endTime);
                         } catch (error) {
                           console.error('드롭 처리 중 오류:', error);
                         }
@@ -217,35 +761,127 @@ export function BigCalendar({ selectedDate = new Date(), todos = [], categories 
                     />
                   ))}
 
+                  {/* Current time indicator */}
+                  {isToday && (() => {
+                    const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
+                    const topPosition = (currentMinutes / 60) * hourHeight;
+
+                    return (
+                      <div
+                        className="absolute left-0 right-0 flex items-center pointer-events-none"
+                        style={{ top: `${topPosition}px`, zIndex: 20 }}
+                      >
+                        <div className="w-2 h-2 bg-red-500 rounded-full -ml-1" />
+                        <div className="flex-1 h-0.5 bg-red-500" />
+                      </div>
+                    );
+                  })()}
+
+                  {/* Creating event preview */}
+                  {creatingEvent &&
+                    creatingEvent.date.toDateString() === date.toDateString() &&
+                    (() => {
+                      const style = getTodoBlockStyle(creatingEvent.startTime, creatingEvent.endTime);
+
+                      return (
+                        <div
+                          className="absolute left-0 right-0 mx-1 px-2 py-1 rounded text-xs overflow-hidden pointer-events-none bg-primary-400 text-white opacity-70"
+                          style={{
+                            ...style,
+                            zIndex: 15,
+                          }}
+                        >
+                          <div className="font-semibold">새 일정</div>
+                          <div className="text-xs">
+                            {creatingEvent.startTime} - {creatingEvent.endTime}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                   {/* Todo Blocks */}
                   {dayTodos.map((todo) => {
-                    const category = categories.find(c => c.id === todo.categoryId);
-                    const style = getTodoBlockStyle(todo.startTime!, todo.endTime!);
+                    const category = categories.find((c) => c.id === todo.categoryId);
+                    const isResizing = resizingTodo?.id === todo.id;
+                    const displayStartTime = isResizing ? resizingTodo.currentStartTime : todo.startTime!;
+                    const displayEndTime = isResizing ? resizingTodo.currentEndTime : todo.endTime!;
+                    const style = getTodoBlockStyle(displayStartTime, displayEndTime);
+                    const isRecurring = !!todo.recurrenceId;
 
                     return (
                       <div
                         key={todo.id}
-                        draggable
+                        draggable={!isResizing}
                         onDragStart={(e) => {
                           e.dataTransfer.effectAllowed = 'move';
-                          e.dataTransfer.setData('text/plain', JSON.stringify({
-                            id: todo.id,
-                            text: todo.text,
-                            categoryId: todo.categoryId,
-                            date: todo.date.toISOString(),
-                          }));
+                          e.dataTransfer.setData(
+                            'text/plain',
+                            JSON.stringify({
+                              id: todo.id,
+                              text: todo.text,
+                              categoryId: todo.categoryId,
+                              date: todo.date.toISOString(),
+                              startTime: todo.startTime,
+                              endTime: todo.endTime,
+                            })
+                          );
                         }}
-                        className="absolute left-0 right-0 mx-1 px-2 py-1 rounded text-xs overflow-hidden cursor-move hover:opacity-90 transition-opacity"
+                        onContextMenu={(e) => handleContextMenu(e, todo.id)}
+                        className="absolute left-0 right-0 mx-1 px-2 py-1 rounded text-xs overflow-visible cursor-move hover:opacity-90 transition-opacity group"
                         style={{
                           ...style,
                           backgroundColor: category?.color || '#3B82F6',
                           color: 'white',
-                          zIndex: 1,
+                          zIndex: isResizing ? 20 : 10,
                         }}
-                        title={`${todo.text} (${todo.startTime} - ${todo.endTime})`}
+                        title={`${todo.text} (${displayStartTime} - ${displayEndTime})`}
                       >
-                        <div className="font-semibold truncate">{todo.text}</div>
-                        <div className="text-xs opacity-90">{todo.startTime} - {todo.endTime}</div>
+                        <div className="flex items-center gap-1">
+                          {isRecurring && <Repeat size={12} className="flex-shrink-0" />}
+                          {editingTodoId === todo.id ? (
+                            <input
+                              type="text"
+                              value={editingText}
+                              onChange={(e) => setEditingText(e.target.value)}
+                              onBlur={handleFinishEdit}
+                              onClick={(e) => e.stopPropagation()}
+                              onMouseDown={(e) => e.stopPropagation()}
+                              onKeyDown={(e) => {
+                                e.stopPropagation();
+                                if (e.key === 'Enter') handleFinishEdit();
+                                if (e.key === 'Escape') {
+                                  setEditingTodoId(null);
+                                  setEditingText('');
+                                }
+                              }}
+                              className="flex-1 bg-white text-neutral-text-primary rounded px-2 py-0.5 font-semibold outline-none border-2 border-primary-500 min-w-0"
+                              autoFocus
+                            />
+                          ) : (
+                            <div
+                              className="font-semibold truncate cursor-text hover:underline"
+                              onDoubleClick={(e) => {
+                                e.stopPropagation();
+                                setEditingTodoId(todo.id);
+                                setEditingText(todo.text);
+                              }}
+                            >
+                              {todo.text || '(제목 없음)'}
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-xs opacity-90">
+                          {displayStartTime} - {displayEndTime}
+                        </div>
+
+                        {/* Resize handle */}
+                        <div
+                          className="absolute bottom-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
+                          style={{
+                            background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.2))',
+                          }}
+                          onMouseDown={(e) => handleResizeStart(e, todo.id, todo.startTime!, todo.endTime!)}
+                        />
                       </div>
                     );
                   })}
@@ -255,6 +891,66 @@ export function BigCalendar({ selectedDate = new Date(), todos = [], categories 
           </div>
         </div>
       </div>
+
+      {/* Context Menu */}
+      <ContextMenu
+        isOpen={contextMenu.isOpen}
+        x={contextMenu.x}
+        y={contextMenu.y}
+        onClose={() => setContextMenu({ ...contextMenu, isOpen: false })}
+        onDuplicate={handleDuplicate}
+        onDelete={handleDelete}
+        onMove={handleMove}
+        onChangeCategory={handleChangeCategory}
+        onRename={handleRename}
+        onSetRecurrence={handleSetRecurrence}
+      />
+
+      {/* Category Change Dialog */}
+      <CategoryChangeDialog
+        isOpen={categoryDialog.isOpen}
+        currentCategoryId={categoryDialog.currentCategoryId}
+        categories={categories}
+        onClose={() => setCategoryDialog({ ...categoryDialog, isOpen: false })}
+        onConfirm={handleConfirmCategoryChange}
+      />
+
+      {/* Date Move Dialog */}
+      <DateMoveDialog
+        isOpen={dateDialog.isOpen}
+        currentDate={dateDialog.currentDate}
+        onClose={() => setDateDialog({ ...dateDialog, isOpen: false })}
+        onConfirm={handleConfirmMove}
+      />
+
+      {/* Duplicate Dialog */}
+      <DuplicateDialog
+        isOpen={duplicateDialog.isOpen}
+        todoName={duplicateDialog.todoName}
+        onClose={() => setDuplicateDialog({ ...duplicateDialog, isOpen: false })}
+        onConfirm={handleConfirmDuplicate}
+      />
+
+      {/* Recurring Event Dialog */}
+      <RecurringEventDialog
+        isOpen={recurringDialog.isOpen}
+        title={recurringDialog.action === 'delete' ? '반복 일정 삭제' : '반복 일정 수정'}
+        onClose={() => setRecurringDialog({ ...recurringDialog, isOpen: false })}
+        onSelectThis={() => {
+          const todo = todos.find((t) => t.id === recurringDialog.todoId);
+          if (todo && recurringDialog.action === 'delete') {
+            onDeleteTodo?.(todo.id);
+          }
+          setRecurringDialog({ ...recurringDialog, isOpen: false });
+        }}
+        onSelectAll={() => {
+          const todo = todos.find((t) => t.id === recurringDialog.todoId);
+          if (todo && todo.recurrenceId && recurringDialog.action === 'delete') {
+            onDeleteTodo?.(todo.recurrenceId);
+          }
+          setRecurringDialog({ ...recurringDialog, isOpen: false });
+        }}
+      />
     </div>
   );
 }
