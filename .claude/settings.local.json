@@ -3,7 +3,11 @@
     "allow": [
       "Bash(dir:*)",
       "Bash(claude mcp add:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(npm run build:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: add Google Calendar-like event creation and default category\n\n- Calendar event creation now starts with empty title and auto-deletes if left blank\n- Add \"기타\" (Other) system category as default for new calendar events\n- \"기타\" category cannot be deleted, renamed, and always appears at the bottom\n- Add UI dialogs for context menu, category change, date move, duplicate, and recurring events\n- Improve calendar event editing with immediate edit mode on creation\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

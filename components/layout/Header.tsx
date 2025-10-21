@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronLeft, ChevronRight, Repeat } from 'lucide-react';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { RecurringEventDialog } from '@/components/ui/RecurringEventDialog';
 import { ContextMenu } from '@/components/ui/ContextMenu';
 import { CategoryChangeDialog } from '@/components/ui/CategoryChangeDialog';
@@ -136,15 +136,63 @@ export function BigCalendar({
   // Inline editing state
   const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState('');
+  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
 
   // Resize state
   const [resizingTodo, setResizingTodo] = useState<{
     id: string;
+    type: 'top' | 'bottom';
     originalStartTime: string;
     originalEndTime: string;
     currentStartTime: string;
     currentEndTime: string;
   } | null>(null);
+
+  // Dragging todo (for moving within same day)
+  const [draggingTodo, setDraggingTodo] = useState<{
+    id: string;
+    originalStartTime: string;
+    originalEndTime: string;
+    currentStartTime: string;
+    currentEndTime: string;
+    offsetY: number;
+  } | null>(null);
+
+  // Ref for calendar grid
+  const gridScrollRef = useRef<HTMLDivElement>(null);
+
+  // Handle pending edit after todo is created
+  useEffect(() => {
+    if (pendingEditId) {
+      const todo = todos.find(t => t.id === pendingEditId);
+      if (todo) {
+        setEditingTodoId(pendingEditId);
+        setEditingText(todo.text || '');
+        setPendingEditId(null);
+      }
+    }
+  }, [todos, pendingEditId]);
+
+  // Clean up empty todos when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      
+      // Don't process if clicking on input or inside editing todo
+      if (target.tagName === 'INPUT' || target.closest('input')) {
+        return;
+      }
+      
+      if (editingTodoId && editingText.trim() === '') {
+        onDeleteTodo?.(editingTodoId);
+        setEditingTodoId(null);
+        setEditingText('');
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [editingTodoId, editingText, onDeleteTodo]);
 
   // Ctrl+Wheel zoom functionality
   useEffect(() => {
@@ -311,6 +359,11 @@ export function BigCalendar({
   const handleDragStart = (date: Date, hour: number, e: React.MouseEvent) => {
     e.preventDefault();
 
+    // Finish any pending edit before creating new event
+    if (editingTodoId) {
+      handleFinishEdit();
+    }
+
     const rect = e.currentTarget.getBoundingClientRect();
     const y = e.clientY - rect.top;
     const minuteOffset = Math.floor((y / hourHeight) * 60);
@@ -419,9 +472,8 @@ export function BigCalendar({
       startTime,
       endTime,
     }, (newId) => {
-      // Automatically enter edit mode for the new todo
-      setEditingTodoId(newId);
-      setEditingText('');
+      // Set pending edit to trigger edit mode after todo is added
+      setPendingEditId(newId);
     });
 
     setIsDragging(false);
@@ -433,6 +485,12 @@ export function BigCalendar({
   const handleContextMenu = (e: React.MouseEvent, todoId: string) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Finish editing before opening context menu
+    if (editingTodoId) {
+      handleFinishEdit();
+    }
+    
     setContextMenu({
       isOpen: true,
       x: e.clientX,
@@ -541,10 +599,11 @@ export function BigCalendar({
     setEditingText('');
   };
 
-  // Resize handlers
+  // Resize handlers (top and bottom)
   const handleResizeStart = (
     e: React.MouseEvent,
     todoId: string,
+    type: 'top' | 'bottom',
     startTime: string,
     endTime: string
   ) => {
@@ -553,6 +612,7 @@ export function BigCalendar({
 
     setResizingTodo({
       id: todoId,
+      type,
       originalStartTime: startTime,
       originalEndTime: endTime,
       currentStartTime: startTime,
@@ -581,17 +641,30 @@ export function BigCalendar({
         minute = 0;
       }
 
-      const newEndTime = `${String(adjustedHour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+      const newTime = `${String(adjustedHour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 
-      // Ensure end time is after start time
-      const startMinutes = timeToMinutes(startTime);
-      const endMinutes = timeToMinutes(newEndTime);
+      if (type === 'bottom') {
+        // Resizing bottom: ensure end time is after start time
+        const startMinutes = timeToMinutes(resizingTodo.currentStartTime);
+        const endMinutes = timeToMinutes(newTime);
 
-      if (endMinutes > startMinutes) {
-        setResizingTodo(prev => prev ? {
-          ...prev,
-          currentEndTime: newEndTime,
-        } : null);
+        if (endMinutes > startMinutes) {
+          setResizingTodo(prev => prev ? {
+            ...prev,
+            currentEndTime: newTime,
+          } : null);
+        }
+      } else {
+        // Resizing top: ensure start time is before end time
+        const startMinutes = timeToMinutes(newTime);
+        const endMinutes = timeToMinutes(resizingTodo.currentEndTime);
+
+        if (startMinutes < endMinutes) {
+          setResizingTodo(prev => prev ? {
+            ...prev,
+            currentStartTime: newTime,
+          } : null);
+        }
       }
     };
 
@@ -604,6 +677,94 @@ export function BigCalendar({
         });
       }
       setResizingTodo(null);
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
+
+  // Todo drag move handler (for moving within same day)
+  const handleTodoDragStart = (
+    e: React.MouseEvent,
+    todoId: string,
+    startTime: string,
+    endTime: string
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const offsetY = e.clientY - rect.top;
+
+    setDraggingTodo({
+      id: todoId,
+      originalStartTime: startTime,
+      originalEndTime: endTime,
+      currentStartTime: startTime,
+      currentEndTime: endTime,
+      offsetY,
+    });
+
+    const handleMouseMove = (moveEvent: MouseEvent) => {
+      if (!draggingTodo) return;
+
+      const target = document.elementFromPoint(moveEvent.clientX, moveEvent.clientY);
+      if (!target) return;
+
+      const hourCell = target.closest('[data-hour]');
+      if (!hourCell) return;
+
+      const hour = parseInt(hourCell.getAttribute('data-hour') || '0');
+      const rect = hourCell.getBoundingClientRect();
+      const y = moveEvent.clientY - rect.top;
+      const minuteOffset = Math.floor((y / hourHeight) * 60);
+      let minute = roundToQuarterHour(minuteOffset);
+      let adjustedHour = hour;
+
+      if (minute === 0 && minuteOffset > 45) {
+        adjustedHour = hour + 1;
+        minute = 0;
+      }
+
+      const newStartMinutes = adjustedHour * 60 + minute;
+      
+      // Calculate duration
+      const originalStartMinutes = timeToMinutes(startTime);
+      const originalEndMinutes = timeToMinutes(endTime);
+      const duration = originalEndMinutes - originalStartMinutes;
+
+      // Calculate new end time
+      const newEndMinutes = newStartMinutes + duration;
+      
+      // Ensure we don't go past 24:00
+      if (newEndMinutes > 24 * 60) return;
+
+      const newStartHour = Math.floor(newStartMinutes / 60);
+      const newStartMin = newStartMinutes % 60;
+      const newEndHour = Math.floor(newEndMinutes / 60);
+      const newEndMin = newEndMinutes % 60;
+
+      const newStartTime = `${String(newStartHour).padStart(2, '0')}:${String(newStartMin).padStart(2, '0')}`;
+      const newEndTime = `${String(newEndHour).padStart(2, '0')}:${String(newEndMin).padStart(2, '0')}`;
+
+      setDraggingTodo(prev => prev ? {
+        ...prev,
+        currentStartTime: newStartTime,
+        currentEndTime: newEndTime,
+      } : null);
+    };
+
+    const handleMouseUp = () => {
+      if (draggingTodo) {
+        // Apply the move
+        onEditTodo?.(draggingTodo.id, {
+          startTime: draggingTodo.currentStartTime,
+          endTime: draggingTodo.currentEndTime,
+        });
+      }
+      setDraggingTodo(null);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -637,39 +798,44 @@ export function BigCalendar({
         </div>
       </div>
 
-      {/* Week Days Header */}
-      <div className="flex border-b border-neutral-gray-300">
-        <div className="w-16 bg-neutral-gray-50 border-r border-neutral-gray-300" />
-        {weekDays.map((date, index) => {
-          const isToday =
-            date.getDate() === new Date().getDate() &&
-            date.getMonth() === new Date().getMonth() &&
-            date.getFullYear() === new Date().getFullYear();
+      {/* Combined Calendar Grid with Header */}
+      <div ref={gridScrollRef} className="flex-1 overflow-auto calendar-grid">
+        {/* Week Days Header - Fixed at top */}
+        <div className="sticky top-0 z-20 bg-white border-b border-neutral-gray-300">
+          <div className="flex min-w-full">
+            <div className="w-16 bg-neutral-gray-50 border-r border-neutral-gray-300 shrink-0 sticky left-0 z-30" />
+            <div className="flex flex-1">
+              {weekDays.map((date, index) => {
+                const isToday =
+                  date.getDate() === new Date().getDate() &&
+                  date.getMonth() === new Date().getMonth() &&
+                  date.getFullYear() === new Date().getFullYear();
 
-          return (
-            <div
-              key={index}
-              className={`flex-1 text-center py-3 border-r border-neutral-gray-300 ${
-                isToday ? 'bg-primary-50' : ''
-              }`}
-            >
-              <div className="text-xs text-neutral-text-secondary font-medium">
-                {dayNames[date.getDay()]}
-              </div>
-              <div
-                className={`text-lg font-semibold ${
-                  isToday ? 'text-primary-500' : 'text-neutral-text-primary'
-                }`}
-              >
-                {date.getDate()}
-              </div>
+                return (
+                  <div
+                    key={index}
+                    className={`flex-1 min-w-[100px] text-center py-3 border-r border-neutral-gray-300 ${
+                      isToday ? 'bg-primary-50' : ''
+                    }`}
+                  >
+                    <div className="text-xs text-neutral-text-secondary font-medium">
+                      {dayNames[date.getDay()]}
+                    </div>
+                    <div
+                      className={`text-lg font-semibold ${
+                        isToday ? 'text-primary-500' : 'text-neutral-text-primary'
+                      }`}
+                    >
+                      {date.getDate()}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
-      </div>
+          </div>
+        </div>
 
-      {/* Time Grid */}
-      <div className="flex-1 overflow-auto calendar-grid">
+        {/* Time Grid */}
         <div className="flex min-w-full" style={{ height: `${hourHeight * 24}px` }}>
           {/* Time Column */}
           <div className="w-16 bg-neutral-gray-50 border-r border-neutral-gray-300 shrink-0 sticky left-0 z-10">
@@ -777,7 +943,7 @@ export function BigCalendar({
                     );
                   })()}
 
-                  {/* Creating event preview */}
+                  {/* Creating event preview - Google Calendar style */}
                   {creatingEvent &&
                     creatingEvent.date.toDateString() === date.toDateString() &&
                     (() => {
@@ -785,14 +951,17 @@ export function BigCalendar({
 
                       return (
                         <div
-                          className="absolute left-0 right-0 mx-1 px-2 py-1 rounded text-xs overflow-hidden pointer-events-none bg-primary-400 text-white opacity-70"
+                          className="absolute left-0 right-0 mx-1 px-2 py-1 rounded text-xs overflow-hidden pointer-events-none"
                           style={{
                             ...style,
                             zIndex: 15,
+                            backgroundColor: 'rgba(59, 130, 246, 0.3)',
+                            border: '2px dashed rgba(59, 130, 246, 0.8)',
+                            boxShadow: '0 2px 8px rgba(59, 130, 246, 0.2)',
                           }}
                         >
-                          <div className="font-semibold">새 일정</div>
-                          <div className="text-xs">
+                          <div className="font-semibold text-primary-700">새 일정</div>
+                          <div className="text-xs text-primary-600">
                             {creatingEvent.startTime} - {creatingEvent.endTime}
                           </div>
                         </div>
@@ -803,15 +972,26 @@ export function BigCalendar({
                   {dayTodos.map((todo) => {
                     const category = categories.find((c) => c.id === todo.categoryId);
                     const isResizing = resizingTodo?.id === todo.id;
-                    const displayStartTime = isResizing ? resizingTodo.currentStartTime : todo.startTime!;
-                    const displayEndTime = isResizing ? resizingTodo.currentEndTime : todo.endTime!;
+                    const isDraggingThis = draggingTodo?.id === todo.id;
+                    
+                    let displayStartTime = todo.startTime!;
+                    let displayEndTime = todo.endTime!;
+                    
+                    if (isResizing) {
+                      displayStartTime = resizingTodo.currentStartTime;
+                      displayEndTime = resizingTodo.currentEndTime;
+                    } else if (isDraggingThis) {
+                      displayStartTime = draggingTodo.currentStartTime;
+                      displayEndTime = draggingTodo.currentEndTime;
+                    }
+                    
                     const style = getTodoBlockStyle(displayStartTime, displayEndTime);
                     const isRecurring = !!todo.recurrenceId;
 
                     return (
                       <div
                         key={todo.id}
-                        draggable={!isResizing}
+                        draggable={!isResizing && !isDraggingThis}
                         onDragStart={(e) => {
                           e.dataTransfer.effectAllowed = 'move';
                           e.dataTransfer.setData(
@@ -827,60 +1007,83 @@ export function BigCalendar({
                           );
                         }}
                         onContextMenu={(e) => handleContextMenu(e, todo.id)}
-                        className="absolute left-0 right-0 mx-1 px-2 py-1 rounded text-xs overflow-visible cursor-move hover:opacity-90 transition-opacity group"
+                        className="absolute left-0 right-0 mx-1 px-2 py-1 rounded text-xs overflow-visible cursor-move hover:opacity-90 transition-opacity group select-none"
                         style={{
                           ...style,
                           backgroundColor: category?.color || '#3B82F6',
                           color: 'white',
-                          zIndex: isResizing ? 20 : 10,
+                          zIndex: isResizing || isDraggingThis ? 20 : 10,
+                          opacity: isDraggingThis ? 0.7 : 1,
                         }}
                         title={`${todo.text} (${displayStartTime} - ${displayEndTime})`}
                       >
-                        <div className="flex items-center gap-1">
-                          {isRecurring && <Repeat size={12} className="flex-shrink-0" />}
-                          {editingTodoId === todo.id ? (
-                            <input
-                              type="text"
-                              value={editingText}
-                              onChange={(e) => setEditingText(e.target.value)}
-                              onBlur={handleFinishEdit}
-                              onClick={(e) => e.stopPropagation()}
-                              onMouseDown={(e) => e.stopPropagation()}
-                              onKeyDown={(e) => {
-                                e.stopPropagation();
-                                if (e.key === 'Enter') handleFinishEdit();
-                                if (e.key === 'Escape') {
-                                  setEditingTodoId(null);
-                                  setEditingText('');
-                                }
-                              }}
-                              className="flex-1 bg-white text-neutral-text-primary rounded px-2 py-0.5 font-semibold outline-none border-2 border-primary-500 min-w-0"
-                              autoFocus
-                            />
-                          ) : (
-                            <div
-                              className="font-semibold truncate cursor-text hover:underline"
-                              onDoubleClick={(e) => {
-                                e.stopPropagation();
-                                setEditingTodoId(todo.id);
-                                setEditingText(todo.text);
-                              }}
-                            >
-                              {todo.text || '(제목 없음)'}
-                            </div>
-                          )}
-                        </div>
-                        <div className="text-xs opacity-90">
-                          {displayStartTime} - {displayEndTime}
+                        {/* Top resize handle */}
+                        <div
+                          className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
+                          style={{
+                            background: 'linear-gradient(to top, transparent, rgba(0,0,0,0.2))',
+                          }}
+                          onMouseDown={(e) => handleResizeStart(e, todo.id, 'top', todo.startTime!, todo.endTime!)}
+                        />
+
+                        {/* Content - draggable area */}
+                        <div
+                          className="relative"
+                          onMouseDown={(e) => {
+                            // Only start drag if not clicking on resize handles or input
+                            const target = e.target as HTMLElement;
+                            if (!target.classList.contains('cursor-ns-resize') && 
+                                target.tagName !== 'INPUT') {
+                              handleTodoDragStart(e, todo.id, todo.startTime!, todo.endTime!);
+                            }
+                          }}
+                        >
+                          <div className="flex items-center gap-1">
+                            {isRecurring && <Repeat size={12} className="flex-shrink-0" />}
+                            {editingTodoId === todo.id ? (
+                              <input
+                                type="text"
+                                value={editingText}
+                                onChange={(e) => setEditingText(e.target.value)}
+                                onBlur={handleFinishEdit}
+                                onClick={(e) => e.stopPropagation()}
+                                onMouseDown={(e) => e.stopPropagation()}
+                                onKeyDown={(e) => {
+                                  e.stopPropagation();
+                                  if (e.key === 'Enter') handleFinishEdit();
+                                  if (e.key === 'Escape') {
+                                    setEditingTodoId(null);
+                                    setEditingText('');
+                                  }
+                                }}
+                                className="flex-1 bg-white text-neutral-text-primary rounded px-2 py-0.5 font-semibold outline-none border-2 border-primary-500 min-w-0"
+                                autoFocus
+                              />
+                            ) : (
+                              <div
+                                className="font-semibold truncate cursor-text hover:underline"
+                                onDoubleClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingTodoId(todo.id);
+                                  setEditingText(todo.text);
+                                }}
+                              >
+                                {todo.text || '(제목 없음)'}
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-xs opacity-90">
+                            {displayStartTime} - {displayEndTime}
+                          </div>
                         </div>
 
-                        {/* Resize handle */}
+                        {/* Bottom resize handle */}
                         <div
-                          className="absolute bottom-0 left-0 right-0 h-1 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
                           style={{
                             background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.2))',
                           }}
-                          onMouseDown={(e) => handleResizeStart(e, todo.id, todo.startTime!, todo.endTime!)}
+                          onMouseDown={(e) => handleResizeStart(e, todo.id, 'bottom', todo.startTime!, todo.endTime!)}
                         />
                       </div>
                     );
@@ -954,3 +1157,4 @@ export function BigCalendar({
     </div>
   );
 }
+
