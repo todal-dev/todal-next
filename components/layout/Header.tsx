@@ -148,11 +148,13 @@ export function BigCalendar({
     currentEndTime: string;
   } | null>(null);
 
-  // Dragging todo (for moving within same day)
+  // Dragging todo (for moving to any day)
   const [draggingTodo, setDraggingTodo] = useState<{
     id: string;
+    originalDate: Date;
     originalStartTime: string;
     originalEndTime: string;
+    currentDate: Date;
     currentStartTime: string;
     currentEndTime: string;
     offsetY: number;
@@ -700,10 +702,11 @@ export function BigCalendar({
     document.addEventListener('mouseup', handleMouseUp);
   };
 
-  // Todo drag move handler (for moving within same day)
+  // Todo drag move handler (for moving to any day)
   const handleTodoDragStart = (
     e: React.MouseEvent,
     todoId: string,
+    todoDate: Date,
     startTime: string,
     endTime: string
   ) => {
@@ -714,6 +717,7 @@ export function BigCalendar({
     const offsetY = e.clientY - rect.top;
 
     // Use local variables to avoid closure issues
+    let currentDate = todoDate;
     let currentStartTime = startTime;
     let currentEndTime = endTime;
 
@@ -723,8 +727,10 @@ export function BigCalendar({
 
     setDraggingTodo({
       id: todoId,
+      originalDate: todoDate,
       originalStartTime: startTime,
       originalEndTime: endTime,
+      currentDate: todoDate,
       currentStartTime: startTime,
       currentEndTime: endTime,
       offsetY,
@@ -745,6 +751,19 @@ export function BigCalendar({
       const contentY = relativeY - headerHeight;
 
       if (contentY < 0) return;
+
+      // Calculate which day column we're over
+      const mouseX = moveEvent.clientX;
+
+      // Find the day column element at this X position
+      let targetDate = currentDate;
+      const dayElements = document.querySelectorAll('.calendar-day-column');
+      dayElements.forEach((element, index) => {
+        const dayRect = element.getBoundingClientRect();
+        if (mouseX >= dayRect.left && mouseX <= dayRect.right) {
+          targetDate = weekDays[index];
+        }
+      });
 
       // Calculate total minutes from top of grid
       const totalMinutes = Math.floor((contentY / hourHeight) * 60);
@@ -771,11 +790,13 @@ export function BigCalendar({
       const newStartTime = `${String(newStartHour).padStart(2, '0')}:${String(newStartMin).padStart(2, '0')}`;
       const newEndTime = `${String(newEndHour).padStart(2, '0')}:${String(newEndMin).padStart(2, '0')}`;
 
+      currentDate = targetDate;
       currentStartTime = newStartTime;
       currentEndTime = newEndTime;
 
       setDraggingTodo(prev => prev ? {
         ...prev,
+        currentDate: targetDate,
         currentStartTime: newStartTime,
         currentEndTime: newEndTime,
       } : null);
@@ -783,10 +804,16 @@ export function BigCalendar({
 
     const handleMouseUp = () => {
       // Apply the move using local variables
-      onEditTodo?.(todoId, {
-        startTime: currentStartTime,
-        endTime: currentEndTime,
-      });
+      if (currentDate.toDateString() !== todoDate.toDateString()) {
+        // Date changed, use onUpdateTodoDateTime to update both date and time
+        onUpdateTodoDateTime?.(todoId, currentDate, currentStartTime, currentEndTime);
+      } else {
+        // Same date, just update time
+        onEditTodo?.(todoId, {
+          startTime: currentStartTime,
+          endTime: currentEndTime,
+        });
+      }
       setDraggingTodo(null);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
@@ -884,10 +911,15 @@ export function BigCalendar({
                 date.getMonth() === currentTime.getMonth() &&
                 date.getFullYear() === currentTime.getFullYear();
 
+              const isDraggingOverThisDay = draggingTodo &&
+                draggingTodo.currentDate.toDateString() === date.toDateString();
+
               return (
                 <div
                   key={dayIndex}
-                  className="flex-1 border-r border-neutral-gray-300 min-w-[100px] relative"
+                  className={`flex-1 border-r border-neutral-gray-300 min-w-[100px] relative calendar-day-column transition-colors ${
+                    isDraggingOverThisDay ? 'bg-primary-50' : ''
+                  }`}
                 >
                   {/* Time Grid Background */}
                   {hours.map((hour) => (
@@ -991,23 +1023,59 @@ export function BigCalendar({
                       );
                     })()}
 
+                  {/* Dragging preview - show on target date */}
+                  {draggingTodo &&
+                    draggingTodo.currentDate.toDateString() === date.toDateString() &&
+                    (() => {
+                      const todo = todos.find(t => t.id === draggingTodo.id);
+                      if (!todo) return null;
+
+                      const category = categories.find((c) => c.id === todo.categoryId);
+                      const style = getTodoBlockStyle(draggingTodo.currentStartTime, draggingTodo.currentEndTime);
+
+                      return (
+                        <div
+                          className="absolute left-0 right-0 mx-1 px-2 py-1 rounded text-xs overflow-visible pointer-events-none"
+                          style={{
+                            ...style,
+                            backgroundColor: category?.color || '#3B82F6',
+                            color: 'white',
+                            zIndex: 25,
+                            opacity: 0.7,
+                            border: '2px dashed white',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+                          }}
+                        >
+                          <div className="font-semibold truncate">{todo.text || '(제목 없음)'}</div>
+                          <div className="text-xs opacity-90">
+                            {draggingTodo.currentStartTime} - {draggingTodo.currentEndTime}
+                          </div>
+                        </div>
+                      );
+                    })()}
+
                   {/* Todo Blocks */}
                   {dayTodos.map((todo) => {
                     const category = categories.find((c) => c.id === todo.categoryId);
                     const isResizing = resizingTodo?.id === todo.id;
                     const isDraggingThis = draggingTodo?.id === todo.id;
-                    
+
+                    // Hide original todo when dragging to different date
+                    const isDraggingToOtherDate = isDraggingThis &&
+                      draggingTodo.currentDate.toDateString() !== date.toDateString();
+
+                    if (isDraggingToOtherDate) {
+                      return null; // Don't render on original date when dragging to another date
+                    }
+
                     let displayStartTime = todo.startTime!;
                     let displayEndTime = todo.endTime!;
-                    
+
                     if (isResizing) {
                       displayStartTime = resizingTodo.currentStartTime;
                       displayEndTime = resizingTodo.currentEndTime;
-                    } else if (isDraggingThis) {
-                      displayStartTime = draggingTodo.currentStartTime;
-                      displayEndTime = draggingTodo.currentEndTime;
                     }
-                    
+
                     const style = getTodoBlockStyle(displayStartTime, displayEndTime);
                     const isRecurring = !!todo.recurrenceId;
 
@@ -1035,8 +1103,8 @@ export function BigCalendar({
                           ...style,
                           backgroundColor: category?.color || '#3B82F6',
                           color: 'white',
-                          zIndex: isResizing || isDraggingThis ? 20 : 10,
-                          opacity: isDraggingThis ? 0.7 : 1,
+                          zIndex: isResizing ? 20 : 10,
+                          opacity: isDraggingThis ? 0.3 : 1, // Show original position when dragging on same date
                         }}
                         title={`${todo.text} (${displayStartTime} - ${displayEndTime})`}
                       >
@@ -1055,9 +1123,9 @@ export function BigCalendar({
                           onMouseDown={(e) => {
                             // Only start drag if not clicking on resize handles or input
                             const target = e.target as HTMLElement;
-                            if (!target.classList.contains('cursor-ns-resize') && 
+                            if (!target.classList.contains('cursor-ns-resize') &&
                                 target.tagName !== 'INPUT') {
-                              handleTodoDragStart(e, todo.id, todo.startTime!, todo.endTime!);
+                              handleTodoDragStart(e, todo.id, todo.date, todo.startTime!, todo.endTime!);
                             }
                           }}
                         >
