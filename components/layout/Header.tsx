@@ -11,7 +11,9 @@ import { DuplicateDialog } from '@/components/ui/DuplicateDialog';
 interface RecurrenceRule {
   frequency: 'daily' | 'weekly' | 'monthly';
   interval: number;
+  startDate?: Date;
   endDate?: Date;
+  daysOfWeek?: number[]; // 1=월, 2=화, ..., 7=일
 }
 
 interface Todo {
@@ -300,13 +302,35 @@ export function BigCalendar({
         );
         shouldInclude = daysDiff >= 0 && daysDiff % interval === 0;
       } else if (frequency === 'weekly') {
-        const weeksDiff = Math.floor(
-          (weekDay.getTime() - todo.date.getTime()) / (1000 * 60 * 60 * 24 * 7)
-        );
-        shouldInclude =
-          weekDay.getDay() === todo.date.getDay() &&
-          weeksDiff >= 0 &&
-          weeksDiff % interval === 0;
+        const daysOfWeek = todo.recurrenceRule?.daysOfWeek;
+        const dayOfWeekValue = weekDay.getDay() === 0 ? 7 : weekDay.getDay(); // 1=월, ..., 7=일
+
+        if (daysOfWeek && daysOfWeek.length > 0) {
+          // daysOfWeek가 지정된 경우: 선택된 요일들에 반복
+          if (daysOfWeek.includes(dayOfWeekValue)) {
+            // 시작 날짜 이후인지 확인 (날짜만 비교)
+            const startDateOnly = new Date(todo.date.getFullYear(), todo.date.getMonth(), todo.date.getDate());
+            const weekDayOnly = new Date(weekDay.getFullYear(), weekDay.getMonth(), weekDay.getDate());
+
+            if (weekDayOnly >= startDateOnly) {
+              // interval 확인 (주 단위)
+              const daysDiff = Math.floor(
+                (weekDayOnly.getTime() - startDateOnly.getTime()) / (1000 * 60 * 60 * 24)
+              );
+              const weeksDiff = Math.floor(daysDiff / 7);
+              shouldInclude = weeksDiff % interval === 0;
+            }
+          }
+        } else {
+          // daysOfWeek가 없는 경우: 시작 날짜의 요일만 반복 (기존 로직)
+          const weeksDiff = Math.floor(
+            (weekDay.getTime() - todo.date.getTime()) / (1000 * 60 * 60 * 24 * 7)
+          );
+          shouldInclude =
+            weekDay.getDay() === todo.date.getDay() &&
+            weeksDiff >= 0 &&
+            weeksDiff % interval === 0;
+        }
       } else if (frequency === 'monthly') {
         const monthsDiff =
           (weekDay.getFullYear() - todo.date.getFullYear()) * 12 +

@@ -5,6 +5,14 @@ import { MiniCalendar } from '@/components/layout/CalendarPlaceholder';
 import { BigCalendar } from '@/components/layout/Header';
 import { TodoList } from '@/components/todo/TodoList';
 
+interface RecurrenceRule {
+  frequency: 'daily' | 'weekly' | 'monthly';
+  interval: number;
+  startDate?: Date;
+  endDate?: Date;
+  daysOfWeek?: number[]; // 1=월, 2=화, ..., 7=일
+}
+
 interface Todo {
   id: string;
   text: string;
@@ -15,6 +23,8 @@ interface Todo {
   parentId?: string;
   startTime?: string; // 'HH:mm' 형식
   endTime?: string; // 'HH:mm' 형식
+  recurrenceRule?: RecurrenceRule; // 반복 규칙
+  recurrenceId?: string; // 원본 반복 일정 ID
 }
 
 interface Category {
@@ -51,6 +61,7 @@ export default function Home() {
 
   // 샘플 투두 데이터 (하위 할일 예시 포함)
   const [todos, setTodos] = useState<Todo[]>([
+    // 일반 할일들만 (반복 일정 샘플 데이터 제거)
     {
       id: '1',
       text: '프로젝트 기획',
@@ -385,6 +396,55 @@ export default function Home() {
     setTodos(newTodos);
   };
 
+  // 반복 일정 추가
+  const handleAddRecurring = (
+    text: string,
+    startTime: string,
+    endTime: string,
+    recurrenceRule: RecurrenceRule
+  ) => {
+    const newRecurring: Todo = {
+      id: `recurring-${Date.now()}`,
+      text,
+      completed: false,
+      date: selectedDate, // 선택된 날짜를 시작 날짜로 사용
+      categoryId: 'cat-etc',
+      startTime,
+      endTime,
+      recurrenceRule,
+      subtasks: [],
+    };
+    setTodos([...todos, newRecurring]);
+  };
+
+  // 반복 일정 편집
+  const handleEditRecurring = (
+    id: string,
+    text: string,
+    startTime: string,
+    endTime: string,
+    recurrenceRule: RecurrenceRule
+  ) => {
+    setTodos(todos.map(todo => {
+      if (todo.id === id) {
+        return {
+          ...todo,
+          text,
+          startTime,
+          endTime,
+          recurrenceRule,
+        };
+      }
+      return todo;
+    }));
+  };
+
+  // 반복 일정 삭제
+  const handleDeleteRecurring = (id: string) => {
+    // 반복 일정 원본과 모든 인스턴스 삭제
+    setTodos(todos.filter(todo => todo.id !== id && todo.recurrenceId !== id));
+  };
+
   return (
     <div className="flex flex-col h-screen bg-white">
       {/* Header */}
@@ -422,6 +482,9 @@ export default function Home() {
                 onChangeColor={handleChangeColor}
                 onDeleteCategory={handleDeleteCategory}
                 onMoveTodo={handleMoveTodo}
+                onAddRecurring={handleAddRecurring}
+                onEditRecurring={handleEditRecurring}
+                onDeleteRecurring={handleDeleteRecurring}
               />
             </div>
           </div>
@@ -555,6 +618,9 @@ export default function Home() {
                     onChangeColor={handleChangeColor}
                     onDeleteCategory={handleDeleteCategory}
                     onMoveTodo={handleMoveTodo}
+                    onAddRecurring={handleAddRecurring}
+                    onEditRecurring={handleEditRecurring}
+                    onDeleteRecurring={handleDeleteRecurring}
                   />
                 </div>
               </div>

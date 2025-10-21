@@ -15,6 +15,16 @@ import {
 import { Plus } from 'lucide-react';
 import { CategorySection } from './CategorySection';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { RecurringSection } from './RecurringSection';
+import { AddRecurringDialog } from '@/components/ui/AddRecurringDialog';
+
+interface RecurrenceRule {
+  frequency: 'daily' | 'weekly' | 'monthly';
+  interval: number;
+  startDate?: Date;
+  endDate?: Date;
+  daysOfWeek?: number[]; // 1=월, 2=화, ..., 7=일
+}
 
 interface Todo {
   id: string;
@@ -26,6 +36,8 @@ interface Todo {
   parentId?: string;
   startTime?: string;
   endTime?: string;
+  recurrenceRule?: RecurrenceRule; // 반복 규칙
+  recurrenceId?: string; // 원본 반복 일정 ID
 }
 
 interface Category {
@@ -48,6 +60,9 @@ interface TodoListProps {
   onChangeColor: (id: string, color: string) => void;
   onDeleteCategory: (id: string) => void;
   onMoveTodo?: (todoId: string, newCategoryId: string, newParentId?: string, newIndex?: number) => void;
+  onAddRecurring?: (text: string, startTime: string, endTime: string, recurrenceRule: RecurrenceRule) => void;
+  onEditRecurring?: (id: string, text: string, startTime: string, endTime: string, recurrenceRule: RecurrenceRule) => void;
+  onDeleteRecurring?: (id: string) => void;
 }
 
 export function TodoList({
@@ -64,11 +79,22 @@ export function TodoList({
   onChangeColor,
   onDeleteCategory,
   onMoveTodo,
+  onAddRecurring,
+  onEditRecurring,
+  onDeleteRecurring,
 }: TodoListProps) {
   const [addingNewCategory, setAddingNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
+  const [editingRecurring, setEditingRecurring] = useState<{
+    id: string;
+    text: string;
+    startTime?: string;
+    endTime?: string;
+    recurrenceRule?: RecurrenceRule;
+  } | undefined>(undefined);
 
   // DnD sensors
   const sensors = useSensors(
@@ -85,8 +111,12 @@ export function TodoList({
     '#10B981', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16',
   ];
 
-  // 선택된 날짜의 할일만 필터링
+  // 선택된 날짜의 할일만 필터링 (반복 일정 제외)
   const filteredTodos = todos.filter(todo => {
+    // 반복 일정은 제외 (반복 일정 섹션에서만 표시)
+    if (todo.recurrenceRule || todo.recurrenceId) {
+      return false;
+    }
     return todo.date.getFullYear() === selectedDate.getFullYear() &&
            todo.date.getMonth() === selectedDate.getMonth() &&
            todo.date.getDate() === selectedDate.getDate();
@@ -118,6 +148,47 @@ export function TodoList({
   };
 
   const activeTodo = activeDragId ? findTodo(activeDragId, filteredTodos) : null;
+
+  // 반복 일정 핸들러
+  const handleAddRecurring = () => {
+    setEditingRecurring(undefined);
+    setRecurringDialogOpen(true);
+  };
+
+  const handleEditRecurringClick = (id: string) => {
+    const todo = todos.find(t => t.id === id);
+    if (todo) {
+      setEditingRecurring({
+        id: todo.id,
+        text: todo.text,
+        startTime: todo.startTime,
+        endTime: todo.endTime,
+        recurrenceRule: todo.recurrenceRule,
+      });
+      setRecurringDialogOpen(true);
+    }
+  };
+
+  const handleConfirmRecurring = (
+    text: string,
+    startTime: string,
+    endTime: string,
+    recurrenceRule: RecurrenceRule
+  ) => {
+    if (editingRecurring) {
+      onEditRecurring?.(editingRecurring.id, text, startTime, endTime, recurrenceRule);
+    } else {
+      onAddRecurring?.(text, startTime, endTime, recurrenceRule);
+    }
+    setRecurringDialogOpen(false);
+    setEditingRecurring(undefined);
+  };
+
+  const handleDeleteRecurringClick = (id: string) => {
+    if (confirm('이 반복 일정을 삭제하시겠습니까?')) {
+      onDeleteRecurring?.(id);
+    }
+  };
 
   // 드래그 시작
   const handleDragStart = (event: DragStartEvent) => {
@@ -156,33 +227,47 @@ export function TodoList({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex flex-col gap-2 p-5 h-full overflow-y-auto">
+      <div className="flex flex-col h-full p-5 gap-2">
         {/* Header */}
-        <div className="mb-2">
+        <div className="flex-shrink-0">
           <h1 className="text-lg font-semibold text-neutral-text-primary">
             {selectedDate.toLocaleString('ko-KR', { month: 'long', day: 'numeric' })}의 할일
           </h1>
         </div>
 
-        {/* Categories */}
-        <AnimatePresence>
-          {todosByCategory.map((category) => (
-            <CategorySection
-              key={category.id}
-              category={category}
-              selectedDate={selectedDate}
-              onToggleTodo={onToggleTodo}
-              onEditTodo={onEditTodo}
-              onDeleteTodo={onDeleteTodo}
-              onUpdateTodoTime={onUpdateTodoTime}
-              onMoveTodo={onMoveTodo}
-              onAddTodo={onAddTodo}
-              onEditCategory={onEditCategory}
-              onChangeColor={onChangeColor}
-              onDeleteCategory={onDeleteCategory}
-            />
-          ))}
-        </AnimatePresence>
+        {/* Recurring Section - 고정 */}
+        <div className="flex-shrink-0">
+          <RecurringSection
+            todos={todos}
+            selectedDate={selectedDate}
+            onToggleTodo={onToggleTodo}
+            onAddRecurring={handleAddRecurring}
+            onEditRecurring={handleEditRecurringClick}
+            onDeleteRecurring={handleDeleteRecurringClick}
+          />
+        </div>
+
+        {/* Categories - 스크롤 영역 */}
+        <div className="flex-1 overflow-y-auto space-y-2">
+          <AnimatePresence>
+            {todosByCategory.map((category) => (
+              <CategorySection
+                key={category.id}
+                category={category}
+                selectedDate={selectedDate}
+                onToggleTodo={onToggleTodo}
+                onEditTodo={onEditTodo}
+                onDeleteTodo={onDeleteTodo}
+                onUpdateTodoTime={onUpdateTodoTime}
+                onMoveTodo={onMoveTodo}
+                onAddTodo={onAddTodo}
+                onEditCategory={onEditCategory}
+                onChangeColor={onChangeColor}
+                onDeleteCategory={onDeleteCategory}
+              />
+            ))}
+          </AnimatePresence>
+        </div>
 
         {/* Add New Category */}
         {addingNewCategory ? (
@@ -264,6 +349,18 @@ export function TodoList({
           </motion.div>
         ) : null}
       </DragOverlay>
+
+      {/* Add Recurring Dialog */}
+      <AddRecurringDialog
+        isOpen={recurringDialogOpen}
+        onClose={() => {
+          setRecurringDialogOpen(false);
+          setEditingRecurring(undefined);
+        }}
+        onConfirm={handleConfirmRecurring}
+        selectedDate={selectedDate}
+        editingTodo={editingRecurring}
+      />
     </DndContext>
   );
 }
