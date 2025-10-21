@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronLeft, ChevronRight, Repeat } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Repeat, Check, ChevronDown, Filter } from 'lucide-react';
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { RecurringEventDialog } from '@/components/ui/RecurringEventDialog';
 import { ContextMenu } from '@/components/ui/ContextMenu';
@@ -160,6 +160,12 @@ export function BigCalendar({
     offsetY: number;
   } | null>(null);
 
+  // Filter states
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [completionFilter, setCompletionFilter] = useState<'all' | 'completed' | 'incomplete'>('all');
+  const [showCategoryFilter, setShowCategoryFilter] = useState(false);
+  const [showCompletionFilter, setShowCompletionFilter] = useState(false);
+
   // Ref for calendar grid
   const gridScrollRef = useRef<HTMLDivElement>(null);
 
@@ -179,12 +185,12 @@ export function BigCalendar({
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      
+
       // Don't process if clicking on input or inside editing todo
       if (target.tagName === 'INPUT' || target.closest('input')) {
         return;
       }
-      
+
       if (editingTodoId && editingText.trim() === '') {
         onDeleteTodo?.(editingTodoId);
         setEditingTodoId(null);
@@ -195,6 +201,24 @@ export function BigCalendar({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [editingTodoId, editingText, onDeleteTodo]);
+
+  // Close filter dropdowns when clicking outside
+  useEffect(() => {
+    if (!showCategoryFilter && !showCompletionFilter) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+
+      // Check if click is outside filter dropdowns
+      if (!target.closest('.filter-dropdown-container')) {
+        setShowCategoryFilter(false);
+        setShowCompletionFilter(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showCategoryFilter, showCompletionFilter]);
 
   // Ctrl+Wheel zoom functionality
   useEffect(() => {
@@ -332,12 +356,29 @@ export function BigCalendar({
       const dateKey = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
       grouped[dateKey] = allTodos.filter((todo) => {
         const todoDateKey = `${todo.date.getFullYear()}-${String(todo.date.getMonth() + 1).padStart(2, '0')}-${String(todo.date.getDate()).padStart(2, '0')}`;
-        return todoDateKey === dateKey && todo.startTime && todo.endTime;
+        if (todoDateKey !== dateKey || !todo.startTime || !todo.endTime) {
+          return false;
+        }
+
+        // Apply category filter
+        if (selectedCategories.length > 0 && !selectedCategories.includes(todo.categoryId)) {
+          return false;
+        }
+
+        // Apply completion filter
+        if (completionFilter === 'completed' && !todo.completed) {
+          return false;
+        }
+        if (completionFilter === 'incomplete' && todo.completed) {
+          return false;
+        }
+
+        return true;
       });
     });
 
     return grouped;
-  }, [todos, weekDays]);
+  }, [todos, weekDays, selectedCategories, completionFilter]);
 
   // Convert time to minutes
   const timeToMinutes = (time: string) => {
@@ -706,6 +747,30 @@ export function BigCalendar({
     console.log('Set recurrence for', contextMenu.todoId);
   };
 
+  // Filter handlers
+  const handleCategoryToggle = (categoryId: string) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(categoryId)) {
+        return prev.filter(id => id !== categoryId);
+      } else {
+        return [...prev, categoryId];
+      }
+    });
+  };
+
+  const handleCompletionFilterChange = (filter: 'all' | 'completed' | 'incomplete') => {
+    setCompletionFilter(filter);
+    setShowCompletionFilter(false);
+  };
+
+  // Toggle todo completion
+  const handleToggleCompletion = (todoId: string) => {
+    const todo = todos.find(t => t.id === todoId);
+    if (todo) {
+      onEditTodo?.(todoId, { completed: !todo.completed });
+    }
+  };
+
   // Inline editing handlers
   const handleFinishEdit = () => {
     if (editingTodoId) {
@@ -954,21 +1019,118 @@ export function BigCalendar({
         <h2 className="text-heading-2 text-neutral-text-primary">
           {year}년 {monthName}
         </h2>
-        <div className="flex gap-2">
-          <button
-            onClick={handlePrevWeek}
-            className="p-2 hover:bg-neutral-gray-100 rounded-md transition-colors cursor-pointer"
-            aria-label="이전 주"
-          >
-            <ChevronLeft size={20} className="text-neutral-text-secondary" />
-          </button>
-          <button
-            onClick={handleNextWeek}
-            className="p-2 hover:bg-neutral-gray-100 rounded-md transition-colors cursor-pointer"
-            aria-label="다음 주"
-          >
-            <ChevronRight size={20} className="text-neutral-text-secondary" />
-          </button>
+        <div className="flex items-center gap-3">
+          {/* Category Filter */}
+          <div className="relative filter-dropdown-container">
+            <button
+              onClick={() => {
+                setShowCategoryFilter(!showCategoryFilter);
+                setShowCompletionFilter(false);
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm border border-neutral-gray-300 rounded-md hover:bg-neutral-gray-50 transition-colors"
+            >
+              <Filter size={16} className="text-neutral-text-secondary" />
+              <span className="text-neutral-text-primary">카테고리</span>
+              {selectedCategories.length > 0 && (
+                <span className="px-1.5 py-0.5 text-xs bg-primary-500 text-white rounded-full">
+                  {selectedCategories.length}
+                </span>
+              )}
+              <ChevronDown size={16} className="text-neutral-text-secondary" />
+            </button>
+
+            {showCategoryFilter && (
+              <div className="absolute top-full mt-1 right-0 bg-white border border-neutral-gray-300 rounded-md shadow-lg z-50 min-w-[200px]">
+                <div className="py-1">
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => handleCategoryToggle(category.id)}
+                      className="w-full flex items-center gap-2 px-3 py-2 hover:bg-neutral-gray-50 transition-colors text-left"
+                    >
+                      <div
+                        className="w-4 h-4 rounded border-2 flex items-center justify-center"
+                        style={{
+                          borderColor: category.color,
+                          backgroundColor: selectedCategories.includes(category.id) ? category.color : 'transparent'
+                        }}
+                      >
+                        {selectedCategories.includes(category.id) && (
+                          <Check size={12} className="text-white" />
+                        )}
+                      </div>
+                      <span className="text-sm text-neutral-text-primary">{category.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Completion Filter */}
+          <div className="relative filter-dropdown-container">
+            <button
+              onClick={() => {
+                setShowCompletionFilter(!showCompletionFilter);
+                setShowCategoryFilter(false);
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm border border-neutral-gray-300 rounded-md hover:bg-neutral-gray-50 transition-colors"
+            >
+              <span className="text-neutral-text-primary">
+                {completionFilter === 'all' ? '전체' : completionFilter === 'completed' ? '완료' : '미완료'}
+              </span>
+              <ChevronDown size={16} className="text-neutral-text-secondary" />
+            </button>
+
+            {showCompletionFilter && (
+              <div className="absolute top-full mt-1 right-0 bg-white border border-neutral-gray-300 rounded-md shadow-lg z-50 min-w-[120px]">
+                <div className="py-1">
+                  <button
+                    onClick={() => handleCompletionFilterChange('all')}
+                    className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-neutral-gray-50 transition-colors text-left ${
+                      completionFilter === 'all' ? 'bg-primary-50' : ''
+                    }`}
+                  >
+                    <span className="text-sm text-neutral-text-primary">전체</span>
+                  </button>
+                  <button
+                    onClick={() => handleCompletionFilterChange('completed')}
+                    className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-neutral-gray-50 transition-colors text-left ${
+                      completionFilter === 'completed' ? 'bg-primary-50' : ''
+                    }`}
+                  >
+                    <span className="text-sm text-neutral-text-primary">완료</span>
+                  </button>
+                  <button
+                    onClick={() => handleCompletionFilterChange('incomplete')}
+                    className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-neutral-gray-50 transition-colors text-left ${
+                      completionFilter === 'incomplete' ? 'bg-primary-50' : ''
+                    }`}
+                  >
+                    <span className="text-sm text-neutral-text-primary">미완료</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Week Navigation */}
+          <div className="flex gap-2">
+            <button
+              onClick={handlePrevWeek}
+              className="p-2 hover:bg-neutral-gray-100 rounded-md transition-colors cursor-pointer"
+              aria-label="이전 주"
+            >
+              <ChevronLeft size={20} className="text-neutral-text-secondary" />
+            </button>
+            <button
+              onClick={handleNextWeek}
+              className="p-2 hover:bg-neutral-gray-100 rounded-md transition-colors cursor-pointer"
+              aria-label="다음 주"
+            >
+              <ChevronRight size={20} className="text-neutral-text-secondary" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1207,6 +1369,14 @@ export function BigCalendar({
                       displayEndTime = resizingTodo.currentEndTime;
                     }
 
+                    // Check if event is in the past (end time is before current time)
+                    const isPastEvent = (() => {
+                      const [endHour, endMinute] = displayEndTime.split(':').map(Number);
+                      const eventEndDate = new Date(todo.date);
+                      eventEndDate.setHours(endHour, endMinute, 0, 0);
+                      return eventEndDate < currentTime;
+                    })();
+
                     // Get layout info for overlapping events
                     const layout = eventLayout[todo.id] || { width: 100, left: 0 };
                     const style = getTodoBlockStyle(displayStartTime, displayEndTime, layout.width, layout.left);
@@ -1246,7 +1416,7 @@ export function BigCalendar({
                           color: 'white',
                           boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
                           zIndex: isResizing ? 20 : 10,
-                          opacity: isDraggingThis ? 0.3 : 1,
+                          opacity: isDraggingThis ? 0.3 : (isPastEvent && !todo.completed) ? 0.5 : 1,
                         }}
                         title={`${todo.text} (${displayStartTime} - ${displayEndTime})`}
                       >
@@ -1259,9 +1429,30 @@ export function BigCalendar({
                           onMouseDown={(e) => handleResizeStart(e, todo.id, 'top', todo.startTime!, todo.endTime!)}
                         />
 
+                        {/* Checkbox - Top Right */}
+                        <div
+                          className="absolute top-1 right-1 z-10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleCompletion(todo.id);
+                          }}
+                          onMouseDown={(e) => e.stopPropagation()}
+                        >
+                          <div
+                            className="w-4 h-4 rounded border-2 border-white flex items-center justify-center cursor-pointer hover:bg-white/20 transition-colors"
+                            style={{
+                              backgroundColor: todo.completed ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
+                            }}
+                          >
+                            {todo.completed && (
+                              <Check size={12} style={{ color: category?.color || '#3B82F6' }} strokeWidth={3} />
+                            )}
+                          </div>
+                        </div>
+
                         {/* Content */}
                         <div className="relative">
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 pr-6">
                             {isRecurring && <Repeat size={12} className="flex-shrink-0" />}
                             {editingTodoId === todo.id ? (
                               <input
