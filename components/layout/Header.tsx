@@ -7,45 +7,10 @@ import { ContextMenu } from '@/components/ui/ContextMenu';
 import { CategoryChangeDialog } from '@/components/ui/CategoryChangeDialog';
 import { DateMoveDialog } from '@/components/ui/DateMoveDialog';
 import { DuplicateDialog } from '@/components/ui/DuplicateDialog';
-
-interface RecurrenceRule {
-  frequency: 'daily' | 'weekly' | 'monthly';
-  interval: number;
-  startDate?: Date;
-  endDate?: Date;
-  daysOfWeek?: number[]; // 1=월, 2=화, ..., 7=일
-}
-
-interface Todo {
-  id: string;
-  text: string;
-  completed: boolean;
-  date: Date;
-  categoryId: string;
-  subtasks?: Todo[];
-  parentId?: string;
-  startTime?: string;
-  endTime?: string;
-  recurrenceRule?: RecurrenceRule;
-  recurrenceId?: string;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-}
-
-interface BigCalendarProps {
-  selectedDate?: Date;
-  todos?: Todo[];
-  categories?: Category[];
-  onUpdateTodoDateTime?: (id: string, date: Date, startTime?: string, endTime?: string) => void;
-  onAddTodo?: (todo: Omit<Todo, 'id'>, callback?: (id: string) => void) => void;
-  onEditTodo?: (id: string, updates: Partial<Todo>) => void;
-  onDeleteTodo?: (id: string) => void;
-  onMoveTodo?: (id: string, newDate: Date) => void;
-}
+import type { BigCalendarProps, Todo } from '@/types/calendar';
+import { getWeekDays, roundToQuarterHour, timeToMinutes, getTodoBlockStyle } from '@/utils/calendarUtils';
+import { calculateEventLayout } from '@/utils/eventLayoutUtils';
+import { generateRecurringEvents } from '@/utils/recurringUtils';
 
 export function BigCalendar({
   selectedDate = new Date(),
@@ -250,16 +215,6 @@ export function BigCalendar({
     return () => window.removeEventListener('wheel', handleWheel);
   }, []);
 
-  const getWeekDays = (startDate: Date) => {
-    const days = [];
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(startDate);
-      date.setDate(date.getDate() + i);
-      days.push(date);
-    }
-    return days;
-  };
-
   const handlePrevWeek = () => {
     const newDate = new Date(currentWeekStart);
     newDate.setDate(newDate.getDate() - 7);
@@ -279,89 +234,6 @@ export function BigCalendar({
   const monthName = currentWeekStart.toLocaleString('ko-KR', { month: 'long' });
   const year = currentWeekStart.getFullYear();
 
-  // Helper function: round to 15-minute intervals, never return 60
-  const roundToQuarterHour = (minutes: number) => {
-    const rounded = Math.round(minutes / 15) * 15;
-    return rounded >= 60 ? 0 : rounded;
-  };
-
-  // Generate recurring events for the week
-  const generateRecurringEvents = (todo: Todo): Todo[] => {
-    if (!todo.recurrenceRule) return [todo];
-
-    const events: Todo[] = [];
-    const { frequency, interval, endDate } = todo.recurrenceRule;
-
-    weekDays.forEach((weekDay) => {
-      // Check if this day should have a recurring event
-      let shouldInclude = false;
-
-      if (frequency === 'daily') {
-        const daysDiff = Math.floor(
-          (weekDay.getTime() - todo.date.getTime()) / (1000 * 60 * 60 * 24)
-        );
-        shouldInclude = daysDiff >= 0 && daysDiff % interval === 0;
-      } else if (frequency === 'weekly') {
-        const daysOfWeek = todo.recurrenceRule?.daysOfWeek;
-        const dayOfWeekValue = weekDay.getDay() === 0 ? 7 : weekDay.getDay(); // 1=월, ..., 7=일
-
-        if (daysOfWeek && daysOfWeek.length > 0) {
-          // daysOfWeek가 지정된 경우: 선택된 요일들에 반복
-          if (daysOfWeek.includes(dayOfWeekValue)) {
-            // 시작 날짜 이후인지 확인 (날짜만 비교)
-            const startDateOnly = new Date(todo.date.getFullYear(), todo.date.getMonth(), todo.date.getDate());
-            const weekDayOnly = new Date(weekDay.getFullYear(), weekDay.getMonth(), weekDay.getDate());
-
-            if (weekDayOnly >= startDateOnly) {
-              // interval 확인 (주 단위)
-              const daysDiff = Math.floor(
-                (weekDayOnly.getTime() - startDateOnly.getTime()) / (1000 * 60 * 60 * 24)
-              );
-              const weeksDiff = Math.floor(daysDiff / 7);
-              shouldInclude = weeksDiff % interval === 0;
-            }
-          }
-        } else {
-          // daysOfWeek가 없는 경우: 시작 날짜의 요일만 반복 (기존 로직)
-          const weeksDiff = Math.floor(
-            (weekDay.getTime() - todo.date.getTime()) / (1000 * 60 * 60 * 24 * 7)
-          );
-          shouldInclude =
-            weekDay.getDay() === todo.date.getDay() &&
-            weeksDiff >= 0 &&
-            weeksDiff % interval === 0;
-        }
-      } else if (frequency === 'monthly') {
-        const monthsDiff =
-          (weekDay.getFullYear() - todo.date.getFullYear()) * 12 +
-          (weekDay.getMonth() - todo.date.getMonth());
-        shouldInclude =
-          weekDay.getDate() === todo.date.getDate() &&
-          monthsDiff >= 0 &&
-          monthsDiff % interval === 0;
-      }
-
-      // Check end date (inclusive)
-      if (endDate) {
-        const endDateEnd = new Date(endDate);
-        endDateEnd.setHours(23, 59, 59, 999);
-        if (weekDay > endDateEnd) {
-          shouldInclude = false;
-        }
-      }
-
-      if (shouldInclude) {
-        events.push({
-          ...todo,
-          id: `${todo.id}-${weekDay.toISOString()}`,
-          date: weekDay,
-        });
-      }
-    });
-
-    return events;
-  };
-
   // Filter and group todos for the week
   const weekTodos = useMemo(() => {
     const grouped: Record<string, Todo[]> = {};
@@ -370,7 +242,7 @@ export function BigCalendar({
     const allTodos: Todo[] = [];
     todos.forEach((todo) => {
       if (todo.recurrenceRule) {
-        allTodos.push(...generateRecurringEvents(todo));
+        allTodos.push(...generateRecurringEvents(todo, weekDays));
       } else {
         allTodos.push(todo);
       }
@@ -403,145 +275,6 @@ export function BigCalendar({
 
     return grouped;
   }, [todos, weekDays, selectedCategories, completionFilter]);
-
-  // Convert time to minutes
-  const timeToMinutes = (time: string) => {
-    const [hours, minutes] = time.split(':').map(Number);
-    return hours * 60 + minutes;
-  };
-
-  // Check if two events overlap
-  const eventsOverlap = (event1: Todo, event2: Todo) => {
-    if (!event1.startTime || !event1.endTime || !event2.startTime || !event2.endTime) {
-      return false;
-    }
-    const start1 = timeToMinutes(event1.startTime);
-    const end1 = timeToMinutes(event1.endTime);
-    const start2 = timeToMinutes(event2.startTime);
-    const end2 = timeToMinutes(event2.endTime);
-
-    return start1 < end2 && start2 < end1;
-  };
-
-  // Calculate layout for overlapping events (Google Calendar style)
-  const calculateEventLayout = (todos: Todo[]) => {
-    const layout: Record<string, { width: number; left: number }> = {};
-
-    if (todos.length === 0) return layout;
-
-    // Sort events by start time, then by duration (longer first)
-    const sortedTodos = [...todos].sort((a, b) => {
-      const aStart = timeToMinutes(a.startTime!);
-      const bStart = timeToMinutes(b.startTime!);
-      if (aStart !== bStart) return aStart - bStart;
-
-      const aDuration = timeToMinutes(a.endTime!) - aStart;
-      const bDuration = timeToMinutes(b.endTime!) - bStart;
-      return bDuration - aDuration; // Longer events first
-    });
-
-    // Track which column each event is in
-    const columns: Todo[][] = [];
-
-    // Assign each event to the leftmost available column
-    sortedTodos.forEach((event) => {
-      // Find the first column where this event doesn't overlap with any event already in that column
-      let placed = false;
-
-      for (let colIndex = 0; colIndex < columns.length; colIndex++) {
-        const column = columns[colIndex];
-
-        // Check if event overlaps with any event in this column
-        const hasOverlap = column.some((existingEvent) => eventsOverlap(event, existingEvent));
-
-        if (!hasOverlap) {
-          // Can place in this column
-          column.push(event);
-          placed = true;
-          break;
-        }
-      }
-
-      // If no existing column works, create a new column
-      if (!placed) {
-        columns.push([event]);
-      }
-    });
-
-    // For each event, find how many columns it spans
-    sortedTodos.forEach((event) => {
-      // Find which column this event is in
-      let eventColumn = 0;
-      for (let i = 0; i < columns.length; i++) {
-        if (columns[i].some((e) => e.id === event.id)) {
-          eventColumn = i;
-          break;
-        }
-      }
-
-      // Find the maximum number of columns among all overlapping events
-      let maxColumns = 1;
-
-      // Check all events that overlap with this one
-      sortedTodos.forEach((other) => {
-        if (eventsOverlap(event, other)) {
-          // Count how many columns exist among overlapping events
-          const overlappingColumns = new Set<number>();
-
-          sortedTodos.forEach((e) => {
-            if (eventsOverlap(event, e) || e.id === event.id) {
-              for (let i = 0; i < columns.length; i++) {
-                if (columns[i].some((col) => col.id === e.id)) {
-                  overlappingColumns.add(i);
-                  break;
-                }
-              }
-            }
-          });
-
-          maxColumns = Math.max(maxColumns, overlappingColumns.size);
-        }
-      });
-
-      // Calculate width and position
-      const width = 100 / maxColumns;
-      const left = eventColumn * width;
-
-      layout[event.id] = { width, left };
-    });
-
-    return layout;
-  };
-
-  // Calculate todo block position
-  const getTodoBlockStyle = (startTime: string, endTime: string, width?: number, left?: number) => {
-    const startMinutes = timeToMinutes(startTime);
-    const endMinutes = timeToMinutes(endTime);
-    const duration = endMinutes - startMinutes;
-
-    const top = (startMinutes / 60) * hourHeight;
-    const height = (duration / 60) * hourHeight - 2; // 2px gap between blocks
-
-    const style: React.CSSProperties = {
-      top: `${top}px`,
-      height: `${height}px`
-    };
-
-    // Apply width and left if provided (for overlapping events)
-    if (width !== undefined && left !== undefined) {
-      style.width = `calc(${width}% - 4px)`;
-      style.left = `${left}%`;
-      style.marginLeft = '2px';
-      style.marginRight = '2px';
-    } else {
-      style.left = '0';
-      style.right = '0';
-      style.marginLeft = '4px';
-      style.marginRight = '4px';
-    }
-
-    return style;
-  };
 
   // Handle drag start for creating events
   const handleDragStart = (date: Date, hour: number, e: React.MouseEvent) => {
@@ -1315,7 +1048,7 @@ export function BigCalendar({
                   {creatingEvent &&
                     creatingEvent.date.toDateString() === date.toDateString() &&
                     (() => {
-                      const style = getTodoBlockStyle(creatingEvent.startTime, creatingEvent.endTime);
+                      const style = getTodoBlockStyle(creatingEvent.startTime, creatingEvent.endTime, hourHeight);
                       // Use the color of the category that will be assigned (cat-etc)
                       const defaultCategory = categories.find((c) => c.id === 'cat-etc');
                       const previewColor = defaultCategory?.color || '#9CA3AF';
@@ -1348,7 +1081,7 @@ export function BigCalendar({
                       if (!todo) return null;
 
                       const category = categories.find((c) => c.id === todo.categoryId);
-                      const style = getTodoBlockStyle(draggingTodo.currentStartTime, draggingTodo.currentEndTime);
+                      const style = getTodoBlockStyle(draggingTodo.currentStartTime, draggingTodo.currentEndTime, hourHeight);
 
                       return (
                         <div
@@ -1403,7 +1136,7 @@ export function BigCalendar({
 
                     // Get layout info for overlapping events
                     const layout = eventLayout[todo.id] || { width: 100, left: 0 };
-                    const style = getTodoBlockStyle(displayStartTime, displayEndTime, layout.width, layout.left);
+                    const style = getTodoBlockStyle(displayStartTime, displayEndTime, hourHeight, layout.width, layout.left);
                     const isRecurring = !!todo.recurrenceId;
 
                     return (
