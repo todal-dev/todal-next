@@ -3,7 +3,7 @@ import type { Todo } from '@/types/calendar';
 
 interface UseContextMenuProps {
   todos: Todo[];
-  onAddTodo?: (todo: Partial<Todo>, callback?: (id: string) => void) => void;
+  onAddTodo?: (todo: Omit<Todo, 'id'>, callback?: (id: string) => void) => void;
   onEditTodo?: (id: string, updates: Partial<Todo>) => void;
   onDeleteTodo?: (id: string) => void;
   onMoveTodo?: (id: string, newDate: Date) => void;
