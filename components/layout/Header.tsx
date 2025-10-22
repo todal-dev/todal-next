@@ -11,6 +11,8 @@ import type { BigCalendarProps, Todo } from '@/types/calendar';
 import { getWeekDays, roundToQuarterHour, timeToMinutes, getTodoBlockStyle } from '@/utils/calendarUtils';
 import { calculateEventLayout } from '@/utils/eventLayoutUtils';
 import { generateRecurringEvents } from '@/utils/recurringUtils';
+import { useCalendarDrag } from '@/hooks/useCalendarDrag';
+import { useCalendarFilters } from '@/hooks/useCalendarFilters';
 
 export function BigCalendar({
   selectedDate = new Date(),
@@ -56,17 +58,6 @@ export function BigCalendar({
     return () => clearInterval(timer);
   }, []);
 
-  // Drag state for Google Calendar-style creation
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<{ date: Date; hour: number; minute: number } | null>(null);
-  const [creatingEvent, setCreatingEvent] = useState<{
-    date: Date;
-    hour: number;
-    tempId: string;
-    startTime: string;
-    endTime: string;
-  } | null>(null);
-
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{
     isOpen: boolean;
@@ -105,6 +96,24 @@ export function BigCalendar({
   const [editingText, setEditingText] = useState('');
   const [pendingEditId, setPendingEditId] = useState<string | null>(null);
 
+  // Calendar drag hook (event creation)
+  const { creatingEvent, handleDragStart: handleCalendarDragStart, handleDragMove: handleCalendarDragMove, handleDragEnd: handleCalendarDragEnd } = useCalendarDrag({
+    hourHeight,
+    onAddTodo,
+    onFinishEdit: () => {
+      if (editingTodoId) {
+        const trimmedText = editingText.trim();
+        if (trimmedText) {
+          onEditTodo?.(editingTodoId, { text: trimmedText });
+        } else {
+          onDeleteTodo?.(editingTodoId);
+        }
+        setEditingTodoId(null);
+        setEditingText('');
+      }
+    },
+  });
+
   // Resize state
   const [resizingTodo, setResizingTodo] = useState<{
     id: string;
@@ -128,10 +137,16 @@ export function BigCalendar({
   } | null>(null);
 
   // Filter states
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [completionFilter, setCompletionFilter] = useState<'all' | 'completed' | 'incomplete'>('all');
-  const [showCategoryFilter, setShowCategoryFilter] = useState(false);
-  const [showCompletionFilter, setShowCompletionFilter] = useState(false);
+  const {
+    selectedCategories,
+    completionFilter,
+    showCategoryFilter,
+    setShowCategoryFilter,
+    showCompletionFilter,
+    setShowCompletionFilter,
+    handleCategoryToggle,
+    handleCompletionFilterChange,
+  } = useCalendarFilters();
 
   // Ref for calendar grid
   const gridScrollRef = useRef<HTMLDivElement>(null);
@@ -276,131 +291,6 @@ export function BigCalendar({
     return grouped;
   }, [todos, weekDays, selectedCategories, completionFilter]);
 
-  // Handle drag start for creating events
-  const handleDragStart = (date: Date, hour: number, e: React.MouseEvent) => {
-    e.preventDefault();
-
-    // Finish any pending edit before creating new event
-    if (editingTodoId) {
-      handleFinishEdit();
-    }
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const minuteOffset = Math.floor((y / hourHeight) * 60);
-    const roundedMinute = roundToQuarterHour(minuteOffset);
-
-    let startHour = hour;
-    let startMinute = roundedMinute;
-
-    // If rounding caused overflow to next hour
-    if (roundedMinute === 0 && minuteOffset > 45) {
-      startHour = hour + 1;
-      startMinute = 0;
-    }
-
-    // Ensure we don't go past 23:59
-    if (startHour >= 24) {
-      startHour = 23;
-      startMinute = 45;
-    }
-
-    const startTime = `${String(startHour).padStart(2, '0')}:${String(startMinute).padStart(2, '0')}`;
-
-    // Default 1 hour duration
-    let endTotalMinutes = startHour * 60 + startMinute + 60;
-    if (endTotalMinutes > 24 * 60) {
-      endTotalMinutes = 24 * 60;
-    }
-    const endHour = Math.floor(endTotalMinutes / 60);
-    const endMinute = endTotalMinutes % 60;
-    const endTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
-
-    setIsDragging(true);
-    setDragStart({ date, hour: startHour, minute: startMinute });
-
-    // Immediately create the event block
-    setCreatingEvent({
-      date,
-      hour: startHour,
-      tempId: `temp-${Date.now()}`,
-      startTime,
-      endTime,
-    });
-  };
-
-  const handleDragMove = (date: Date, hour: number, e: React.MouseEvent) => {
-    if (!isDragging || !dragStart || !creatingEvent) return;
-
-    // Only allow dragging on the same day
-    if (date.toDateString() !== dragStart.date.toDateString()) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const minuteOffset = Math.floor((y / hourHeight) * 60);
-    let endMinute = roundToQuarterHour(minuteOffset);
-    let endHour = hour;
-
-    // If rounding caused overflow to next hour
-    if (endMinute === 0 && minuteOffset > 45) {
-      endHour = hour + 1;
-      endMinute = 0;
-    }
-
-    const endTotalMinutes = endHour * 60 + endMinute;
-    const startTotalMinutes = dragStart.hour * 60 + dragStart.minute;
-
-    // Ensure end is after start (minimum 15 minutes)
-    if (endTotalMinutes <= startTotalMinutes) {
-      return;
-    }
-
-    const startTime = `${String(dragStart.hour).padStart(2, '0')}:${String(dragStart.minute).padStart(2, '0')}`;
-    const endTime = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
-
-    // Update creating event with new end time for real-time preview
-    setCreatingEvent({
-      ...creatingEvent,
-      startTime,
-      endTime,
-    });
-  };
-
-  const handleDragEnd = () => {
-    if (!isDragging || !creatingEvent) return;
-
-    let { startTime, endTime } = creatingEvent;
-
-    // Normalize times to prevent 60 minutes
-    const [startHour, startMinute] = startTime.split(':').map(Number);
-    const [endHour, endMinute] = endTime.split(':').map(Number);
-
-    const normalizedStartMinute = startMinute >= 60 ? 0 : startMinute;
-    const normalizedStartHour = startMinute >= 60 ? startHour + 1 : startHour;
-
-    const normalizedEndMinute = endMinute >= 60 ? 0 : endMinute;
-    const normalizedEndHour = endMinute >= 60 ? endHour + 1 : endHour;
-
-    startTime = `${String(normalizedStartHour).padStart(2, '0')}:${String(normalizedStartMinute).padStart(2, '0')}`;
-    endTime = `${String(normalizedEndHour).padStart(2, '0')}:${String(normalizedEndMinute).padStart(2, '0')}`;
-
-    // Add the new todo with empty text and automatically enter edit mode
-    onAddTodo?.({
-      text: '',
-      completed: false,
-      date: creatingEvent.date,
-      categoryId: 'cat-etc',
-      startTime,
-      endTime,
-    }, (newId) => {
-      // Set pending edit to trigger edit mode after todo is added
-      setPendingEditId(newId);
-    });
-
-    setIsDragging(false);
-    setDragStart(null);
-    setCreatingEvent(null);
-  };
 
   // Context menu handlers
   const handleContextMenu = (e: React.MouseEvent, todoId: string) => {
@@ -502,22 +392,6 @@ export function BigCalendar({
     // This would open a recurrence settings dialog
     // For now, just placeholder
     console.log('Set recurrence for', contextMenu.todoId);
-  };
-
-  // Filter handlers
-  const handleCategoryToggle = (categoryId: string) => {
-    setSelectedCategories(prev => {
-      if (prev.includes(categoryId)) {
-        return prev.filter(id => id !== categoryId);
-      } else {
-        return [...prev, categoryId];
-      }
-    });
-  };
-
-  const handleCompletionFilterChange = (filter: 'all' | 'completed' | 'incomplete') => {
-    setCompletionFilter(filter);
-    setShowCompletionFilter(false);
   };
 
   // Toggle todo completion
@@ -974,9 +848,9 @@ export function BigCalendar({
                       data-hour={hour}
                       className="border-b border-neutral-gray-200 hover:bg-neutral-gray-50 transition-colors cursor-pointer"
                       style={{ height: `${hourHeight}px` }}
-                      onMouseDown={(e) => handleDragStart(date, hour, e)}
-                      onMouseMove={(e) => handleDragMove(date, hour, e)}
-                      onMouseUp={handleDragEnd}
+                      onMouseDown={(e) => handleCalendarDragStart(date, hour, e)}
+                      onMouseMove={(e) => handleCalendarDragMove(date, hour, e)}
+                      onMouseUp={() => handleCalendarDragEnd(setPendingEditId)}
                       onDragOver={(e) => {
                         e.preventDefault();
                         e.currentTarget.classList.add('bg-primary-100');
