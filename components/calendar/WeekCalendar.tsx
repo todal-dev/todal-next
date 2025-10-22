@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { RecurringEventDialog } from '@/components/ui/RecurringEventDialog';
 import { ContextMenu } from '@/components/ui/ContextMenu';
 import { CategoryChangeDialog } from '@/components/ui/CategoryChangeDialog';
@@ -8,7 +8,7 @@ import { DateMoveDialog } from '@/components/ui/DateMoveDialog';
 import { DuplicateDialog } from '@/components/ui/DuplicateDialog';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarGrid } from '@/components/calendar/CalendarGrid';
-import type { BigCalendarProps, Todo } from '@/types/calendar';
+import type { Todo } from '@/types/calendar';
 import { getWeekDays } from '@/utils/calendarUtils';
 import { generateRecurringEvents } from '@/utils/recurringUtils';
 import { useCalendarDrag } from '@/hooks/useCalendarDrag';
@@ -19,17 +19,22 @@ import { useDialogs } from '@/hooks/useDialogs';
 import { useResizeTodo } from '@/hooks/useResizeTodo';
 import { useTodoDrag } from '@/hooks/useTodoDrag';
 import { useContextMenu } from '@/hooks/useContextMenu';
+import { useTodoContext } from '@/contexts/TodoContext';
+import { useCategoryContext } from '@/contexts/CategoryContext';
 
-export function BigCalendar({
-  selectedDate = new Date(),
-  todos = [],
-  categories = [],
-  onUpdateTodoDateTime,
-  onAddTodo,
-  onEditTodo,
-  onDeleteTodo,
-  onMoveTodo,
-}: BigCalendarProps) {
+export function BigCalendar() {
+  // Get values from contexts
+  const {
+    selectedDate,
+    todos,
+    onUpdateTodoDateTime,
+    onAddTodoFromCalendar: onAddTodo,
+    onUpdateTodo: onEditTodo,
+    onDeleteTodo,
+    onMoveTodoToDate: onMoveTodo,
+  } = useTodoContext();
+
+  const { categories } = useCategoryContext();
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const date = new Date(selectedDate);
     const day = date.getDay();
@@ -162,20 +167,20 @@ export function BigCalendar({
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showCategoryFilter, showCompletionFilter]);
+  }, [showCategoryFilter, showCompletionFilter, setShowCategoryFilter, setShowCompletionFilter]);
 
-
-  const handlePrevWeek = () => {
+  // Memoize handlers to prevent unnecessary re-renders
+  const handlePrevWeek = useCallback(() => {
     const newDate = new Date(currentWeekStart);
     newDate.setDate(newDate.getDate() - 7);
     setCurrentWeekStart(newDate);
-  };
+  }, [currentWeekStart]);
 
-  const handleNextWeek = () => {
+  const handleNextWeek = useCallback(() => {
     const newDate = new Date(currentWeekStart);
     newDate.setDate(newDate.getDate() + 7);
     setCurrentWeekStart(newDate);
-  };
+  }, [currentWeekStart]);
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
@@ -225,26 +230,26 @@ export function BigCalendar({
     return grouped;
   }, [todos, weekDays, selectedCategories, completionFilter]);
 
-  // Handlers for dialogs
-  const handleConfirmMove = (newDate: Date) => {
+  // Memoize dialog handlers
+  const handleConfirmMove = useCallback((newDate: Date) => {
     onMoveTodo?.(dateDialog.todoId, newDate);
-  };
+  }, [onMoveTodo, dateDialog.todoId]);
 
-  const handleConfirmCategoryChange = (categoryId: string) => {
+  const handleConfirmCategoryChange = useCallback((categoryId: string) => {
     onEditTodo?.(categoryDialog.todoId, { categoryId });
-  };
+  }, [onEditTodo, categoryDialog.todoId]);
 
-  const handleConfirmDuplicateAction = () => {
+  const handleConfirmDuplicateAction = useCallback(() => {
     handleConfirmDuplicate(duplicateDialog.todoId);
-  };
+  }, [handleConfirmDuplicate, duplicateDialog.todoId]);
 
-  // Toggle todo completion
-  const handleToggleCompletion = (todoId: string) => {
+  // Memoize toggle completion handler
+  const handleToggleCompletion = useCallback((todoId: string) => {
     const todo = todos.find(t => t.id === todoId);
     if (todo) {
       onEditTodo?.(todoId, { completed: !todo.completed });
     }
-  };
+  }, [todos, onEditTodo]);
 
   return (
     <div className="flex flex-col h-full bg-white">

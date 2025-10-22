@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { ChevronLeft, ChevronRight, Check, ChevronDown, Filter } from 'lucide-react';
 import type { Category } from '@/types/calendar';
 
@@ -17,7 +18,7 @@ interface CalendarHeaderProps {
   handleNextWeek: () => void;
 }
 
-export function CalendarHeader({
+const CalendarHeaderComponent = ({
   year,
   monthName,
   categories,
@@ -31,7 +32,7 @@ export function CalendarHeader({
   handleCompletionFilterChange,
   handlePrevWeek,
   handleNextWeek,
-}: CalendarHeaderProps) {
+}: CalendarHeaderProps) => {
   return (
     <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-gray-300">
       <h2 className="text-heading-2 text-neutral-text-primary">
@@ -152,4 +153,7 @@ export function CalendarHeader({
       </div>
     </div>
   );
-}
+};
+
+// Memoize CalendarHeader to prevent unnecessary re-renders
+export const CalendarHeader = memo(CalendarHeaderComponent);

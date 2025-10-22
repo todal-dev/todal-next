@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { DesktopLayout } from '@/components/layout/DesktopLayout';
 import { MobileLayout } from '@/components/layout/MobileLayout';
 import { useTodos } from '@/hooks/useTodos';
 import { useCategories } from '@/hooks/useCategories';
+import { TodoProvider } from '@/contexts/TodoContext';
+import { CategoryProvider } from '@/contexts/CategoryContext';
 import type { Todo } from '@/types/calendar';
 
 interface TodoByDateCategory {
@@ -130,88 +132,102 @@ export default function Home() {
     return grouped;
   }, [todos, categories]);
 
-  // Handle category deletion with todos
-  const handleDeleteCategoryWithTodos = (id: string) => {
+  // Memoize category deletion handler
+  const handleDeleteCategoryWithTodos = useCallback((id: string) => {
     handleDeleteCategory(id, () => {
       // Delete all todos with this category
       setTodos(todos.filter(todo => todo.categoryId !== id));
     });
-  };
+  }, [handleDeleteCategory, todos, setTodos]);
 
-  // Wrapper for recurring handlers that include selectedDate
-  const handleAddRecurringWrapper = (
+  // Memoize recurring handler wrapper
+  const handleAddRecurringWrapper = useCallback((
     text: string,
     startTime: string,
     endTime: string,
     recurrenceRule: any
   ) => {
     handleAddRecurring(text, startTime, endTime, recurrenceRule, selectedDate);
-  };
+  }, [handleAddRecurring, selectedDate]);
+
+  // Create context values
+  const todoContextValue = useMemo(
+    () => ({
+      todos,
+      selectedDate,
+      onDateSelect: setSelectedDate,
+      onAddTodo: handleAddTodo,
+      onDeleteTodo: handleDeleteTodo,
+      onToggleTodo: handleToggleTodo,
+      onEditTodo: handleEditTodo,
+      onUpdateTodoTime: handleUpdateTodoTime,
+      onMoveTodo: handleMoveTodo,
+      onUpdateTodoDateTime: handleUpdateTodoDateTime,
+      onAddTodoFromCalendar: handleAddTodoFromCalendar,
+      onUpdateTodo: handleUpdateTodo,
+      onMoveTodoToDate: handleMoveTodoToDate,
+    }),
+    [
+      todos,
+      selectedDate,
+      handleAddTodo,
+      handleDeleteTodo,
+      handleToggleTodo,
+      handleEditTodo,
+      handleUpdateTodoTime,
+      handleMoveTodo,
+      handleUpdateTodoDateTime,
+      handleAddTodoFromCalendar,
+      handleUpdateTodo,
+      handleMoveTodoToDate,
+    ]
+  );
+
+  const categoryContextValue = useMemo(
+    () => ({
+      categories,
+      onAddCategory: handleAddCategory,
+      onEditCategory: handleEditCategory,
+      onChangeColor: handleChangeColor,
+      onDeleteCategory: handleDeleteCategoryWithTodos,
+      onAddRecurring: handleAddRecurringWrapper,
+      onEditRecurring: handleEditRecurring,
+      onDeleteRecurring: handleDeleteRecurring,
+    }),
+    [
+      categories,
+      handleAddCategory,
+      handleEditCategory,
+      handleChangeColor,
+      handleDeleteCategoryWithTodos,
+      handleAddRecurringWrapper,
+      handleEditRecurring,
+      handleDeleteRecurring,
+    ]
+  );
 
   return (
-    <div className="flex flex-col h-screen bg-white">
-      {/* Header */}
-      <header className="border-b border-neutral-gray-300 bg-white h-12 px-5 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-neutral-text-primary">Todal</h1>
-        <div className="flex gap-2">
-          {/* Settings/profile buttons can be added later */}
+    <TodoProvider value={todoContextValue}>
+      <CategoryProvider value={categoryContextValue}>
+        <div className="flex flex-col h-screen bg-white">
+          {/* Header */}
+          <header className="border-b border-neutral-gray-300 bg-white h-12 px-5 flex items-center justify-between">
+            <h1 className="text-lg font-semibold text-neutral-text-primary">Todal</h1>
+            <div className="flex gap-2">
+              {/* Settings/profile buttons can be added later */}
+            </div>
+          </header>
+
+          {/* Main Content */}
+          <div className="flex flex-1 overflow-hidden">
+            {/* Desktop Layout */}
+            <DesktopLayout todosByDate={todosByDate} />
+
+            {/* Mobile Layout */}
+            <MobileLayout todosByDate={todosByDate} />
+          </div>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Desktop Layout */}
-        <DesktopLayout
-          selectedDate={selectedDate}
-          onDateSelect={setSelectedDate}
-          todosByDate={todosByDate}
-          todos={todos}
-          categories={categories}
-          onAddTodo={handleAddTodo}
-          onDeleteTodo={handleDeleteTodo}
-          onToggleTodo={handleToggleTodo}
-          onEditTodo={handleEditTodo}
-          onUpdateTodoTime={handleUpdateTodoTime}
-          onAddCategory={handleAddCategory}
-          onEditCategory={handleEditCategory}
-          onChangeColor={handleChangeColor}
-          onDeleteCategory={handleDeleteCategoryWithTodos}
-          onMoveTodo={handleMoveTodo}
-          onAddRecurring={handleAddRecurringWrapper}
-          onEditRecurring={handleEditRecurring}
-          onDeleteRecurring={handleDeleteRecurring}
-          onUpdateTodoDateTime={handleUpdateTodoDateTime}
-          onAddTodoFromCalendar={handleAddTodoFromCalendar}
-          onUpdateTodo={handleUpdateTodo}
-          onMoveTodoToDate={handleMoveTodoToDate}
-        />
-
-        {/* Mobile Layout */}
-        <MobileLayout
-          selectedDate={selectedDate}
-          onDateSelect={setSelectedDate}
-          todosByDate={todosByDate}
-          todos={todos}
-          categories={categories}
-          onAddTodo={handleAddTodo}
-          onDeleteTodo={handleDeleteTodo}
-          onToggleTodo={handleToggleTodo}
-          onEditTodo={handleEditTodo}
-          onUpdateTodoTime={handleUpdateTodoTime}
-          onAddCategory={handleAddCategory}
-          onEditCategory={handleEditCategory}
-          onChangeColor={handleChangeColor}
-          onDeleteCategory={handleDeleteCategoryWithTodos}
-          onMoveTodo={handleMoveTodo}
-          onAddRecurring={handleAddRecurringWrapper}
-          onEditRecurring={handleEditRecurring}
-          onDeleteRecurring={handleDeleteRecurring}
-          onUpdateTodoDateTime={handleUpdateTodoDateTime}
-          onAddTodoFromCalendar={handleAddTodoFromCalendar}
-          onUpdateTodo={handleUpdateTodo}
-          onMoveTodoToDate={handleMoveTodoToDate}
-        />
-      </div>
-    </div>
+      </CategoryProvider>
+    </TodoProvider>
   );
 }

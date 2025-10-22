@@ -51,65 +51,84 @@ export function useResizeTodo({ hourHeight, gridScrollRef, onEditTodo }: UseResi
       currentEndTime: endTime,
     });
 
+    // Use requestAnimationFrame to throttle state updates for instant, smooth resizing
+    let animationFrameId: number | null = null;
+    let pendingUpdate = false;
+
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!gridContainer) return;
 
-      // Calculate time based on scroll position and mouse Y
-      const gridRect = gridContainer.getBoundingClientRect();
-      const scrollTop = gridContainer.scrollTop;
+      // If we already have a pending update, skip this mousemove event
+      if (pendingUpdate) return;
 
-      // Mouse Y relative to the visible grid, plus scroll offset
-      const relativeY = moveEvent.clientY - gridRect.top + scrollTop;
+      pendingUpdate = true;
 
-      // Subtract the header height (approximately 73px based on the code)
-      const headerHeight = 73; // Adjust if needed
-      const contentY = relativeY - headerHeight;
+      // Schedule update on next animation frame for smooth 60fps resizing
+      animationFrameId = requestAnimationFrame(() => {
+        pendingUpdate = false;
 
-      if (contentY < 0) return;
+        // Calculate time based on scroll position and mouse Y
+        const gridRect = gridContainer.getBoundingClientRect();
+        const scrollTop = gridContainer.scrollTop;
 
-      // Calculate total minutes from top of grid
-      const totalMinutes = Math.floor((contentY / hourHeight) * 60);
+        // Mouse Y relative to the visible grid, plus scroll offset
+        const relativeY = moveEvent.clientY - gridRect.top + scrollTop;
 
-      // Round to 15-minute intervals
-      const roundedMinutes = Math.round(totalMinutes / 15) * 15;
+        // Subtract the header height (approximately 73px based on the code)
+        const headerHeight = 73; // Adjust if needed
+        const contentY = relativeY - headerHeight;
 
-      // Convert to hours and minutes
-      const hours = Math.floor(roundedMinutes / 60);
-      const minutes = roundedMinutes % 60;
+        if (contentY < 0) return;
 
-      // Clamp to 0-24 hour range
-      if (hours < 0 || hours >= 24) return;
+        // Calculate total minutes from top of grid
+        const totalMinutes = Math.floor((contentY / hourHeight) * 60);
 
-      const newTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+        // Round to 15-minute intervals
+        const roundedMinutes = Math.round(totalMinutes / 15) * 15;
 
-      if (type === 'bottom') {
-        // Resizing bottom: ensure end time is after start time
-        const startMinutes = timeToMinutes(currentStartTime);
-        const endMinutes = timeToMinutes(newTime);
+        // Convert to hours and minutes
+        const hours = Math.floor(roundedMinutes / 60);
+        const minutes = roundedMinutes % 60;
 
-        if (endMinutes > startMinutes) {
-          currentEndTime = newTime;
-          setResizingTodo(prev => prev ? {
-            ...prev,
-            currentEndTime: newTime,
-          } : null);
+        // Clamp to 0-24 hour range
+        if (hours < 0 || hours >= 24) return;
+
+        const newTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+        if (type === 'bottom') {
+          // Resizing bottom: ensure end time is after start time
+          const startMinutes = timeToMinutes(currentStartTime);
+          const endMinutes = timeToMinutes(newTime);
+
+          if (endMinutes > startMinutes) {
+            currentEndTime = newTime;
+            setResizingTodo(prev => prev ? {
+              ...prev,
+              currentEndTime: newTime,
+            } : null);
+          }
+        } else {
+          // Resizing top: ensure start time is before end time
+          const startMinutes = timeToMinutes(newTime);
+          const endMinutes = timeToMinutes(currentEndTime);
+
+          if (startMinutes < endMinutes) {
+            currentStartTime = newTime;
+            setResizingTodo(prev => prev ? {
+              ...prev,
+              currentStartTime: newTime,
+            } : null);
+          }
         }
-      } else {
-        // Resizing top: ensure start time is before end time
-        const startMinutes = timeToMinutes(newTime);
-        const endMinutes = timeToMinutes(currentEndTime);
-
-        if (startMinutes < endMinutes) {
-          currentStartTime = newTime;
-          setResizingTodo(prev => prev ? {
-            ...prev,
-            currentStartTime: newTime,
-          } : null);
-        }
-      }
+      });
     };
 
     const handleMouseUp = () => {
+      // Cancel any pending animation frame
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+
       // Apply the resize using local variables
       onEditTodo?.(todoId, {
         startTime: currentStartTime,

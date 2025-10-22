@@ -67,76 +67,95 @@ export function useTodoDrag({
       offsetY,
     });
 
+    // Use requestAnimationFrame to throttle state updates for instant, smooth dragging
+    let animationFrameId: number | null = null;
+    let pendingUpdate = false;
+
     const handleMouseMove = (moveEvent: MouseEvent) => {
       if (!gridContainer) return;
 
-      // Calculate time based on scroll position and mouse Y
-      const gridRect = gridContainer.getBoundingClientRect();
-      const scrollTop = gridContainer.scrollTop;
+      // If we already have a pending update, skip this mousemove event
+      if (pendingUpdate) return;
 
-      // Mouse Y relative to the visible grid, plus scroll offset
-      const relativeY = moveEvent.clientY - gridRect.top + scrollTop;
+      pendingUpdate = true;
 
-      // Subtract the header height
-      const headerHeight = 73;
-      const contentY = relativeY - headerHeight;
+      // Schedule update on next animation frame for smooth 60fps dragging
+      animationFrameId = requestAnimationFrame(() => {
+        pendingUpdate = false;
 
-      if (contentY < 0) return;
+        // Calculate time based on scroll position and mouse Y
+        const gridRect = gridContainer.getBoundingClientRect();
+        const scrollTop = gridContainer.scrollTop;
 
-      // Calculate which day column we're over
-      const mouseX = moveEvent.clientX;
+        // Mouse Y relative to the visible grid, plus scroll offset
+        const relativeY = moveEvent.clientY - gridRect.top + scrollTop;
 
-      // Find the day column element at this X position
-      let targetDate = currentDate;
-      const dayElements = document.querySelectorAll('.calendar-day-column');
-      dayElements.forEach((element, index) => {
-        const dayRect = element.getBoundingClientRect();
-        if (mouseX >= dayRect.left && mouseX <= dayRect.right) {
-          targetDate = weekDays[index];
-        }
+        // Subtract the header height
+        const headerHeight = 73;
+        const contentY = relativeY - headerHeight;
+
+        if (contentY < 0) return;
+
+        // Calculate which day column we're over
+        const mouseX = moveEvent.clientX;
+
+        // Find the day column element at this X position
+        let targetDate = currentDate;
+        const dayElements = document.querySelectorAll('.calendar-day-column');
+        dayElements.forEach((element, index) => {
+          const dayRect = element.getBoundingClientRect();
+          if (mouseX >= dayRect.left && mouseX <= dayRect.right) {
+            targetDate = weekDays[index];
+          }
+        });
+
+        // Subtract the offset where the user clicked within the block
+        const adjustedY = contentY - offsetY;
+
+        // Calculate total minutes from top of grid
+        const totalMinutes = Math.floor((adjustedY / hourHeight) * 60);
+
+        // Round to 15-minute intervals
+        const roundedMinutes = Math.round(totalMinutes / 15) * 15;
+
+        // Calculate duration
+        const originalStartMinutes = timeToMinutes(startTime);
+        const originalEndMinutes = timeToMinutes(endTime);
+        const duration = originalEndMinutes - originalStartMinutes;
+
+        // Calculate new end time
+        const newEndMinutes = roundedMinutes + duration;
+
+        // Ensure we don't go past 24:00
+        if (roundedMinutes < 0 || newEndMinutes > 24 * 60) return;
+
+        const newStartHour = Math.floor(roundedMinutes / 60);
+        const newStartMin = roundedMinutes % 60;
+        const newEndHour = Math.floor(newEndMinutes / 60);
+        const newEndMin = newEndMinutes % 60;
+
+        const newStartTime = `${String(newStartHour).padStart(2, '0')}:${String(newStartMin).padStart(2, '0')}`;
+        const newEndTime = `${String(newEndHour).padStart(2, '0')}:${String(newEndMin).padStart(2, '0')}`;
+
+        currentDate = targetDate;
+        currentStartTime = newStartTime;
+        currentEndTime = newEndTime;
+
+        setDraggingTodo(prev => prev ? {
+          ...prev,
+          currentDate: targetDate,
+          currentStartTime: newStartTime,
+          currentEndTime: newEndTime,
+        } : null);
       });
-
-      // Subtract the offset where the user clicked within the block
-      const adjustedY = contentY - offsetY;
-
-      // Calculate total minutes from top of grid
-      const totalMinutes = Math.floor((adjustedY / hourHeight) * 60);
-
-      // Round to 15-minute intervals
-      const roundedMinutes = Math.round(totalMinutes / 15) * 15;
-
-      // Calculate duration
-      const originalStartMinutes = timeToMinutes(startTime);
-      const originalEndMinutes = timeToMinutes(endTime);
-      const duration = originalEndMinutes - originalStartMinutes;
-
-      // Calculate new end time
-      const newEndMinutes = roundedMinutes + duration;
-
-      // Ensure we don't go past 24:00
-      if (roundedMinutes < 0 || newEndMinutes > 24 * 60) return;
-
-      const newStartHour = Math.floor(roundedMinutes / 60);
-      const newStartMin = roundedMinutes % 60;
-      const newEndHour = Math.floor(newEndMinutes / 60);
-      const newEndMin = newEndMinutes % 60;
-
-      const newStartTime = `${String(newStartHour).padStart(2, '0')}:${String(newStartMin).padStart(2, '0')}`;
-      const newEndTime = `${String(newEndHour).padStart(2, '0')}:${String(newEndMin).padStart(2, '0')}`;
-
-      currentDate = targetDate;
-      currentStartTime = newStartTime;
-      currentEndTime = newEndTime;
-
-      setDraggingTodo(prev => prev ? {
-        ...prev,
-        currentDate: targetDate,
-        currentStartTime: newStartTime,
-        currentEndTime: newEndTime,
-      } : null);
     };
 
     const handleMouseUp = () => {
+      // Cancel any pending animation frame
+      if (animationFrameId !== null) {
+        cancelAnimationFrame(animationFrameId);
+      }
+
       // Apply the move using local variables
       if (currentDate.toDateString() !== todoDate.toDateString()) {
         // Date changed, use onUpdateTodoDateTime to update both date and time

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Repeat, Check } from 'lucide-react';
 import type { Todo, Category } from '@/types/calendar';
 import { getTodoBlockStyle } from '@/utils/calendarUtils';
@@ -23,7 +24,7 @@ interface TodoBlockProps {
   draggingTodo: { id: string; currentDate: Date; currentStartTime: string; currentEndTime: string } | null;
 }
 
-export function TodoBlock({
+const TodoBlockComponent = ({
   todo,
   category,
   date,
@@ -42,7 +43,7 @@ export function TodoBlock({
   handleResizeStart,
   resizingTodo,
   draggingTodo,
-}: TodoBlockProps) {
+}: TodoBlockProps) => {
   const isResizing = resizingTodo?.id === todo.id;
   const isDraggingThis = draggingTodo?.id === todo.id;
 
@@ -192,4 +193,27 @@ export function TodoBlock({
       />
     </div>
   );
-}
+};
+
+// Memoize TodoBlock to prevent unnecessary re-renders
+export const TodoBlock = memo(TodoBlockComponent, (prevProps, nextProps) => {
+  // Only re-render if these critical props change
+  return (
+    prevProps.todo.id === nextProps.todo.id &&
+    prevProps.todo.text === nextProps.todo.text &&
+    prevProps.todo.completed === nextProps.todo.completed &&
+    prevProps.todo.startTime === nextProps.todo.startTime &&
+    prevProps.todo.endTime === nextProps.todo.endTime &&
+    prevProps.hourHeight === nextProps.hourHeight &&
+    prevProps.layout.width === nextProps.layout.width &&
+    prevProps.layout.left === nextProps.layout.left &&
+    prevProps.category?.color === nextProps.category?.color &&
+    prevProps.editingTodoId === nextProps.editingTodoId &&
+    prevProps.editingText === nextProps.editingText &&
+    prevProps.resizingTodo?.id === nextProps.resizingTodo?.id &&
+    prevProps.resizingTodo?.currentStartTime === nextProps.resizingTodo?.currentStartTime &&
+    prevProps.resizingTodo?.currentEndTime === nextProps.resizingTodo?.currentEndTime &&
+    prevProps.draggingTodo?.id === nextProps.draggingTodo?.id &&
+    prevProps.draggingTodo?.currentDate.toDateString() === nextProps.draggingTodo?.currentDate.toDateString()
+  );
+});

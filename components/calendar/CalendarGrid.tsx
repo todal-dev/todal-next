@@ -1,3 +1,4 @@
+import { useMemo, memo } from 'react';
 import type { Todo, Category } from '@/types/calendar';
 import { getTodoBlockStyle, roundToQuarterHour } from '@/utils/calendarUtils';
 import { calculateEventLayout } from '@/utils/eventLayoutUtils';
@@ -33,7 +34,7 @@ interface CalendarGridProps {
   handleResizeStart: (e: React.MouseEvent, todoId: string, direction: 'top' | 'bottom', startTime: string, endTime: string) => void;
 }
 
-export function CalendarGrid({
+const CalendarGridComponent = ({
   weekDays,
   weekTodos,
   todos,
@@ -61,7 +62,18 @@ export function CalendarGrid({
   handleContextMenu,
   handleTodoDragStart,
   handleResizeStart,
-}: CalendarGridProps) {
+}: CalendarGridProps) => {
+  // Pre-calculate event layouts for all days to avoid recalculation on every render
+  const allEventLayouts = useMemo(() => {
+    const layouts: Record<string, Record<string, { width: number; left: number }>> = {};
+    weekDays.forEach((date) => {
+      const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const dayTodos = weekTodos[dateKey] || [];
+      layouts[dateKey] = calculateEventLayout(dayTodos);
+    });
+    return layouts;
+  }, [weekDays, weekTodos]);
+
   return (
     <div ref={gridScrollRef} className="flex-1 overflow-auto calendar-grid">
       {/* Week Days Header - Fixed at top */}
@@ -120,8 +132,8 @@ export function CalendarGrid({
             const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
             const dayTodos = weekTodos[dateKey] || [];
 
-            // Calculate layout for overlapping events
-            const eventLayout = calculateEventLayout(dayTodos);
+            // Use pre-calculated layout for better performance
+            const eventLayout = allEventLayouts[dateKey] || {};
 
             const isToday =
               date.getDate() === currentTime.getDate() &&
@@ -311,4 +323,8 @@ export function CalendarGrid({
       </div>
     </div>
   );
-}
+};
+
+// Memoize CalendarGrid to prevent unnecessary re-renders
+// This is important as it renders the entire calendar grid with many TodoBlocks
+export const CalendarGrid = memo(CalendarGridComponent);

@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -36,7 +37,7 @@ interface TodoItemProps {
   selectedDate: Date;
 }
 
-export function TodoItem({
+const TodoItemComponent = ({
   todo,
   level = 0,
   categoryId,
@@ -50,7 +51,7 @@ export function TodoItem({
   onMove,
   onAddTodo,
   selectedDate,
-}: TodoItemProps) {
+}: TodoItemProps) => {
   const [editingTime, setEditingTime] = useState(false);
 
   const {
@@ -295,4 +296,22 @@ export function TodoItem({
       )}
     </div>
   );
-}
+};
+
+// Memoize TodoItem to prevent unnecessary re-renders, especially important for recursive rendering
+export const TodoItem = memo(TodoItemComponent, (prevProps, nextProps) => {
+  // Only re-render if these critical props change
+  return (
+    prevProps.todo.id === nextProps.todo.id &&
+    prevProps.todo.text === nextProps.todo.text &&
+    prevProps.todo.completed === nextProps.todo.completed &&
+    prevProps.todo.startTime === nextProps.todo.startTime &&
+    prevProps.todo.endTime === nextProps.todo.endTime &&
+    prevProps.todo.subtasks?.length === nextProps.todo.subtasks?.length &&
+    prevProps.level === nextProps.level &&
+    prevProps.categoryId === nextProps.categoryId &&
+    prevProps.index === nextProps.index &&
+    prevProps.siblings.length === nextProps.siblings.length &&
+    prevProps.parentId === nextProps.parentId
+  );
+});

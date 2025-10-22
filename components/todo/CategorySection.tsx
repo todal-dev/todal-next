@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Trash2 } from 'lucide-react';
@@ -53,7 +54,7 @@ const colorPalette = [
   '#84CC16',
 ];
 
-export function CategorySection({
+const CategorySectionComponent = ({
   category,
   selectedDate,
   onToggleTodo,
@@ -65,7 +66,7 @@ export function CategorySection({
   onEditCategory,
   onChangeColor,
   onDeleteCategory,
-}: CategorySectionProps) {
+}: CategorySectionProps) => {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
 
   useEffect(() => {
@@ -195,4 +196,21 @@ export function CategorySection({
       </div>
     </motion.div>
   );
-}
+};
+
+// Memoize CategorySection to prevent unnecessary re-renders
+// Custom comparison to check if category items have changed
+export const CategorySection = memo(CategorySectionComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.category.id === nextProps.category.id &&
+    prevProps.category.name === nextProps.category.name &&
+    prevProps.category.color === nextProps.category.color &&
+    prevProps.category.items.length === nextProps.category.items.length &&
+    prevProps.category.items.every((item, idx) =>
+      item.id === nextProps.category.items[idx]?.id &&
+      item.text === nextProps.category.items[idx]?.text &&
+      item.completed === nextProps.category.items[idx]?.completed
+    ) &&
+    prevProps.selectedDate.getTime() === nextProps.selectedDate.getTime()
+  );
+});

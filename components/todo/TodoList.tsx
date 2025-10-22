@@ -17,8 +17,11 @@ import { CategorySection } from './CategorySection';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { RecurringSection } from './RecurringSection';
 import { AddRecurringDialog } from '@/components/ui/AddRecurringDialog';
+import { useTodoContext } from '@/contexts/TodoContext';
+import { useCategoryContext } from '@/contexts/CategoryContext';
+import type { Todo } from '@/types/calendar';
 
-interface RecurrenceRule {
+interface RecurrenceRuleLocal {
   frequency: 'daily' | 'weekly' | 'monthly';
   interval: number;
   startDate?: Date;
@@ -26,63 +29,29 @@ interface RecurrenceRule {
   daysOfWeek?: number[]; // 1=월, 2=화, ..., 7=일
 }
 
-interface Todo {
-  id: string;
-  text: string;
-  completed: boolean;
-  date: Date;
-  categoryId: string;
-  subtasks?: Todo[];
-  parentId?: string;
-  startTime?: string;
-  endTime?: string;
-  recurrenceRule?: RecurrenceRule; // 반복 규칙
-  recurrenceId?: string; // 원본 반복 일정 ID
-}
+export function TodoList() {
+  // Get values from contexts
+  const {
+    todos,
+    selectedDate,
+    onAddTodo,
+    onDeleteTodo,
+    onToggleTodo,
+    onEditTodo,
+    onUpdateTodoTime,
+    onMoveTodo,
+  } = useTodoContext();
 
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-}
-
-interface TodoListProps {
-  selectedDate?: Date;
-  todos: Todo[];
-  categories: Category[];
-  onAddTodo: (text: string, categoryId: string, date: Date, parentId?: string, startTime?: string, endTime?: string) => void;
-  onDeleteTodo: (id: string) => void;
-  onToggleTodo: (id: string) => void;
-  onEditTodo: (id: string, text: string) => void;
-  onUpdateTodoTime?: (id: string, startTime?: string, endTime?: string) => void;
-  onAddCategory: (name: string, color: string) => void;
-  onEditCategory: (id: string, name: string) => void;
-  onChangeColor: (id: string, color: string) => void;
-  onDeleteCategory: (id: string) => void;
-  onMoveTodo?: (todoId: string, newCategoryId: string, newParentId?: string, newIndex?: number) => void;
-  onAddRecurring?: (text: string, startTime: string, endTime: string, recurrenceRule: RecurrenceRule) => void;
-  onEditRecurring?: (id: string, text: string, startTime: string, endTime: string, recurrenceRule: RecurrenceRule) => void;
-  onDeleteRecurring?: (id: string) => void;
-}
-
-export function TodoList({
-  selectedDate = new Date(),
-  todos,
-  categories,
-  onAddTodo,
-  onDeleteTodo,
-  onToggleTodo,
-  onEditTodo,
-  onUpdateTodoTime,
-  onAddCategory,
-  onEditCategory,
-  onChangeColor,
-  onDeleteCategory,
-  onMoveTodo,
-  onAddRecurring,
-  onEditRecurring,
-  onDeleteRecurring,
-}: TodoListProps) {
+  const {
+    categories,
+    onAddCategory,
+    onEditCategory,
+    onChangeColor,
+    onDeleteCategory,
+    onAddRecurring,
+    onEditRecurring,
+    onDeleteRecurring,
+  } = useCategoryContext();
   const [addingNewCategory, setAddingNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
@@ -93,7 +62,7 @@ export function TodoList({
     text: string;
     startTime?: string;
     endTime?: string;
-    recurrenceRule?: RecurrenceRule;
+    recurrenceRule?: RecurrenceRuleLocal;
   } | undefined>(undefined);
 
   // DnD sensors
@@ -173,7 +142,7 @@ export function TodoList({
     text: string,
     startTime: string,
     endTime: string,
-    recurrenceRule: RecurrenceRule
+    recurrenceRule: RecurrenceRuleLocal
   ) => {
     if (editingRecurring) {
       onEditRecurring?.(editingRecurring.id, text, startTime, endTime, recurrenceRule);
