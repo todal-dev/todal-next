@@ -99,7 +99,7 @@ const TodoBlockComponent = ({
           handleTodoDragStart(e, todo.id, todo.date, todo.startTime!, todo.endTime!);
         }
       }}
-      className="absolute py-1 pr-2 pl-1.5 rounded text-xs overflow-visible cursor-move hover:brightness-95 transition-all group select-none"
+      className={`absolute py-1 pr-2 pl-1.5 rounded text-xs overflow-visible cursor-move hover:brightness-95 group select-none ${isResizing ? '' : 'transition-all'}`}
       style={{
         ...style,
         backgroundColor: category?.color || '#3B82F6',
