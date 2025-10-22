@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { MiniCalendar } from '@/components/layout/CalendarPlaceholder';
-import { BigCalendar } from '@/components/layout/WeekCalendar';
+import { MiniCalendar } from '@/components/calendar/MiniCalendar';
+import { BigCalendar } from '@/components/calendar/WeekCalendar';
 import { TodoList } from '@/components/todo/TodoList';
 import type { Todo, Category, RecurrenceRule } from '@/types/calendar';
 
