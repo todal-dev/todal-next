@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { MiniCalendar } from '@/components/layout/CalendarPlaceholder';
-import { BigCalendar } from '@/components/layout/Header';
+import { BigCalendar } from '@/components/layout/WeekCalendar';
 import { TodoList } from '@/components/todo/TodoList';
 
 interface RecurrenceRule {

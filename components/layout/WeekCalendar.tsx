@@ -8,11 +8,16 @@ import { CategoryChangeDialog } from '@/components/ui/CategoryChangeDialog';
 import { DateMoveDialog } from '@/components/ui/DateMoveDialog';
 import { DuplicateDialog } from '@/components/ui/DuplicateDialog';
 import type { BigCalendarProps, Todo } from '@/types/calendar';
-import { getWeekDays, roundToQuarterHour, timeToMinutes, getTodoBlockStyle } from '@/utils/calendarUtils';
+import { getWeekDays, roundToQuarterHour, getTodoBlockStyle } from '@/utils/calendarUtils';
 import { calculateEventLayout } from '@/utils/eventLayoutUtils';
 import { generateRecurringEvents } from '@/utils/recurringUtils';
 import { useCalendarDrag } from '@/hooks/useCalendarDrag';
 import { useCalendarFilters } from '@/hooks/useCalendarFilters';
+import { useHourHeight } from '@/hooks/useHourHeight';
+import { useInlineEdit } from '@/hooks/useInlineEdit';
+import { useDialogs } from '@/hooks/useDialogs';
+import { useResizeTodo } from '@/hooks/useResizeTodo';
+import { useTodoDrag } from '@/hooks/useTodoDrag';
 
 export function BigCalendar({
   selectedDate = new Date(),
@@ -31,21 +36,8 @@ export function BigCalendar({
     return new Date(date.setDate(diff));
   });
 
-  // Hour height with localStorage (default 40px, min 33px, max 200px)
-  const [hourHeight, setHourHeight] = useState(40);
-
-  // Load from localStorage after mount to avoid hydration mismatch
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('calendar-hour-height');
-      if (saved) {
-        const parsedHeight = parseInt(saved, 10);
-        if (!isNaN(parsedHeight)) {
-          setHourHeight(Math.max(33, Math.min(200, parsedHeight)));
-        }
-      }
-    }
-  }, []);
+  // Hour height with localStorage and zoom functionality
+  const hourHeight = useHourHeight();
 
   // Current time tracking
   const [currentTime, setCurrentTime] = useState(new Date());
@@ -67,74 +59,62 @@ export function BigCalendar({
   }>({ isOpen: false, x: 0, y: 0, todoId: '' });
 
   // Dialog states
-  const [categoryDialog, setCategoryDialog] = useState<{
-    isOpen: boolean;
-    todoId: string;
-    currentCategoryId: string;
-  }>({ isOpen: false, todoId: '', currentCategoryId: '' });
-
-  const [dateDialog, setDateDialog] = useState<{
-    isOpen: boolean;
-    todoId: string;
-    currentDate: Date;
-  }>({ isOpen: false, todoId: '', currentDate: new Date() });
-
-  const [duplicateDialog, setDuplicateDialog] = useState<{
-    isOpen: boolean;
-    todoId: string;
-    todoName: string;
-  }>({ isOpen: false, todoId: '', todoName: '' });
-
-  const [recurringDialog, setRecurringDialog] = useState<{
-    isOpen: boolean;
-    todoId: string;
-    action: 'edit' | 'delete' | null;
-  }>({ isOpen: false, todoId: '', action: null });
+  const {
+    categoryDialog,
+    dateDialog,
+    duplicateDialog,
+    recurringDialog,
+    openCategoryDialog,
+    closeCategoryDialog,
+    openDateDialog,
+    closeDateDialog,
+    openDuplicateDialog,
+    closeDuplicateDialog,
+    openRecurringDialog,
+    closeRecurringDialog,
+  } = useDialogs();
 
   // Inline editing state
-  const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
-  const [editingText, setEditingText] = useState('');
-  const [pendingEditId, setPendingEditId] = useState<string | null>(null);
+  const {
+    editingTodoId,
+    editingText,
+    setEditingText,
+    setPendingEditId,
+    startEdit,
+    finishEdit: handleFinishEdit,
+    cancelEdit,
+  } = useInlineEdit({ todos, onEditTodo, onDeleteTodo });
 
   // Calendar drag hook (event creation)
   const { creatingEvent, handleDragStart: handleCalendarDragStart, handleDragMove: handleCalendarDragMove, handleDragEnd: handleCalendarDragEnd } = useCalendarDrag({
     hourHeight,
     onAddTodo,
     onFinishEdit: () => {
-      if (editingTodoId) {
-        const trimmedText = editingText.trim();
-        if (trimmedText) {
-          onEditTodo?.(editingTodoId, { text: trimmedText });
-        } else {
-          onDeleteTodo?.(editingTodoId);
-        }
-        setEditingTodoId(null);
-        setEditingText('');
-      }
+      handleFinishEdit();
     },
   });
 
-  // Resize state
-  const [resizingTodo, setResizingTodo] = useState<{
-    id: string;
-    type: 'top' | 'bottom';
-    originalStartTime: string;
-    originalEndTime: string;
-    currentStartTime: string;
-    currentEndTime: string;
-  } | null>(null);
+  // Calculate week days
+  const weekDays = useMemo(() => getWeekDays(currentWeekStart), [currentWeekStart]);
 
-  // Dragging todo (for moving to any day)
-  const [draggingTodo, setDraggingTodo] = useState<{
-    id: string;
-    originalDate: Date;
-    originalStartTime: string;
-    originalEndTime: string;
-    currentDate: Date;
-    currentStartTime: string;
-    currentEndTime: string;
-    offsetY: number;
-  } | null>(null);
+  // Ref for calendar grid
+  const gridScrollRef = useRef<HTMLDivElement>(null);
+
+  // Resize functionality
+  const { resizingTodo, handleResizeStart } = useResizeTodo({
+    hourHeight,
+    gridScrollRef,
+    onEditTodo,
+  });
+
+  // Todo drag functionality
+  const { draggingTodo, handleTodoDragStart } = useTodoDrag({
+    hourHeight,
+    gridScrollRef,
+    weekDays,
+    onUpdateTodoDateTime,
+    onEditTodo,
+  });
 
   // Filter states
   const {
@@ -147,42 +127,6 @@ export function BigCalendar({
     handleCategoryToggle,
     handleCompletionFilterChange,
   } = useCalendarFilters();
-
-  // Ref for calendar grid
-  const gridScrollRef = useRef<HTMLDivElement>(null);
-
-  // Handle pending edit after todo is created
-  useEffect(() => {
-    if (pendingEditId) {
-      const todo = todos.find(t => t.id === pendingEditId);
-      if (todo) {
-        setEditingTodoId(pendingEditId);
-        setEditingText(todo.text || '');
-        setPendingEditId(null);
-      }
-    }
-  }, [todos, pendingEditId]);
-
-  // Clean up empty todos when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-
-      // Don't process if clicking on input or inside editing todo
-      if (target.tagName === 'INPUT' || target.closest('input')) {
-        return;
-      }
-
-      if (editingTodoId && editingText.trim() === '') {
-        onDeleteTodo?.(editingTodoId);
-        setEditingTodoId(null);
-        setEditingText('');
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [editingTodoId, editingText, onDeleteTodo]);
 
   // Close filter dropdowns when clicking outside
   useEffect(() => {
@@ -202,33 +146,6 @@ export function BigCalendar({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showCategoryFilter, showCompletionFilter]);
 
-  // Ctrl+Wheel zoom functionality
-  useEffect(() => {
-    const handleWheel = (e: Event) => {
-      const wheelEvent = e as WheelEvent;
-      if (wheelEvent.ctrlKey || wheelEvent.metaKey) {
-        wheelEvent.preventDefault();
-
-        const target = wheelEvent.target as HTMLElement;
-        const calendarGrid = document.querySelector('.calendar-grid');
-
-        if (calendarGrid && calendarGrid.contains(target)) {
-          const delta = wheelEvent.deltaY;
-          const zoomFactor = delta > 0 ? 0.9 : 1.1;
-
-          setHourHeight((prev) => {
-            const newHeight = Math.round(prev * zoomFactor);
-            const clampedHeight = Math.max(33, Math.min(200, newHeight));
-            localStorage.setItem('calendar-hour-height', clampedHeight.toString());
-            return clampedHeight;
-          });
-        }
-      }
-    };
-
-    window.addEventListener('wheel', handleWheel, { passive: false });
-    return () => window.removeEventListener('wheel', handleWheel);
-  }, []);
 
   const handlePrevWeek = () => {
     const newDate = new Date(currentWeekStart);
@@ -242,7 +159,6 @@ export function BigCalendar({
     setCurrentWeekStart(newDate);
   };
 
-  const weekDays = getWeekDays(currentWeekStart);
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
@@ -314,11 +230,7 @@ export function BigCalendar({
     const todo = todos.find((t) => t.id === contextMenu.todoId);
     if (!todo) return;
 
-    setDuplicateDialog({
-      isOpen: true,
-      todoId: todo.id,
-      todoName: todo.text,
-    });
+    openDuplicateDialog(todo.id, todo.text);
   };
 
   const handleConfirmDuplicate = () => {
@@ -340,11 +252,7 @@ export function BigCalendar({
     if (!todo) return;
 
     if (todo.recurrenceId) {
-      setRecurringDialog({
-        isOpen: true,
-        todoId: todo.id,
-        action: 'delete',
-      });
+      openRecurringDialog(todo.id, 'delete');
     } else {
       onDeleteTodo?.(todo.id);
     }
@@ -354,11 +262,7 @@ export function BigCalendar({
     const todo = todos.find((t) => t.id === contextMenu.todoId);
     if (!todo) return;
 
-    setDateDialog({
-      isOpen: true,
-      todoId: todo.id,
-      currentDate: todo.date,
-    });
+    openDateDialog(todo.id, todo.date);
   };
 
   const handleConfirmMove = (newDate: Date) => {
@@ -369,11 +273,7 @@ export function BigCalendar({
     const todo = todos.find((t) => t.id === contextMenu.todoId);
     if (!todo) return;
 
-    setCategoryDialog({
-      isOpen: true,
-      todoId: todo.id,
-      currentCategoryId: todo.categoryId,
-    });
+    openCategoryDialog(todo.id, todo.categoryId);
   };
 
   const handleConfirmCategoryChange = (categoryId: string) => {
@@ -384,8 +284,7 @@ export function BigCalendar({
     const todo = todos.find((t) => t.id === contextMenu.todoId);
     if (!todo) return;
 
-    setEditingTodoId(todo.id);
-    setEditingText(todo.text);
+    startEdit(todo.id, todo.text);
   };
 
   const handleSetRecurrence = () => {
@@ -402,246 +301,7 @@ export function BigCalendar({
     }
   };
 
-  // Inline editing handlers
-  const handleFinishEdit = () => {
-    if (editingTodoId) {
-      const trimmedText = editingText.trim();
-      if (trimmedText) {
-        // Update todo with new text
-        onEditTodo?.(editingTodoId, { text: trimmedText });
-      } else {
-        // Delete todo if text is empty (like Google Calendar)
-        onDeleteTodo?.(editingTodoId);
-      }
-    }
-    setEditingTodoId(null);
-    setEditingText('');
-  };
 
-  // Resize handlers (top and bottom)
-  const handleResizeStart = (
-    e: React.MouseEvent,
-    todoId: string,
-    type: 'top' | 'bottom',
-    startTime: string,
-    endTime: string
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // Use local variables to avoid closure issues
-    let currentStartTime = startTime;
-    let currentEndTime = endTime;
-
-    // Get the grid container for coordinate calculations
-    const gridContainer = gridScrollRef.current;
-    if (!gridContainer) return;
-
-    setResizingTodo({
-      id: todoId,
-      type,
-      originalStartTime: startTime,
-      originalEndTime: endTime,
-      currentStartTime: startTime,
-      currentEndTime: endTime,
-    });
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!gridContainer) return;
-
-      // Calculate time based on scroll position and mouse Y
-      const gridRect = gridContainer.getBoundingClientRect();
-      const scrollTop = gridContainer.scrollTop;
-
-      // Mouse Y relative to the visible grid, plus scroll offset
-      const relativeY = moveEvent.clientY - gridRect.top + scrollTop;
-
-      // Subtract the header height (approximately 73px based on the code)
-      const headerHeight = 73; // Adjust if needed
-      const contentY = relativeY - headerHeight;
-
-      if (contentY < 0) return;
-
-      // Calculate total minutes from top of grid
-      const totalMinutes = Math.floor((contentY / hourHeight) * 60);
-
-      // Round to 15-minute intervals
-      const roundedMinutes = Math.round(totalMinutes / 15) * 15;
-
-      // Convert to hours and minutes
-      const hours = Math.floor(roundedMinutes / 60);
-      const minutes = roundedMinutes % 60;
-
-      // Clamp to 0-24 hour range
-      if (hours < 0 || hours >= 24) return;
-
-      const newTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-
-      if (type === 'bottom') {
-        // Resizing bottom: ensure end time is after start time
-        const startMinutes = timeToMinutes(currentStartTime);
-        const endMinutes = timeToMinutes(newTime);
-
-        if (endMinutes > startMinutes) {
-          currentEndTime = newTime;
-          setResizingTodo(prev => prev ? {
-            ...prev,
-            currentEndTime: newTime,
-          } : null);
-        }
-      } else {
-        // Resizing top: ensure start time is before end time
-        const startMinutes = timeToMinutes(newTime);
-        const endMinutes = timeToMinutes(currentEndTime);
-
-        if (startMinutes < endMinutes) {
-          currentStartTime = newTime;
-          setResizingTodo(prev => prev ? {
-            ...prev,
-            currentStartTime: newTime,
-          } : null);
-        }
-      }
-    };
-
-    const handleMouseUp = () => {
-      // Apply the resize using local variables
-      onEditTodo?.(todoId, {
-        startTime: currentStartTime,
-        endTime: currentEndTime,
-      });
-      setResizingTodo(null);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
-
-  // Todo drag move handler (for moving to any day)
-  const handleTodoDragStart = (
-    e: React.MouseEvent,
-    todoId: string,
-    todoDate: Date,
-    startTime: string,
-    endTime: string
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const offsetY = e.clientY - rect.top;
-
-    // Use local variables to avoid closure issues
-    let currentDate = todoDate;
-    let currentStartTime = startTime;
-    let currentEndTime = endTime;
-
-    // Get the grid container for coordinate calculations
-    const gridContainer = gridScrollRef.current;
-    if (!gridContainer) return;
-
-    setDraggingTodo({
-      id: todoId,
-      originalDate: todoDate,
-      originalStartTime: startTime,
-      originalEndTime: endTime,
-      currentDate: todoDate,
-      currentStartTime: startTime,
-      currentEndTime: endTime,
-      offsetY,
-    });
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!gridContainer) return;
-
-      // Calculate time based on scroll position and mouse Y
-      const gridRect = gridContainer.getBoundingClientRect();
-      const scrollTop = gridContainer.scrollTop;
-
-      // Mouse Y relative to the visible grid, plus scroll offset
-      const relativeY = moveEvent.clientY - gridRect.top + scrollTop;
-
-      // Subtract the header height
-      const headerHeight = 73;
-      const contentY = relativeY - headerHeight;
-
-      if (contentY < 0) return;
-
-      // Calculate which day column we're over
-      const mouseX = moveEvent.clientX;
-
-      // Find the day column element at this X position
-      let targetDate = currentDate;
-      const dayElements = document.querySelectorAll('.calendar-day-column');
-      dayElements.forEach((element, index) => {
-        const dayRect = element.getBoundingClientRect();
-        if (mouseX >= dayRect.left && mouseX <= dayRect.right) {
-          targetDate = weekDays[index];
-        }
-      });
-
-      // Subtract the offset where the user clicked within the block
-      const adjustedY = contentY - offsetY;
-
-      // Calculate total minutes from top of grid
-      const totalMinutes = Math.floor((adjustedY / hourHeight) * 60);
-
-      // Round to 15-minute intervals
-      const roundedMinutes = Math.round(totalMinutes / 15) * 15;
-
-      // Calculate duration
-      const originalStartMinutes = timeToMinutes(startTime);
-      const originalEndMinutes = timeToMinutes(endTime);
-      const duration = originalEndMinutes - originalStartMinutes;
-
-      // Calculate new end time
-      const newEndMinutes = roundedMinutes + duration;
-
-      // Ensure we don't go past 24:00
-      if (roundedMinutes < 0 || newEndMinutes > 24 * 60) return;
-
-      const newStartHour = Math.floor(roundedMinutes / 60);
-      const newStartMin = roundedMinutes % 60;
-      const newEndHour = Math.floor(newEndMinutes / 60);
-      const newEndMin = newEndMinutes % 60;
-
-      const newStartTime = `${String(newStartHour).padStart(2, '0')}:${String(newStartMin).padStart(2, '0')}`;
-      const newEndTime = `${String(newEndHour).padStart(2, '0')}:${String(newEndMin).padStart(2, '0')}`;
-
-      currentDate = targetDate;
-      currentStartTime = newStartTime;
-      currentEndTime = newEndTime;
-
-      setDraggingTodo(prev => prev ? {
-        ...prev,
-        currentDate: targetDate,
-        currentStartTime: newStartTime,
-        currentEndTime: newEndTime,
-      } : null);
-    };
-
-    const handleMouseUp = () => {
-      // Apply the move using local variables
-      if (currentDate.toDateString() !== todoDate.toDateString()) {
-        // Date changed, use onUpdateTodoDateTime to update both date and time
-        onUpdateTodoDateTime?.(todoId, currentDate, currentStartTime, currentEndTime);
-      } else {
-        // Same date, just update time
-        onEditTodo?.(todoId, {
-          startTime: currentStartTime,
-          endTime: currentEndTime,
-        });
-      }
-      setDraggingTodo(null);
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  };
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -1096,10 +756,7 @@ export function BigCalendar({
                                 onKeyDown={(e) => {
                                   e.stopPropagation();
                                   if (e.key === 'Enter') handleFinishEdit();
-                                  if (e.key === 'Escape') {
-                                    setEditingTodoId(null);
-                                    setEditingText('');
-                                  }
+                                  if (e.key === 'Escape') cancelEdit();
                                 }}
                                 style={{
                                   color: 'white',
@@ -1114,8 +771,7 @@ export function BigCalendar({
                                 className="font-semibold cursor-text hover:underline break-words"
                                 onDoubleClick={(e) => {
                                   e.stopPropagation();
-                                  setEditingTodoId(todo.id);
-                                  setEditingText(todo.text);
+                                  startEdit(todo.id, todo.text);
                                 }}
                               >
                                 {todo.text || '(제목 없음)'}
@@ -1164,7 +820,7 @@ export function BigCalendar({
         isOpen={categoryDialog.isOpen}
         currentCategoryId={categoryDialog.currentCategoryId}
         categories={categories}
-        onClose={() => setCategoryDialog({ ...categoryDialog, isOpen: false })}
+        onClose={closeCategoryDialog}
         onConfirm={handleConfirmCategoryChange}
       />
 
@@ -1172,7 +828,7 @@ export function BigCalendar({
       <DateMoveDialog
         isOpen={dateDialog.isOpen}
         currentDate={dateDialog.currentDate}
-        onClose={() => setDateDialog({ ...dateDialog, isOpen: false })}
+        onClose={closeDateDialog}
         onConfirm={handleConfirmMove}
       />
 
@@ -1180,7 +836,7 @@ export function BigCalendar({
       <DuplicateDialog
         isOpen={duplicateDialog.isOpen}
         todoName={duplicateDialog.todoName}
-        onClose={() => setDuplicateDialog({ ...duplicateDialog, isOpen: false })}
+        onClose={closeDuplicateDialog}
         onConfirm={handleConfirmDuplicate}
       />
 
@@ -1188,20 +844,20 @@ export function BigCalendar({
       <RecurringEventDialog
         isOpen={recurringDialog.isOpen}
         title={recurringDialog.action === 'delete' ? '반복 일정 삭제' : '반복 일정 수정'}
-        onClose={() => setRecurringDialog({ ...recurringDialog, isOpen: false })}
+        onClose={closeRecurringDialog}
         onSelectThis={() => {
           const todo = todos.find((t) => t.id === recurringDialog.todoId);
           if (todo && recurringDialog.action === 'delete') {
             onDeleteTodo?.(todo.id);
           }
-          setRecurringDialog({ ...recurringDialog, isOpen: false });
+          closeRecurringDialog();
         }}
         onSelectAll={() => {
           const todo = todos.find((t) => t.id === recurringDialog.todoId);
           if (todo && todo.recurrenceId && recurringDialog.action === 'delete') {
             onDeleteTodo?.(todo.recurrenceId);
           }
-          setRecurringDialog({ ...recurringDialog, isOpen: false });
+          closeRecurringDialog();
         }}
       />
     </div>
