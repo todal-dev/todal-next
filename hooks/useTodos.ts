@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { Todo, RecurrenceRule } from '@/types/calendar';
 import { formatDateKey } from '@/utils/calendarUtils';
 import {
@@ -17,7 +17,7 @@ export function useTodos(initialTodos: Todo[] = []) {
   const [todos, setTodos] = useState<Todo[]>(initialTodos);
 
   // Add a new todo
-  const handleAddTodo = (
+  const handleAddTodo = useCallback((
     text: string,
     categoryId: string,
     date: Date,
@@ -37,88 +37,92 @@ export function useTodos(initialTodos: Todo[] = []) {
       endTime,
     };
 
-    if (parentId) {
-      // Add as subtask
-      setTodos(addSubtaskRecursively(todos, parentId, newTodo));
-    } else {
-      // Add as top-level todo
-      setTodos([...todos, newTodo]);
-    }
-  };
+    setTodos(prevTodos => {
+      if (parentId) {
+        // Add as subtask
+        return addSubtaskRecursively(prevTodos, parentId, newTodo);
+      } else {
+        // Add as top-level todo
+        return [...prevTodos, newTodo];
+      }
+    });
+  }, []);
 
   // Delete a todo (recursively deletes subtasks)
-  const handleDeleteTodo = (id: string) => {
-    setTodos(deleteRecursively(todos, id));
-  };
+  const handleDeleteTodo = useCallback((id: string) => {
+    setTodos(prevTodos => deleteRecursively(prevTodos, id));
+  }, []);
 
   // Toggle todo completion (toggles all subtasks, updates parent)
-  const handleToggleTodo = (id: string) => {
-    setTodos(toggleRecursively(todos, id));
-  };
+  const handleToggleTodo = useCallback((id: string) => {
+    setTodos(prevTodos => toggleRecursively(prevTodos, id));
+  }, []);
 
   // Edit todo text
-  const handleEditTodo = (id: string, text: string) => {
-    setTodos(editRecursively(todos, id, text));
-  };
+  const handleEditTodo = useCallback((id: string, text: string) => {
+    setTodos(prevTodos => editRecursively(prevTodos, id, text));
+  }, []);
 
   // Update todo time
-  const handleUpdateTodoTime = (id: string, startTime?: string, endTime?: string) => {
-    setTodos(updateTimeRecursively(todos, id, startTime, endTime));
-  };
+  const handleUpdateTodoTime = useCallback((id: string, startTime?: string, endTime?: string) => {
+    setTodos(prevTodos => updateTimeRecursively(prevTodos, id, startTime, endTime));
+  }, []);
 
   // Update todo date and time
-  const handleUpdateTodoDateTime = (
+  const handleUpdateTodoDateTime = useCallback((
     id: string,
     date: Date,
     startTime?: string,
     endTime?: string
   ) => {
-    setTodos(updateDateRecursively(todos, id, date, startTime, endTime));
-  };
+    setTodos(prevTodos => updateDateRecursively(prevTodos, id, date, startTime, endTime));
+  }, []);
 
   // Update todo with partial updates
-  const handleUpdateTodo = (id: string, updates: Partial<Todo>) => {
-    setTodos(updateTodoRecursively(todos, id, updates));
-  };
+  const handleUpdateTodo = useCallback((id: string, updates: Partial<Todo>) => {
+    setTodos(prevTodos => updateTodoRecursively(prevTodos, id, updates));
+  }, []);
 
   // Move todo to different category/parent
-  const handleMoveTodo = (
+  const handleMoveTodo = useCallback((
     todoId: string,
     newCategoryId: string,
     newParentId?: string,
     newIndex?: number
   ) => {
-    let movedTodo: Todo | null = null;
+    setTodos(prevTodos => {
+      let movedTodo: Todo | null = null;
 
-    // Find and remove the todo
-    const newTodos = findAndRemoveTodo(todos, todoId, (todo) => {
-      movedTodo = { ...todo, categoryId: newCategoryId, parentId: newParentId };
+      // Find and remove the todo
+      const newTodos = findAndRemoveTodo(prevTodos, todoId, (todo) => {
+        movedTodo = { ...todo, categoryId: newCategoryId, parentId: newParentId };
+      });
+
+      if (!movedTodo) return prevTodos;
+
+      // Insert at new position
+      if (newParentId) {
+        // Move as subtask
+        return addToParent(newTodos, newParentId, movedTodo, newIndex);
+      } else {
+        // Move as top-level todo
+        const insertIndex = newIndex !== undefined ? Math.min(newIndex, newTodos.length) : newTodos.length;
+        return [
+          ...newTodos.slice(0, insertIndex),
+          movedTodo,
+          ...newTodos.slice(insertIndex),
+        ];
+      }
     });
-
-    if (!movedTodo) return;
-
-    // Insert at new position
-    if (newParentId) {
-      // Move as subtask
-      setTodos(addToParent(newTodos, newParentId, movedTodo, newIndex));
-    } else {
-      // Move as top-level todo
-      const insertIndex = newIndex !== undefined ? Math.min(newIndex, newTodos.length) : newTodos.length;
-      setTodos([
-        ...newTodos.slice(0, insertIndex),
-        movedTodo,
-        ...newTodos.slice(insertIndex),
-      ]);
-    }
-  };
+  }, []);
 
   // Move todo to a different date
-  const handleMoveTodoToDate = (id: string, newDate: Date) => {
-    setTodos(updateTodoRecursively(todos, id, { date: newDate }));
-  };
+  const handleMoveTodoToDate = useCallback((id: string, newDate: Date) => {
+    setTodos(prevTodos => updateTodoRecursively(prevTodos, id, { date: newDate }));
+  }, []);
 
   // Add recurring todo
-  const handleAddRecurring = (
+  const handleAddRecurring = useCallback((
     text: string,
     startTime: string,
     endTime: string,
@@ -137,11 +141,11 @@ export function useTodos(initialTodos: Todo[] = []) {
       recurrenceRule,
       subtasks: [],
     };
-    setTodos([...todos, newRecurring]);
-  };
+    setTodos(prevTodos => [...prevTodos, newRecurring]);
+  }, []);
 
   // Edit recurring todo
-  const handleEditRecurring = (
+  const handleEditRecurring = useCallback((
     id: string,
     text: string,
     startTime: string,
@@ -149,7 +153,7 @@ export function useTodos(initialTodos: Todo[] = []) {
     recurrenceRule: RecurrenceRule,
     categoryId: string
   ) => {
-    setTodos(todos.map(todo => {
+    setTodos(prevTodos => prevTodos.map(todo => {
       if (todo.id === id) {
         return {
           ...todo,
@@ -162,15 +166,15 @@ export function useTodos(initialTodos: Todo[] = []) {
       }
       return todo;
     }));
-  };
+  }, []);
 
   // Delete recurring todo
-  const handleDeleteRecurring = (id: string) => {
-    setTodos(todos.filter(todo => todo.id !== id));
-  };
+  const handleDeleteRecurring = useCallback((id: string) => {
+    setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id));
+  }, []);
 
   // Add todo from calendar (with callback)
-  const handleAddTodoFromCalendar = (
+  const handleAddTodoFromCalendar = useCallback((
     todo: Omit<Todo, 'id'>,
     callback?: (id: string) => void
   ) => {
@@ -179,12 +183,12 @@ export function useTodos(initialTodos: Todo[] = []) {
       id: Date.now().toString(),
       subtasks: todo.subtasks || [],
     };
-    setTodos([...todos, newTodo]);
+    setTodos(prevTodos => [...prevTodos, newTodo]);
     callback?.(newTodo.id);
-  };
+  }, []);
 
   // Toggle recurring instance (completedDates 토글)
-  const handleToggleRecurringInstance = (recurringId: string, date: Date) => {
+  const handleToggleRecurringInstance = useCallback((recurringId: string, date: Date) => {
     setTodos(prevTodos => {
       const recurringTodo = prevTodos.find(t => t.id === recurringId);
       if (!recurringTodo) return prevTodos;
@@ -202,10 +206,10 @@ export function useTodos(initialTodos: Todo[] = []) {
         completedDates: newCompletedDates
       });
     });
-  };
+  }, []);
 
   // Skip recurring instance (skippedDates에 날짜 추가)
-  const handleSkipRecurringInstance = (recurringId: string, date: Date) => {
+  const handleSkipRecurringInstance = useCallback((recurringId: string, date: Date) => {
     setTodos(prevTodos => {
       const recurringTodo = prevTodos.find(t => t.id === recurringId);
       if (!recurringTodo) return prevTodos;
@@ -220,10 +224,10 @@ export function useTodos(initialTodos: Todo[] = []) {
         skippedDates: [...skippedDates, dateString]
       });
     });
-  };
+  }, []);
 
   // Delete recurring after (endDate를 오늘로 설정)
-  const handleDeleteRecurringAfter = (recurringId: string, date: Date) => {
+  const handleDeleteRecurringAfter = useCallback((recurringId: string, date: Date) => {
     setTodos(prevTodos => {
       const recurringTodo = prevTodos.find(t => t.id === recurringId);
       if (!recurringTodo || !recurringTodo.recurrenceRule) return prevTodos;
@@ -239,7 +243,7 @@ export function useTodos(initialTodos: Todo[] = []) {
         }
       });
     });
-  };
+  }, []);
 
   return {
     todos,

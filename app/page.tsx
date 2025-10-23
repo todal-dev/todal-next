@@ -189,7 +189,7 @@ export default function Home() {
     handleAddRecurring(text, startTime, endTime, recurrenceRule, selectedDate, categoryId);
   }, [handleAddRecurring, selectedDate]);
 
-  // Create context values
+  // Create context values - handlers are memoized with useCallback, so we only need todos and selectedDate
   const todoContextValue = useMemo(
     () => ({
       todos,

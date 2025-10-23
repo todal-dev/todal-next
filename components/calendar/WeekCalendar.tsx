@@ -59,6 +59,7 @@ export function BigCalendar() {
   const [deleteRecurringModalOpen, setDeleteRecurringModalOpen] = useState(false);
   const [editRecurringDialogOpen, setEditRecurringDialogOpen] = useState(false);
   const [selectedRecurringTodoId, setSelectedRecurringTodoId] = useState<string>('');
+  const [selectedRecurringDate, setSelectedRecurringDate] = useState<Date | null>(null);
 
   // Hour height with localStorage and zoom functionality
   const hourHeight = useHourHeight();
@@ -173,43 +174,41 @@ export function BigCalendar() {
     if (todoId.startsWith('recurring-') && todoId.split('-').length > 2) {
       const parts = todoId.split('-');
       const recurringId = `${parts[0]}-${parts[1]}`;
+      const isoDatePart = todoId.substring(recurringId.length + 1);
+      const eventDate = new Date(isoDatePart);
 
       setSelectedRecurringTodoId(recurringId);
+      setSelectedRecurringDate(eventDate);
       setDeleteRecurringModalOpen(true);
       closeRecurringContextMenu();
     }
   }, [recurringContextMenu.todoId, closeRecurringContextMenu]);
 
   const handleSkipRecurringInstanceAction = useCallback(() => {
-    const todoId = selectedRecurringTodoId;
-    // Get the date from recurring context menu todoId
-    const fullTodoId = recurringContextMenu.todoId;
-    if (fullTodoId.startsWith('recurring-') && fullTodoId.split('-').length > 2) {
-      const parts = fullTodoId.split('-');
-      const recurringId = `${parts[0]}-${parts[1]}`;
-      const isoDatePart = fullTodoId.substring(recurringId.length + 1);
-      const eventDate = new Date(isoDatePart);
-
-      onSkipRecurringInstance(todoId, eventDate);
+    if (selectedRecurringTodoId && selectedRecurringDate) {
+      onSkipRecurringInstance(selectedRecurringTodoId, selectedRecurringDate);
+      setDeleteRecurringModalOpen(false);
+      setSelectedRecurringTodoId('');
+      setSelectedRecurringDate(null);
     }
-  }, [selectedRecurringTodoId, recurringContextMenu.todoId, onSkipRecurringInstance]);
+  }, [selectedRecurringTodoId, selectedRecurringDate, onSkipRecurringInstance]);
 
   const handleDeleteRecurringAfterAction = useCallback(() => {
-    const todoId = selectedRecurringTodoId;
-    // Get the date from recurring context menu todoId
-    const fullTodoId = recurringContextMenu.todoId;
-    if (fullTodoId.startsWith('recurring-') && fullTodoId.split('-').length > 2) {
-      const parts = fullTodoId.split('-');
-      const recurringId = `${parts[0]}-${parts[1]}`;
-      const isoDatePart = fullTodoId.substring(recurringId.length + 1);
-      const eventDate = new Date(isoDatePart);
-
-      onDeleteRecurringAfter(todoId, eventDate);
+    if (selectedRecurringTodoId && selectedRecurringDate) {
+      onDeleteRecurringAfter(selectedRecurringTodoId, selectedRecurringDate);
+      setDeleteRecurringModalOpen(false);
+      setSelectedRecurringTodoId('');
+      setSelectedRecurringDate(null);
     }
-  }, [selectedRecurringTodoId, recurringContextMenu.todoId, onDeleteRecurringAfter]);
+  }, [selectedRecurringTodoId, selectedRecurringDate, onDeleteRecurringAfter]);
 
   const handleDeleteAllRecurring = useCallback(() => {
-    onDeleteTodo(selectedRecurringTodoId);
+    if (selectedRecurringTodoId) {
+      onDeleteTodo(selectedRecurringTodoId);
+      setDeleteRecurringModalOpen(false);
+      setSelectedRecurringTodoId('');
+      setSelectedRecurringDate(null);
+    }
   }, [selectedRecurringTodoId, onDeleteTodo]);
 
   // Calendar drag hook (event creation)
@@ -513,7 +512,11 @@ export function BigCalendar() {
       {/* Delete Recurring Modal */}
       <DeleteRecurringModal
         isOpen={deleteRecurringModalOpen}
-        onClose={() => setDeleteRecurringModalOpen(false)}
+        onClose={() => {
+          setDeleteRecurringModalOpen(false);
+          setSelectedRecurringTodoId('');
+          setSelectedRecurringDate(null);
+        }}
         onSkipInstance={handleSkipRecurringInstanceAction}
         onDeleteAfter={handleDeleteRecurringAfterAction}
         onDeleteAll={handleDeleteAllRecurring}

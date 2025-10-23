@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { Category, Todo } from '@/types/calendar';
 
 const DEFAULT_CATEGORIES: Category[] = [
@@ -15,34 +15,34 @@ export function useCategories(
   const [categories, setCategories] = useState<Category[]>(initialCategories);
 
   // Add a new category
-  const handleAddCategory = (name: string, color: string) => {
+  const handleAddCategory = useCallback((name: string, color: string) => {
     const newCategory: Category = {
       id: `cat-${Date.now()}`,
       name,
       color,
     };
-    setCategories([...categories, newCategory]);
-  };
+    setCategories(prev => [...prev, newCategory]);
+  }, []);
 
   // Edit category name (cannot edit 'cat-etc')
-  const handleEditCategory = (id: string, name: string) => {
+  const handleEditCategory = useCallback((id: string, name: string) => {
     if (id === 'cat-etc') {
       return;
     }
-    setCategories(categories.map(cat =>
+    setCategories(prev => prev.map(cat =>
       cat.id === id ? { ...cat, name } : cat
     ));
-  };
+  }, []);
 
   // Change category color
-  const handleChangeColor = (id: string, color: string) => {
-    setCategories(categories.map(cat =>
+  const handleChangeColor = useCallback((id: string, color: string) => {
+    setCategories(prev => prev.map(cat =>
       cat.id === id ? { ...cat, color } : cat
     ));
-  };
+  }, []);
 
   // Delete category (cannot delete 'cat-etc')
-  const handleDeleteCategory = (id: string, onDeleteTodos?: () => void) => {
+  const handleDeleteCategory = useCallback((id: string, onDeleteTodos?: () => void) => {
     // Cannot delete the default 'etc' category
     if (id === 'cat-etc') {
       alert('기타 카테고리는 삭제할 수 없습니다.');
@@ -58,8 +58,8 @@ export function useCategories(
       // Call the callback to delete todos
       onDeleteTodos?.();
     }
-    setCategories(categories.filter(cat => cat.id !== id));
-  };
+    setCategories(prev => prev.filter(cat => cat.id !== id));
+  }, [todos]);
 
   return {
     categories,

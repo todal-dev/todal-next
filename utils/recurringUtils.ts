@@ -1,4 +1,5 @@
 import type { Todo } from '@/types/calendar';
+import { formatDateKey } from './calendarUtils';
 
 /**
  * 반복 규칙에 따라 주어진 주간에 해당하는 반복 이벤트들을 생성
@@ -71,6 +72,14 @@ export function generateRecurringEvents(todo: Todo, weekDays: Date[]): Todo[] {
       const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
       const weekDayOnly = new Date(weekDay.getFullYear(), weekDay.getMonth(), weekDay.getDate());
       if (weekDayOnly > endDateOnly) {
+        shouldInclude = false;
+      }
+    }
+
+    // Check skipped dates - 건너뛴 날짜는 이벤트를 생성하지 않음
+    if (todo.skippedDates && todo.skippedDates.length > 0) {
+      const weekDayKey = formatDateKey(weekDay);
+      if (todo.skippedDates.includes(weekDayKey)) {
         shouldInclude = false;
       }
     }
