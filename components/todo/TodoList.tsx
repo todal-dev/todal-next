@@ -30,7 +30,11 @@ interface RecurrenceRuleLocal {
   daysOfWeek?: number[]; // 1=월, 2=화, ..., 7=일
 }
 
-export function TodoList() {
+interface TodoListProps {
+  showRecurringSection?: boolean;
+}
+
+export function TodoList({ showRecurringSection = true }: TodoListProps) {
   // Get values from contexts
   const {
     todos,
@@ -228,16 +232,18 @@ export function TodoList() {
         </div>
 
         {/* Recurring Section - 고정 */}
-        <div className="flex-shrink-0">
-          <RecurringSection
-            todos={todos}
-            selectedDate={selectedDate}
-            onToggleRecurringInstance={handleToggleRecurringInstance}
-            onAddRecurring={handleAddRecurring}
-            onEditRecurring={handleEditRecurringClick}
-            onDeleteRecurring={handleDeleteRecurringClick}
-          />
-        </div>
+        {showRecurringSection && (
+          <div className="flex-shrink-0">
+            <RecurringSection
+              todos={todos}
+              selectedDate={selectedDate}
+              onToggleRecurringInstance={handleToggleRecurringInstance}
+              onAddRecurring={handleAddRecurring}
+              onEditRecurring={handleEditRecurringClick}
+              onDeleteRecurring={handleDeleteRecurringClick}
+            />
+          </div>
+        )}
 
         {/* Categories - 스크롤 영역 */}
         <div className="flex-1 overflow-y-auto space-y-2">

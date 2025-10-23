@@ -246,9 +246,9 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
   const months = Array.from({ length: 12 }, (_, i) => i);
 
   return (
-    <div className="p-2 border-b border-neutral-gray-300">
+    <div className="p-1.5 border-b border-neutral-gray-300">
       {/* Month/Year Header with Dropdown */}
-      <div className="flex items-center justify-between mb-2 relative">
+      <div className="flex items-center justify-between mb-1.5 relative">
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -334,11 +334,11 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
       </div>
 
       {/* Day Headers */}
-      <div className="grid grid-cols-7 gap-0.5 mb-1">
+      <div className="grid grid-cols-7 gap-0.5 mb-0.5">
         {['일', '월', '화', '수', '목', '금', '토'].map((day, index) => (
-          <div 
-            key={day} 
-            className={`text-xs font-semibold text-center h-4 ${
+          <div
+            key={day}
+            className={`text-xs font-semibold text-center h-3.5 ${
               index === 0 ? 'text-status-error' : index === 6 ? 'text-status-info' : 'text-neutral-text-secondary'
             }`}
           >
@@ -353,7 +353,7 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
           const todos = getTodoIndicators(day || 0);
           const today = isToday(day);
           const selected = isSelected(day);
-          
+
           return (
             <button
               key={index}
@@ -361,7 +361,7 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
               disabled={!day}
               className={`
                 flex flex-col items-center justify-center rounded transition-all duration-150
-                min-h-12 p-0.5
+                min-h-9 p-0.5
                 ${day ? 'cursor-pointer' : 'cursor-default disabled:cursor-default'}
                 ${
                   selected
@@ -385,18 +385,18 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
               {todos && todos.total > 0 && (
                 <div className="flex flex-col items-center justify-center gap-0.5 mt-0.5">
                   {/* Category Color Dots */}
-                  <div className="flex gap-1 flex-wrap justify-center max-w-full">
+                  <div className="flex gap-0.5 flex-wrap justify-center max-w-full">
                     {todos.byCategory?.map((category, idx) => (
                       <div
                         key={idx}
-                        className={`w-1.5 h-1.5 rounded-full transition-colors ring-1 ${selected ? 'ring-white' : 'ring-white'}`}
+                        className={`w-1 h-1 rounded-full transition-colors ring-1 ${selected ? 'ring-white' : 'ring-white'}`}
                         style={{ backgroundColor: category.color }}
                       />
                     ))}
                   </div>
-                  
+
                   {/* Completed/Total Count */}
-                  <div className={`text-xs ${selected ? 'text-white' : 'text-neutral-text-secondary'}`}>
+                  <div className={`text-[10px] ${selected ? 'text-white' : 'text-neutral-text-secondary'}`}>
                     {todos.completed}/{todos.total}
                   </div>
                 </div>
