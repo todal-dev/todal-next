@@ -9,7 +9,7 @@ import { DuplicateDialog } from '@/components/ui/DuplicateDialog';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarGrid } from '@/components/calendar/CalendarGrid';
 import type { Todo } from '@/types/calendar';
-import { getWeekDays } from '@/utils/calendarUtils';
+import { getWeekDays, formatDateKey } from '@/utils/calendarUtils';
 import { generateRecurringEvents } from '@/utils/recurringUtils';
 import { useCalendarDrag } from '@/hooks/useCalendarDrag';
 import { useCalendarFilters } from '@/hooks/useCalendarFilters';
@@ -201,24 +201,22 @@ export function BigCalendar() {
         const generatedEvents = generateRecurringEvents(todo, weekDays);
         // 각 생성된 이벤트에 completedDates 기반으로 completed 설정
         generatedEvents.forEach(event => {
-          const dateString = `${event.date.getFullYear()}-${String(event.date.getMonth() + 1).padStart(2, '0')}-${String(event.date.getDate()).padStart(2, '0')}`;
-          const isCompleted = todo.completedDates?.includes(dateString) || false;
+          const isCompleted = todo.completedDates?.includes(formatDateKey(event.date)) || false;
           allTodos.push({
             ...event,
             completed: isCompleted
           });
         });
-      } else if (!todo.recurrenceId) {
+      } else {
         // 일반 할일만 추가
         allTodos.push(todo);
       }
-      // recurrenceId가 있는 것은 구버전 인스턴스이므로 무시
     });
 
     weekDays.forEach((day) => {
-      const dateKey = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+      const dateKey = formatDateKey(day);
       grouped[dateKey] = allTodos.filter((todo) => {
-        const todoDateKey = `${todo.date.getFullYear()}-${String(todo.date.getMonth() + 1).padStart(2, '0')}-${String(todo.date.getDate()).padStart(2, '0')}`;
+        const todoDateKey = formatDateKey(todo.date);
         if (todoDateKey !== dateKey || !todo.startTime || !todo.endTime) {
           return false;
         }
@@ -258,38 +256,26 @@ export function BigCalendar() {
 
   // Memoize toggle completion handler
   const handleToggleCompletion = useCallback((todoId: string) => {
-    console.log('[handleToggleCompletion] todoId:', todoId);
-
     // 반복 일정에서 생성된 이벤트인지 확인 (ID 패턴: recurring-timestamp-ISODate)
     if (todoId.startsWith('recurring-') && todoId.split('-').length > 2) {
-      console.log('[handleToggleCompletion] Recurring event detected');
       // 생성된 반복 이벤트 - 원본 ID 추출
       const parts = todoId.split('-');
       const recurringId = `${parts[0]}-${parts[1]}`; // "recurring-timestamp" 형태
-      console.log('[handleToggleCompletion] recurringId:', recurringId);
 
       // 원본 할일 찾기
       const originalTodo = todos.find(t => t.id === recurringId);
-      if (!originalTodo) {
-        console.log('[handleToggleCompletion] Original recurring todo not found');
-        return;
-      }
+      if (!originalTodo) return;
 
       // 해당 날짜 찾기
       const isoDatePart = todoId.substring(recurringId.length + 1);
       const eventDate = new Date(isoDatePart);
-      console.log('[handleToggleCompletion] eventDate:', eventDate);
 
       // completedDates 토글
       onToggleRecurringInstance?.(recurringId, eventDate);
     } else {
-      console.log('[handleToggleCompletion] Regular todo');
       // 일반 할일
       const todo = todos.find(t => t.id === todoId);
-      if (!todo) {
-        console.log('[handleToggleCompletion] todo not found');
-        return;
-      }
+      if (!todo) return;
       onEditTodo?.(todoId, { completed: !todo.completed });
     }
   }, [todos, onEditTodo, onToggleRecurringInstance]);
@@ -396,9 +382,16 @@ export function BigCalendar() {
           closeRecurringDialog();
         }}
         onSelectAll={() => {
-          const todo = todos.find((t) => t.id === recurringDialog.todoId);
-          if (todo && todo.recurrenceId && recurringDialog.action === 'delete') {
-            onDeleteTodo?.(todo.recurrenceId);
+          const todoId = recurringDialog.todoId;
+          if (recurringDialog.action === 'delete') {
+            // 생성된 반복 이벤트인 경우 원본 ID 추출
+            if (todoId.startsWith('recurring-') && todoId.split('-').length > 2) {
+              const parts = todoId.split('-');
+              const recurringId = `${parts[0]}-${parts[1]}`;
+              onDeleteTodo?.(recurringId);
+            } else {
+              onDeleteTodo?.(todoId);
+            }
           }
           closeRecurringDialog();
         }}

@@ -2,37 +2,8 @@
 
 import { Plus, Repeat, Edit2, Trash2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/Checkbox';
-
-interface RecurrenceRule {
-  frequency: 'daily' | 'weekly' | 'monthly';
-  interval: number;
-  startDate?: Date;
-  endDate?: Date;
-  daysOfWeek?: number[]; // 1=월, 2=화, ..., 7=일
-}
-
-interface Todo {
-  id: string;
-  text: string;
-  completed: boolean;
-  date: Date;
-  categoryId: string;
-  subtasks?: Todo[];
-  parentId?: string;
-  startTime?: string;
-  endTime?: string;
-  recurrenceRule?: RecurrenceRule;
-  recurrenceId?: string;
-  excludeDates?: Date[];
-  isFromRecurring?: boolean;
-  originalRecurringId?: string;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  color: string;
-}
+import { formatDateKey } from '@/utils/calendarUtils';
+import type { Todo, Category, RecurrenceRule } from '@/types/calendar';
 
 interface RecurringSectionProps {
   todos: Todo[];
@@ -54,28 +25,24 @@ export function RecurringSection({
   onDeleteRecurring,
 }: RecurringSectionProps) {
 
-  // 반복 일정만 필터링 (원본만, recurrenceId가 없는 것)
-  // 그리고 선택된 날짜가 시작일 이후이고 종료일 이전인 것만
+  // 반복 일정만 필터링하고 날짜 범위 체크
   const recurringTodos = todos.filter(todo => {
-    if (!todo.recurrenceRule || todo.recurrenceId) return false;
+    if (!todo.recurrenceRule) return false;
 
-    // 시작일 체크: 시작일이 있으면 선택된 날짜가 시작일 이후여야 함
+    const selected = new Date(selectedDate);
+    selected.setHours(0, 0, 0, 0);
+
+    // 시작일 체크
     if (todo.recurrenceRule.startDate) {
       const startDate = new Date(todo.recurrenceRule.startDate);
       startDate.setHours(0, 0, 0, 0);
-      const selected = new Date(selectedDate);
-      selected.setHours(0, 0, 0, 0);
-
       if (selected < startDate) return false;
     }
 
-    // 종료일 체크: 종료일이 있으면 선택된 날짜가 종료일 이전이어야 함
+    // 종료일 체크
     if (todo.recurrenceRule.endDate) {
       const endDate = new Date(todo.recurrenceRule.endDate);
       endDate.setHours(0, 0, 0, 0);
-      const selected = new Date(selectedDate);
-      selected.setHours(0, 0, 0, 0);
-
       if (selected > endDate) return false;
     }
 
@@ -83,12 +50,10 @@ export function RecurringSection({
   });
 
   // 완료 카운트 계산: completedDates에 오늘 날짜가 포함된 것
-  const todayString = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
-
+  const todayString = formatDateKey(selectedDate);
   const completedCount = recurringTodos.filter(todo =>
     todo.completedDates?.includes(todayString)
   ).length;
-
   const totalCount = recurringTodos.length;
 
   // 반복 주기 텍스트 생성

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Todo, RecurrenceRule } from '@/types/calendar';
+import { formatDateKey } from '@/utils/calendarUtils';
 import {
   deleteRecursively,
   addSubtaskRecursively,
@@ -165,8 +166,7 @@ export function useTodos(initialTodos: Todo[] = []) {
 
   // Delete recurring todo
   const handleDeleteRecurring = (id: string) => {
-    // Delete the original recurring todo and all instances
-    setTodos(todos.filter(todo => todo.id !== id && todo.recurrenceId !== id));
+    setTodos(todos.filter(todo => todo.id !== id));
   };
 
   // Add todo from calendar (with callback)
@@ -174,13 +174,10 @@ export function useTodos(initialTodos: Todo[] = []) {
     todo: Omit<Todo, 'id'>,
     callback?: (id: string) => void
   ) => {
-    // recurrenceRule을 제외하고 나머지 속성만 복사
-    const { recurrenceRule, ...todoWithoutRecurrence } = todo as any;
-
     const newTodo: Todo = {
-      ...todoWithoutRecurrence,
+      ...todo,
       id: Date.now().toString(),
-      subtasks: [],
+      subtasks: todo.subtasks || [],
     };
     setTodos([...todos, newTodo]);
     callback?.(newTodo.id);
@@ -192,13 +189,8 @@ export function useTodos(initialTodos: Todo[] = []) {
       const recurringTodo = prevTodos.find(t => t.id === recurringId);
       if (!recurringTodo) return prevTodos;
 
-      // 날짜를 YYYY-MM-DD 형식으로 변환
-      const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-
-      // 현재 completedDates 가져오기
+      const dateString = formatDateKey(date);
       const completedDates = recurringTodo.completedDates || [];
-
-      // 해당 날짜가 이미 완료되어 있는지 확인
       const isCompleted = completedDates.includes(dateString);
 
       // 토글: 있으면 제거, 없으면 추가
@@ -206,7 +198,6 @@ export function useTodos(initialTodos: Todo[] = []) {
         ? completedDates.filter(d => d !== dateString)
         : [...completedDates, dateString];
 
-      // 업데이트
       return updateTodoRecursively(prevTodos, recurringId, {
         completedDates: newCompletedDates
       });

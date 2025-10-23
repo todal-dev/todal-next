@@ -12,6 +12,13 @@ export function getWeekDays(startDate: Date): Date[] {
 }
 
 /**
+ * Date 객체를 YYYY-MM-DD 형식의 문자열로 변환
+ */
+export function formatDateKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+/**
  * 분을 15분 단위로 반올림 (0, 15, 30, 45)
  * 60 이상은 0으로 반환
  */

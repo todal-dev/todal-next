@@ -88,7 +88,8 @@ export function useContextMenu({
     const todo = todos.find((t) => t.id === contextMenu.todoId);
     if (!todo) return;
 
-    if (todo.recurrenceId) {
+    // 생성된 반복 이벤트인지 확인 (ID 패턴: recurring-timestamp-ISODate)
+    if (todo.id.startsWith('recurring-') && todo.id.split('-').length > 2) {
       openRecurringDialog(todo.id, 'delete');
     } else {
       onDeleteTodo?.(todo.id);

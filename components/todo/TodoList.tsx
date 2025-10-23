@@ -89,12 +89,9 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
     '#10B981', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16',
   ];
 
-  // 선택된 날짜의 할일만 필터링 (반복 일정 완전 제외)
+  // 선택된 날짜의 할일만 필터링 (반복 일정 제외)
   const filteredTodos = todos.filter(todo => {
-    // 반복 일정은 절대 표시하지 않음 (반복 일정 섹션에서만 표시)
-    if (todo.recurrenceRule || todo.recurrenceId) {
-      return false;
-    }
+    if (todo.recurrenceRule) return false; // 반복 일정 제외
     return todo.date.getFullYear() === selectedDate.getFullYear() &&
            todo.date.getMonth() === selectedDate.getMonth() &&
            todo.date.getDate() === selectedDate.getDate();

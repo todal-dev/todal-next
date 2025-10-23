@@ -17,7 +17,6 @@ export interface Todo {
   startTime?: string;
   endTime?: string;
   recurrenceRule?: RecurrenceRule;
-  recurrenceId?: string; // 기존: 생성된 인스턴스가 참조하는 반복 일정 원본 ID
   completedDates?: string[]; // 반복 일정에서 완료한 날짜들 (YYYY-MM-DD 형식)
 }
 

@@ -110,28 +110,22 @@ export default function Home() {
     const expandedTodos: Todo[] = [];
     todos.forEach((todo) => {
       if (todo.recurrenceRule) {
-        // 반복 일정 확장 (excludeDates 자동 반영됨)
+        // 반복 일정 확장
         const generated: Todo[] = [];
         for (const date of allDates) {
-          // generateRecurringEvents가 weekDays를 받으므로 날짜 하나씩 처리
           const events = require('@/utils/recurringUtils').generateRecurringEvents(todo, [date]);
-          // 각 생성된 이벤트에 대해 분리된 할일이 있는지 확인
           events.forEach((event: Todo) => {
-            const separated = todos.find(
-              t => t.isFromRecurring &&
-              t.originalRecurringId === todo.id &&
-              t.date.getFullYear() === event.date.getFullYear() &&
-              t.date.getMonth() === event.date.getMonth() &&
-              t.date.getDate() === event.date.getDate()
-            );
-            // 분리된 할일이 있으면 그것을 사용, 없으면 생성된 이벤트 사용
-            generated.push(separated || event);
+            const dateKey = require('@/utils/calendarUtils').formatDateKey(event.date);
+            const isCompleted = todo.completedDates?.includes(dateKey) || false;
+            generated.push({
+              ...event,
+              completed: isCompleted
+            });
           });
         }
         expandedTodos.push(...generated);
-      } else if (!todo.recurrenceId && !todo.isFromRecurring) {
-        // recurrenceId 없고 isFromRecurring도 아닌 일반 할일만 추가
-        // isFromRecurring은 위 반복 일정 확장에서 이미 처리됨
+      } else {
+        // 일반 할일만 추가
         expandedTodos.push(todo);
       }
     });
