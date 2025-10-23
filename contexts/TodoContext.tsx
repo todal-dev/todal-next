@@ -18,6 +18,8 @@ interface TodoContextType {
   onUpdateTodo: (id: string, updates: Partial<Todo>) => void;
   onMoveTodoToDate: (id: string, newDate: Date) => void;
   onToggleRecurringInstance: (recurringId: string, date: Date) => void;
+  onSkipRecurringInstance: (recurringId: string, date: Date) => void;
+  onDeleteRecurringAfter: (recurringId: string, date: Date) => void;
 }
 
 const TodoContext = createContext<TodoContextType | undefined>(undefined);

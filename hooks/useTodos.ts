@@ -204,6 +204,43 @@ export function useTodos(initialTodos: Todo[] = []) {
     });
   };
 
+  // Skip recurring instance (skippedDates에 날짜 추가)
+  const handleSkipRecurringInstance = (recurringId: string, date: Date) => {
+    setTodos(prevTodos => {
+      const recurringTodo = prevTodos.find(t => t.id === recurringId);
+      if (!recurringTodo) return prevTodos;
+
+      const dateString = formatDateKey(date);
+      const skippedDates = recurringTodo.skippedDates || [];
+
+      // 이미 건너뛴 날짜면 추가하지 않음
+      if (skippedDates.includes(dateString)) return prevTodos;
+
+      return updateTodoRecursively(prevTodos, recurringId, {
+        skippedDates: [...skippedDates, dateString]
+      });
+    });
+  };
+
+  // Delete recurring after (endDate를 오늘로 설정)
+  const handleDeleteRecurringAfter = (recurringId: string, date: Date) => {
+    setTodos(prevTodos => {
+      const recurringTodo = prevTodos.find(t => t.id === recurringId);
+      if (!recurringTodo || !recurringTodo.recurrenceRule) return prevTodos;
+
+      // endDate를 오늘 날짜로 설정 (오늘 이전으로)
+      const endDate = new Date(date);
+      endDate.setDate(endDate.getDate() - 1); // 오늘은 제외하고 어제까지만
+
+      return updateTodoRecursively(prevTodos, recurringId, {
+        recurrenceRule: {
+          ...recurringTodo.recurrenceRule,
+          endDate
+        }
+      });
+    });
+  };
+
   return {
     todos,
     setTodos,
@@ -221,5 +258,7 @@ export function useTodos(initialTodos: Todo[] = []) {
     handleDeleteRecurring,
     handleAddTodoFromCalendar,
     handleToggleRecurringInstance,
+    handleSkipRecurringInstance,
+    handleDeleteRecurringAfter,
   };
 }

@@ -1,7 +1,9 @@
 'use client';
 
 import { Plus, Repeat, Edit2, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { DeleteRecurringModal } from '@/components/ui/DeleteRecurringModal';
 import { formatDateKey } from '@/utils/calendarUtils';
 import type { Todo, Category, RecurrenceRule } from '@/types/calendar';
 
@@ -12,7 +14,9 @@ interface RecurringSectionProps {
   onToggleRecurringInstance: (recurringId: string) => void;
   onAddRecurring: () => void;
   onEditRecurring: (id: string) => void;
-  onDeleteRecurring: (id: string) => void;
+  onSkipRecurringInstance: (recurringId: string) => void;
+  onDeleteRecurringAfter: (recurringId: string) => void;
+  onDeleteRecurring: (recurringId: string) => void;
 }
 
 export function RecurringSection({
@@ -22,8 +26,17 @@ export function RecurringSection({
   onToggleRecurringInstance,
   onAddRecurring,
   onEditRecurring,
+  onSkipRecurringInstance,
+  onDeleteRecurringAfter,
   onDeleteRecurring,
 }: RecurringSectionProps) {
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [selectedTodoId, setSelectedTodoId] = useState<string>('');
+
+  const handleDeleteClick = (todoId: string) => {
+    setSelectedTodoId(todoId);
+    setDeleteModalOpen(true);
+  };
 
   // 반복 일정만 필터링하고 날짜 범위 체크
   const recurringTodos = todos.filter(todo => {
@@ -44,6 +57,12 @@ export function RecurringSection({
       const endDate = new Date(todo.recurrenceRule.endDate);
       endDate.setHours(0, 0, 0, 0);
       if (selected > endDate) return false;
+    }
+
+    // skippedDates 체크 - 건너뛴 날짜는 표시하지 않음
+    const todayString = formatDateKey(selectedDate);
+    if (todo.skippedDates?.includes(todayString)) {
+      return false;
     }
 
     return true;
@@ -159,8 +178,8 @@ export function RecurringSection({
                   <Edit2 size={13} />
                 </button>
                 <button
-                  onClick={() => onDeleteRecurring(todo.id)}
-                  className="p-1 rounded hover:bg-red-100 text-neutral-text-secondary hover:text-red-500 transition-colors"
+                  onClick={() => handleDeleteClick(todo.id)}
+                  className="p-1 rounded hover:bg-red-100 text-neutral-text-secondary hover:text-red-500 transition-colors cursor-pointer"
                   title="삭제"
                 >
                   <Trash2 size={13} />
@@ -171,6 +190,15 @@ export function RecurringSection({
         })}
         </div>
       )}
+
+      {/* Delete Modal */}
+      <DeleteRecurringModal
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onSkipInstance={() => onSkipRecurringInstance(selectedTodoId)}
+        onDeleteAfter={() => onDeleteRecurringAfter(selectedTodoId)}
+        onDeleteAll={() => onDeleteRecurring(selectedTodoId)}
+      />
     </div>
   );
 }

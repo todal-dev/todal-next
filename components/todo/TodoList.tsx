@@ -47,6 +47,8 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
     onUpdateTodoTime,
     onMoveTodo,
     onToggleRecurringInstance,
+    onSkipRecurringInstance,
+    onDeleteRecurringAfter,
   } = useTodoContext();
 
   const {
@@ -57,7 +59,6 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
     onDeleteCategory,
     onAddRecurring,
     onEditRecurring,
-    onDeleteRecurring,
   } = useCategoryContext();
   const [addingNewCategory, setAddingNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -161,11 +162,6 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
     setEditingRecurring(undefined);
   };
 
-  const handleDeleteRecurringClick = (id: string) => {
-    if (confirm('이 반복 일정을 삭제하시겠습니까?')) {
-      onDeleteRecurring?.(id);
-    }
-  };
 
   // 반복 일정 인스턴스 토글 (없으면 생성, 있으면 토글)
   const handleToggleRecurringInstance = (recurringId: string) => {
@@ -298,7 +294,9 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
               onToggleRecurringInstance={handleToggleRecurringInstance}
               onAddRecurring={handleAddRecurring}
               onEditRecurring={handleEditRecurringClick}
-              onDeleteRecurring={handleDeleteRecurringClick}
+              onSkipRecurringInstance={(recurringId: string) => onSkipRecurringInstance(recurringId, selectedDate)}
+              onDeleteRecurringAfter={(recurringId: string) => onDeleteRecurringAfter(recurringId, selectedDate)}
+              onDeleteRecurring={(recurringId: string) => onDeleteTodo(recurringId)}
             />
           </div>
         )}

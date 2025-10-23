@@ -3,9 +3,12 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { RecurringEventDialog } from '@/components/ui/RecurringEventDialog';
 import { ContextMenu } from '@/components/ui/ContextMenu';
+import { SimpleContextMenu } from '@/components/ui/SimpleContextMenu';
+import { DeleteRecurringModal } from '@/components/ui/DeleteRecurringModal';
 import { CategoryChangeDialog } from '@/components/ui/CategoryChangeDialog';
 import { DateMoveDialog } from '@/components/ui/DateMoveDialog';
 import { DuplicateDialog } from '@/components/ui/DuplicateDialog';
+import { AddRecurringDialog } from '@/components/ui/AddRecurringDialog';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarGrid } from '@/components/calendar/CalendarGrid';
 import type { Todo } from '@/types/calendar';
@@ -33,15 +36,29 @@ export function BigCalendar() {
     onDeleteTodo,
     onMoveTodoToDate: onMoveTodo,
     onToggleRecurringInstance,
+    onSkipRecurringInstance,
+    onDeleteRecurringAfter,
   } = useTodoContext();
 
-  const { categories } = useCategoryContext();
+  const { categories, onEditRecurring } = useCategoryContext();
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const date = new Date(selectedDate);
     const day = date.getDay();
     const diff = date.getDate() - day;
     return new Date(date.setDate(diff));
   });
+
+  // Recurring context menu and modal states
+  const [recurringContextMenu, setRecurringContextMenu] = useState<{
+    isOpen: boolean;
+    x: number;
+    y: number;
+    todoId: string;
+  }>({ isOpen: false, x: 0, y: 0, todoId: '' });
+
+  const [deleteRecurringModalOpen, setDeleteRecurringModalOpen] = useState(false);
+  const [editRecurringDialogOpen, setEditRecurringDialogOpen] = useState(false);
+  const [selectedRecurringTodoId, setSelectedRecurringTodoId] = useState<string>('');
 
   // Hour height with localStorage and zoom functionality
   const hourHeight = useHourHeight();
@@ -87,7 +104,7 @@ export function BigCalendar() {
   // Context menu with all handlers
   const {
     contextMenu,
-    handleContextMenu,
+    handleContextMenu: handleNormalContextMenu,
     closeContextMenu,
     handleConfirmDuplicate,
     handleDuplicate,
@@ -108,6 +125,92 @@ export function BigCalendar() {
     startEdit,
     finishEdit: handleFinishEdit,
   });
+
+  // Override handleContextMenu to check for recurring events
+  const handleContextMenu = useCallback((e: React.MouseEvent, todoId: string) => {
+    // Check if it's a recurring event (generated ID pattern: recurring-timestamp-ISODate)
+    const isRecurringEvent = todoId.startsWith('recurring-') && todoId.split('-').length > 2;
+
+    if (isRecurringEvent) {
+      // Open recurring context menu
+      e.preventDefault();
+      e.stopPropagation();
+      handleFinishEdit();
+
+      setRecurringContextMenu({
+        isOpen: true,
+        x: e.clientX,
+        y: e.clientY,
+        todoId,
+      });
+    } else {
+      // Use normal context menu
+      handleNormalContextMenu(e, todoId);
+    }
+  }, [handleNormalContextMenu, handleFinishEdit]);
+
+  // Recurring context menu handlers
+  const closeRecurringContextMenu = useCallback(() => {
+    setRecurringContextMenu({ ...recurringContextMenu, isOpen: false });
+  }, [recurringContextMenu]);
+
+  const handleEditRecurringClick = useCallback(() => {
+    const todoId = recurringContextMenu.todoId;
+    // Extract original recurring ID
+    if (todoId.startsWith('recurring-') && todoId.split('-').length > 2) {
+      const parts = todoId.split('-');
+      const recurringId = `${parts[0]}-${parts[1]}`;
+
+      setSelectedRecurringTodoId(recurringId);
+      setEditRecurringDialogOpen(true);
+      closeRecurringContextMenu();
+    }
+  }, [recurringContextMenu.todoId, closeRecurringContextMenu]);
+
+  const handleDeleteRecurringClick = useCallback(() => {
+    const todoId = recurringContextMenu.todoId;
+    // Extract original recurring ID and date
+    if (todoId.startsWith('recurring-') && todoId.split('-').length > 2) {
+      const parts = todoId.split('-');
+      const recurringId = `${parts[0]}-${parts[1]}`;
+
+      setSelectedRecurringTodoId(recurringId);
+      setDeleteRecurringModalOpen(true);
+      closeRecurringContextMenu();
+    }
+  }, [recurringContextMenu.todoId, closeRecurringContextMenu]);
+
+  const handleSkipRecurringInstanceAction = useCallback(() => {
+    const todoId = selectedRecurringTodoId;
+    // Get the date from recurring context menu todoId
+    const fullTodoId = recurringContextMenu.todoId;
+    if (fullTodoId.startsWith('recurring-') && fullTodoId.split('-').length > 2) {
+      const parts = fullTodoId.split('-');
+      const recurringId = `${parts[0]}-${parts[1]}`;
+      const isoDatePart = fullTodoId.substring(recurringId.length + 1);
+      const eventDate = new Date(isoDatePart);
+
+      onSkipRecurringInstance(todoId, eventDate);
+    }
+  }, [selectedRecurringTodoId, recurringContextMenu.todoId, onSkipRecurringInstance]);
+
+  const handleDeleteRecurringAfterAction = useCallback(() => {
+    const todoId = selectedRecurringTodoId;
+    // Get the date from recurring context menu todoId
+    const fullTodoId = recurringContextMenu.todoId;
+    if (fullTodoId.startsWith('recurring-') && fullTodoId.split('-').length > 2) {
+      const parts = fullTodoId.split('-');
+      const recurringId = `${parts[0]}-${parts[1]}`;
+      const isoDatePart = fullTodoId.substring(recurringId.length + 1);
+      const eventDate = new Date(isoDatePart);
+
+      onDeleteRecurringAfter(todoId, eventDate);
+    }
+  }, [selectedRecurringTodoId, recurringContextMenu.todoId, onDeleteRecurringAfter]);
+
+  const handleDeleteAllRecurring = useCallback(() => {
+    onDeleteTodo(selectedRecurringTodoId);
+  }, [selectedRecurringTodoId, onDeleteTodo]);
 
   // Calendar drag hook (event creation)
   const { creatingEvent, handleDragStart: handleCalendarDragStart, handleDragMove: handleCalendarDragMove, handleDragEnd: handleCalendarDragEnd } = useCalendarDrag({
@@ -344,6 +447,16 @@ export function BigCalendar() {
         onSetRecurrence={handleSetRecurrence}
       />
 
+      {/* Recurring Context Menu - Only Edit and Delete */}
+      <SimpleContextMenu
+        isOpen={recurringContextMenu.isOpen}
+        x={recurringContextMenu.x}
+        y={recurringContextMenu.y}
+        onClose={closeRecurringContextMenu}
+        onEdit={handleEditRecurringClick}
+        onDelete={handleDeleteRecurringClick}
+      />
+
       {/* Category Change Dialog */}
       <CategoryChangeDialog
         isOpen={categoryDialog.isOpen}
@@ -395,6 +508,47 @@ export function BigCalendar() {
           }
           closeRecurringDialog();
         }}
+      />
+
+      {/* Delete Recurring Modal */}
+      <DeleteRecurringModal
+        isOpen={deleteRecurringModalOpen}
+        onClose={() => setDeleteRecurringModalOpen(false)}
+        onSkipInstance={handleSkipRecurringInstanceAction}
+        onDeleteAfter={handleDeleteRecurringAfterAction}
+        onDeleteAll={handleDeleteAllRecurring}
+      />
+
+      {/* Edit Recurring Dialog */}
+      <AddRecurringDialog
+        isOpen={editRecurringDialogOpen}
+        onClose={() => {
+          setEditRecurringDialogOpen(false);
+          setSelectedRecurringTodoId('');
+        }}
+        onConfirm={(text, startTime, endTime, recurrenceRule, categoryId) => {
+          if (selectedRecurringTodoId) {
+            onEditRecurring?.(selectedRecurringTodoId, text, startTime, endTime, recurrenceRule, categoryId);
+          }
+          setEditRecurringDialogOpen(false);
+          setSelectedRecurringTodoId('');
+        }}
+        selectedDate={selectedDate}
+        categories={categories}
+        editingTodo={selectedRecurringTodoId ? (() => {
+          const todo = todos.find(t => t.id === selectedRecurringTodoId);
+          if (todo) {
+            return {
+              id: todo.id,
+              text: todo.text,
+              startTime: todo.startTime,
+              endTime: todo.endTime,
+              recurrenceRule: todo.recurrenceRule,
+              categoryId: todo.categoryId,
+            };
+          }
+          return undefined;
+        })() : undefined}
       />
     </div>
   );

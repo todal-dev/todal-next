@@ -9,7 +9,10 @@
       "Bash(git restore:*)",
       "Bash(git mv:*)",
       "Bash(tree:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(timeout 10 sh:*)",
+      "Bash(timeout 5 sh:*)",
+      "Bash(if exist .next rmdir /s /q .next)"
     ],
     "deny": [],
     "ask": []

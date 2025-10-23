@@ -37,8 +37,8 @@ interface RecurrenceRuleLocal {
 
 const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
   // Get values from contexts
-  const { onDateSelect, todos, selectedDate, onToggleRecurringInstance } = useTodoContext();
-  const { categories, onAddCategory, onAddRecurring, onEditRecurring, onDeleteRecurring } = useCategoryContext();
+  const { onDateSelect, todos, selectedDate, onToggleRecurringInstance, onSkipRecurringInstance, onDeleteRecurringAfter, onDeleteTodo } = useTodoContext();
+  const { categories, onAddCategory, onAddRecurring, onEditRecurring } = useCategoryContext();
 
   const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
   const [editingRecurring, setEditingRecurring] = useState<{
@@ -95,12 +95,6 @@ const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
     }
     setRecurringDialogOpen(false);
     setEditingRecurring(undefined);
-  };
-
-  const handleDeleteRecurringClick = (id: string) => {
-    if (confirm('이 반복 일정을 삭제하시겠습니까?')) {
-      onDeleteRecurring?.(id);
-    }
   };
 
   const handleToggleRecurringInstance = (recurringId: string) => {
@@ -196,7 +190,9 @@ const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
                 onToggleRecurringInstance={handleToggleRecurringInstance}
                 onAddRecurring={handleAddRecurring}
                 onEditRecurring={handleEditRecurringClick}
-                onDeleteRecurring={handleDeleteRecurringClick}
+                onSkipRecurringInstance={(recurringId: string) => onSkipRecurringInstance(recurringId, selectedDate)}
+                onDeleteRecurringAfter={(recurringId: string) => onDeleteRecurringAfter(recurringId, selectedDate)}
+                onDeleteRecurring={(recurringId: string) => onDeleteTodo(recurringId)}
               />
             </div>
 

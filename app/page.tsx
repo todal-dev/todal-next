@@ -81,6 +81,8 @@ export default function Home() {
     handleDeleteRecurring,
     handleAddTodoFromCalendar,
     handleToggleRecurringInstance,
+    handleSkipRecurringInstance,
+    handleDeleteRecurringAfter,
   } = useTodos(INITIAL_TODOS);
 
   // Category state and handlers
@@ -204,6 +206,8 @@ export default function Home() {
       onUpdateTodo: handleUpdateTodo,
       onMoveTodoToDate: handleMoveTodoToDate,
       onToggleRecurringInstance: handleToggleRecurringInstance,
+      onSkipRecurringInstance: handleSkipRecurringInstance,
+      onDeleteRecurringAfter: handleDeleteRecurringAfter,
     }),
     [
       todos,
@@ -219,6 +223,8 @@ export default function Home() {
       handleUpdateTodo,
       handleMoveTodoToDate,
       handleToggleRecurringInstance,
+      handleSkipRecurringInstance,
+      handleDeleteRecurringAfter,
     ]
   );
 
