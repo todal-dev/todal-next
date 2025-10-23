@@ -3,7 +3,7 @@
 import { memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
 import { TodoItem } from './TodoItem';
 import { TodoInput } from './TodoInput';
 import { useState, useEffect } from 'react';
@@ -72,6 +72,7 @@ const CategorySectionComponent = ({
   overId,
 }: CategorySectionProps) => {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const [isAddingTodo, setIsAddingTodo] = useState(false);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -159,6 +160,15 @@ const CategorySectionComponent = ({
           {completedCount}/{totalCount}
         </span>
 
+        {/* 할일 추가 버튼 */}
+        <button
+          onClick={() => setIsAddingTodo(true)}
+          className="flex-shrink-0 p-1 hover:bg-primary-100 rounded transition-colors text-neutral-text-secondary hover:text-primary-500 cursor-pointer"
+          title="할일 추가"
+        >
+          <Plus size={16} />
+        </button>
+
         {/* "기타" 카테고리는 삭제 불가 */}
         {category.id !== 'cat-etc' && (
           <button
@@ -197,6 +207,9 @@ const CategorySectionComponent = ({
           categoryId={category.id}
           selectedDate={selectedDate}
           onAddTodo={onAddTodo}
+          hideButton={true}
+          isAdding={isAddingTodo}
+          onIsAddingChange={setIsAddingTodo}
         />
       </div>
     </motion.div>

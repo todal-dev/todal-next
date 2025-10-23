@@ -224,13 +224,74 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className={`flex flex-col h-full gap-2 ${hideTitle ? 'px-5 pb-5' : 'p-5'}`}>
+      <div className={`flex flex-col gap-2 ${hideTitle ? 'px-5 pb-5' : 'p-5'}`}>
         {/* Header */}
         {!hideTitle && (
-          <div className="flex-shrink-0">
+          <div className="flex-shrink-0 flex items-center justify-between">
             <h1 className="text-lg font-semibold text-neutral-text-primary">
               {selectedDate.toLocaleString('ko-KR', { month: 'long', day: 'numeric' })}의 할일
             </h1>
+            {addingNewCategory ? (
+              <motion.div
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 'auto' }}
+                exit={{ opacity: 0, width: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center gap-2 px-3 py-1 rounded-md bg-neutral-gray-100"
+              >
+                <div
+                  className="flex-shrink-0 w-4 h-4 rounded-full cursor-pointer"
+                  style={{ backgroundColor: newCategoryColor }}
+                  onClick={() => {
+                    const currentIndex = colorPalette.indexOf(newCategoryColor);
+                    const nextIndex = (currentIndex + 1) % colorPalette.length;
+                    setNewCategoryColor(colorPalette[nextIndex]);
+                  }}
+                  title="색상 변경 (클릭)"
+                />
+                <input
+                  ref={(el) => el?.focus()}
+                  type="text"
+                  placeholder="카테고리 이름"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const name = newCategoryName.trim();
+                      if (name) {
+                        onAddCategory(name, newCategoryColor);
+                        setNewCategoryName('');
+                        setNewCategoryColor('#3B82F6');
+                        setAddingNewCategory(false);
+                      }
+                    } else if (e.key === 'Escape') {
+                      setNewCategoryName('');
+                      setNewCategoryColor('#3B82F6');
+                      setAddingNewCategory(false);
+                    }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => {
+                      setNewCategoryName('');
+                      setNewCategoryColor('#3B82F6');
+                      setAddingNewCategory(false);
+                    }, 150);
+                  }}
+                  className="w-32 font-semibold text-sm bg-transparent text-neutral-text-primary focus:outline-none border-0 focus:ring-0"
+                />
+              </motion.div>
+            ) : (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.15 }}
+                onClick={() => setAddingNewCategory(true)}
+                className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-neutral-gray-50 transition-colors text-neutral-text-secondary hover:text-primary-500 cursor-pointer"
+              >
+                <Plus size={16} />
+                <span className="text-sm font-medium">카테고리 추가</span>
+              </motion.button>
+            )}
           </div>
         )}
 
@@ -272,70 +333,6 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
             ))}
           </AnimatePresence>
         </div>
-
-        {/* Add New Category */}
-        {addingNewCategory ? (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2 }}
-            className="flex items-center gap-2 px-3 py-2 rounded-md bg-neutral-gray-100"
-          >
-            <div
-              className="flex-shrink-0 w-4 h-4 rounded-full cursor-pointer"
-              style={{ backgroundColor: newCategoryColor }}
-              onClick={() => {
-                const currentIndex = colorPalette.indexOf(newCategoryColor);
-                const nextIndex = (currentIndex + 1) % colorPalette.length;
-                setNewCategoryColor(colorPalette[nextIndex]);
-              }}
-              title="색상 변경 (클릭)"
-            />
-
-            <input
-              ref={(el) => el?.focus()}
-              type="text"
-              placeholder="카테고리 이름"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  const name = newCategoryName.trim();
-                  if (name) {
-                    onAddCategory(name, newCategoryColor);
-                    setNewCategoryName('');
-                    setNewCategoryColor('#3B82F6');
-                    setAddingNewCategory(false);
-                  }
-                } else if (e.key === 'Escape') {
-                  setNewCategoryName('');
-                  setNewCategoryColor('#3B82F6');
-                  setAddingNewCategory(false);
-                }
-              }}
-              onBlur={() => {
-                setTimeout(() => {
-                  setNewCategoryName('');
-                  setNewCategoryColor('#3B82F6');
-                  setAddingNewCategory(false);
-                }, 150);
-              }}
-              className="flex-1 font-semibold text-sm bg-transparent text-neutral-text-primary focus:outline-none border-0 focus:ring-0"
-            />
-          </motion.div>
-        ) : (
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.15 }}
-            onClick={() => setAddingNewCategory(true)}
-            className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-neutral-gray-50 transition-colors text-neutral-text-tertiary hover:text-primary-500"
-          >
-            <Plus size={16} />
-            <span className="text-sm font-medium">카테고리 추가</span>
-          </motion.button>
-        )}
       </div>
 
       {/* DragOverlay */}

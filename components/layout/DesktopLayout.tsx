@@ -1,4 +1,6 @@
 import { memo, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Plus } from 'lucide-react';
 import { MiniCalendar } from '@/components/calendar/MiniCalendar';
 import { BigCalendar } from '@/components/calendar/WeekCalendar';
 import { TodoList } from '@/components/todo/TodoList';
@@ -36,7 +38,7 @@ interface RecurrenceRuleLocal {
 const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
   // Get values from contexts
   const { onDateSelect, todos, selectedDate, onToggleRecurringInstance } = useTodoContext();
-  const { categories, onAddRecurring, onEditRecurring, onDeleteRecurring } = useCategoryContext();
+  const { categories, onAddCategory, onAddRecurring, onEditRecurring, onDeleteRecurring } = useCategoryContext();
 
   const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
   const [editingRecurring, setEditingRecurring] = useState<{
@@ -47,6 +49,16 @@ const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
     recurrenceRule?: RecurrenceRuleLocal;
     categoryId?: string;
   } | undefined>(undefined);
+
+  const [addingNewCategory, setAddingNewCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
+
+  // 색상 팔레트
+  const colorPalette = [
+    '#3B82F6', '#A855F7', '#2D9F6B', '#EF4444', '#F59E0B',
+    '#10B981', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16',
+  ];
 
   // 반복 일정 핸들러
   const handleAddRecurring = () => {
@@ -106,10 +118,71 @@ const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
           </div>
 
           {/* 오늘 할일 제목 */}
-          <div className="flex-shrink-0 px-5 pt-5 pb-3 border-b border-neutral-gray-300">
+          <div className="flex-shrink-0 px-5 pt-5 pb-3 border-b border-neutral-gray-300 flex items-center justify-between">
             <h1 className="text-lg font-semibold text-neutral-text-primary">
               {selectedDate.toLocaleString('ko-KR', { month: 'long', day: 'numeric' })}의 할일
             </h1>
+            {addingNewCategory ? (
+              <motion.div
+                initial={{ opacity: 0, width: 0 }}
+                animate={{ opacity: 1, width: 'auto' }}
+                exit={{ opacity: 0, width: 0 }}
+                transition={{ duration: 0.2 }}
+                className="flex items-center gap-2 px-3 py-1 rounded-md bg-neutral-gray-100"
+              >
+                <div
+                  className="flex-shrink-0 w-4 h-4 rounded-full cursor-pointer"
+                  style={{ backgroundColor: newCategoryColor }}
+                  onClick={() => {
+                    const currentIndex = colorPalette.indexOf(newCategoryColor);
+                    const nextIndex = (currentIndex + 1) % colorPalette.length;
+                    setNewCategoryColor(colorPalette[nextIndex]);
+                  }}
+                  title="색상 변경 (클릭)"
+                />
+                <input
+                  ref={(el) => el?.focus()}
+                  type="text"
+                  placeholder="카테고리 이름"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const name = newCategoryName.trim();
+                      if (name) {
+                        onAddCategory(name, newCategoryColor);
+                        setNewCategoryName('');
+                        setNewCategoryColor('#3B82F6');
+                        setAddingNewCategory(false);
+                      }
+                    } else if (e.key === 'Escape') {
+                      setNewCategoryName('');
+                      setNewCategoryColor('#3B82F6');
+                      setAddingNewCategory(false);
+                    }
+                  }}
+                  onBlur={() => {
+                    setTimeout(() => {
+                      setNewCategoryName('');
+                      setNewCategoryColor('#3B82F6');
+                      setAddingNewCategory(false);
+                    }, 150);
+                  }}
+                  className="w-32 font-semibold text-sm bg-transparent text-neutral-text-primary focus:outline-none border-0 focus:ring-0"
+                />
+              </motion.div>
+            ) : (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.15 }}
+                onClick={() => setAddingNewCategory(true)}
+                className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-neutral-gray-50 transition-colors text-neutral-text-secondary hover:text-primary-500 cursor-pointer"
+              >
+                <Plus size={16} />
+                <span className="text-sm font-medium">카테고리 추가</span>
+              </motion.button>
+            )}
           </div>
 
           {/* Recurring Section + Todo List */}

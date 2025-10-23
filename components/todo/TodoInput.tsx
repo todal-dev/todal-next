@@ -11,6 +11,9 @@ interface TodoInputProps {
   level?: number;
   selectedDate: Date;
   onAddTodo: (text: string, categoryId: string, date: Date, parentId?: string) => void;
+  hideButton?: boolean;
+  isAdding?: boolean;
+  onIsAddingChange?: (isAdding: boolean) => void;
 }
 
 export function TodoInput({
@@ -19,10 +22,23 @@ export function TodoInput({
   level = 0,
   selectedDate,
   onAddTodo,
+  hideButton = false,
+  isAdding: externalIsAdding,
+  onIsAddingChange,
 }: TodoInputProps) {
-  const [isAdding, setIsAdding] = useState(false);
+  const [internalIsAdding, setInternalIsAdding] = useState(false);
   const [value, setValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Use external isAdding if provided, otherwise use internal state
+  const isAdding = externalIsAdding !== undefined ? externalIsAdding : internalIsAdding;
+  const setIsAdding = (value: boolean) => {
+    if (onIsAddingChange) {
+      onIsAddingChange(value);
+    } else {
+      setInternalIsAdding(value);
+    }
+  };
 
   useEffect(() => {
     if (isAdding && inputRef.current) {
@@ -83,17 +99,19 @@ export function TodoInput({
         )}
       </AnimatePresence>
 
-      <motion.button
-        key="button"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.15 }}
-        onClick={() => setIsAdding(true)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neutral-gray-50 transition-colors text-neutral-text-tertiary hover:text-primary-500 w-full text-left"
-      >
-        <Plus size={14} />
-        <span className="text-sm">Add todo</span>
-      </motion.button>
+      {!hideButton && (
+        <motion.button
+          key="button"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.15 }}
+          onClick={() => setIsAdding(true)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neutral-gray-50 transition-colors text-neutral-text-tertiary hover:text-primary-500 w-full text-left"
+        >
+          <Plus size={14} />
+          <span className="text-sm">Add todo</span>
+        </motion.button>
+      )}
     </div>
   );
 }

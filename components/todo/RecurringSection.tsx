@@ -132,7 +132,7 @@ export function RecurringSection({
         </div>
         <button
           onClick={onAddRecurring}
-          className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-primary-50 text-primary-500 transition-colors"
+          className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-primary-50 text-primary-500 transition-colors cursor-pointer"
         >
           <Plus size={12} />
           <span className="text-xs font-medium">추가</span>
