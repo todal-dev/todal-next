@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { BaseDialog, DialogFooter } from './BaseDialog';
 import { DatePickerInput } from './DatePickerInput';
+import { CategorySelect } from './CategorySelect';
+import { CustomSelect, SelectOption } from './CustomSelect';
 
 interface RecurrenceRule {
   frequency: 'daily' | 'weekly' | 'monthly';
@@ -162,17 +164,11 @@ export function AddRecurringDialog({
           <label className="block text-sm font-medium text-neutral-text-secondary mb-1">
             카테고리
           </label>
-          <select
+          <CategorySelect
+            categories={categories}
             value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full px-3 py-2 border border-neutral-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
+            onChange={setCategoryId}
+          />
         </div>
 
         {/* 시간 */}
@@ -206,15 +202,15 @@ export function AddRecurringDialog({
           <label className="block text-sm font-medium text-neutral-text-secondary mb-1">
             반복 주기
           </label>
-          <select
+          <CustomSelect
+            options={[
+              { value: 'daily', label: '매일' },
+              { value: 'weekly', label: '매주' },
+              { value: 'monthly', label: '매월' }
+            ] as SelectOption<'daily' | 'weekly' | 'monthly'>[]}
             value={frequency}
-            onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekly' | 'monthly')}
-            className="w-full px-3 py-2 border border-neutral-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="daily">매일</option>
-            <option value="weekly">매주</option>
-            <option value="monthly">매월</option>
-          </select>
+            onChange={(value) => setFrequency(value as 'daily' | 'weekly' | 'monthly')}
+          />
         </div>
 
         {/* 간격 */}
