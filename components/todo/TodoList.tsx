@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   DndContext,
   DragEndEvent,
+  DragOverEvent,
   DragOverlay,
   DragStartEvent,
   closestCenter,
@@ -40,6 +41,7 @@ export function TodoList() {
     onEditTodo,
     onUpdateTodoTime,
     onMoveTodo,
+    onToggleRecurringInstance,
   } = useTodoContext();
 
   const {
@@ -56,6 +58,7 @@ export function TodoList() {
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [overId, setOverId] = useState<string | null>(null);
   const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
   const [editingRecurring, setEditingRecurring] = useState<{
     id: string;
@@ -63,6 +66,7 @@ export function TodoList() {
     startTime?: string;
     endTime?: string;
     recurrenceRule?: RecurrenceRuleLocal;
+    categoryId?: string;
   } | undefined>(undefined);
 
   // DnD sensors
@@ -84,6 +88,10 @@ export function TodoList() {
   const filteredTodos = todos.filter(todo => {
     // 반복 일정은 제외 (반복 일정 섹션에서만 표시)
     if (todo.recurrenceRule || todo.recurrenceId) {
+      return false;
+    }
+    // 반복 일정에서 분리된 할일도 제외 (반복 일정 섹션에서만 표시)
+    if (todo.isFromRecurring) {
       return false;
     }
     return todo.date.getFullYear() === selectedDate.getFullYear() &&
@@ -133,6 +141,7 @@ export function TodoList() {
         startTime: todo.startTime,
         endTime: todo.endTime,
         recurrenceRule: todo.recurrenceRule,
+        categoryId: todo.categoryId,
       });
       setRecurringDialogOpen(true);
     }
@@ -142,12 +151,13 @@ export function TodoList() {
     text: string,
     startTime: string,
     endTime: string,
-    recurrenceRule: RecurrenceRuleLocal
+    recurrenceRule: RecurrenceRuleLocal,
+    categoryId: string
   ) => {
     if (editingRecurring) {
-      onEditRecurring?.(editingRecurring.id, text, startTime, endTime, recurrenceRule);
+      onEditRecurring?.(editingRecurring.id, text, startTime, endTime, recurrenceRule, categoryId);
     } else {
-      onAddRecurring?.(text, startTime, endTime, recurrenceRule);
+      onAddRecurring?.(text, startTime, endTime, recurrenceRule, categoryId);
     }
     setRecurringDialogOpen(false);
     setEditingRecurring(undefined);
@@ -159,22 +169,34 @@ export function TodoList() {
     }
   };
 
+  // 반복 일정 인스턴스 토글 (없으면 생성, 있으면 토글)
+  const handleToggleRecurringInstance = (recurringId: string) => {
+    onToggleRecurringInstance?.(recurringId, selectedDate);
+  };
+
   // 드래그 시작
   const handleDragStart = (event: DragStartEvent) => {
     setActiveDragId(event.active.id as string);
+  };
+
+  // 드래그 중 (실시간 위치 업데이트)
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over } = event;
+    setOverId(over ? (over.id as string) : null);
   };
 
   // 드래그 종료
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveDragId(null);
+    setOverId(null);
 
     if (!over || !onMoveTodo) return;
 
     const activeId = active.id as string;
-    const overId = over.id as string;
+    const overIdLocal = over.id as string;
 
-    if (activeId === overId) return;
+    if (activeId === overIdLocal) return;
 
     const activeData = active.data.current;
     const overData = over.data.current;
@@ -194,6 +216,7 @@ export function TodoList() {
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div className="flex flex-col h-full p-5 gap-2">
@@ -209,7 +232,7 @@ export function TodoList() {
           <RecurringSection
             todos={todos}
             selectedDate={selectedDate}
-            onToggleTodo={onToggleTodo}
+            onToggleRecurringInstance={handleToggleRecurringInstance}
             onAddRecurring={handleAddRecurring}
             onEditRecurring={handleEditRecurringClick}
             onDeleteRecurring={handleDeleteRecurringClick}
@@ -233,6 +256,8 @@ export function TodoList() {
                 onEditCategory={onEditCategory}
                 onChangeColor={onChangeColor}
                 onDeleteCategory={onDeleteCategory}
+                activeDragId={activeDragId}
+                overId={overId}
               />
             ))}
           </AnimatePresence>
@@ -328,6 +353,7 @@ export function TodoList() {
         }}
         onConfirm={handleConfirmRecurring}
         selectedDate={selectedDate}
+        categories={categories}
         editingTodo={editingRecurring}
       />
     </DndContext>

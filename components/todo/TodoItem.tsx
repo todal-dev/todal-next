@@ -35,6 +35,7 @@ interface TodoItemProps {
   onMove?: (todoId: string, newCategoryId: string, newParentId?: string, newIndex?: number) => void;
   onAddTodo: (text: string, categoryId: string, date: Date, parentId?: string) => void;
   selectedDate: Date;
+  isOver?: boolean;
 }
 
 const TodoItemComponent = ({
@@ -51,6 +52,7 @@ const TodoItemComponent = ({
   onMove,
   onAddTodo,
   selectedDate,
+  isOver = false,
 }: TodoItemProps) => {
   const [editingTime, setEditingTime] = useState(false);
 
@@ -80,6 +82,17 @@ const TodoItemComponent = ({
 
   return (
     <div style={{ paddingLeft: `${level * 24}px` }}>
+      {isOver && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: '36px' }}
+          exit={{ opacity: 0, height: 0 }}
+          transition={{ duration: 0.15 }}
+          className="mb-1 flex items-center justify-center"
+        >
+          <div className="w-full h-1 bg-primary-500 rounded-full opacity-50" />
+        </motion.div>
+      )}
       <motion.div
         ref={setNodeRef}
         style={style}
@@ -290,6 +303,7 @@ const TodoItemComponent = ({
               onMove={onMove}
               onAddTodo={onAddTodo}
               selectedDate={selectedDate}
+              isOver={false}
             />
           ))}
         </div>
@@ -312,6 +326,7 @@ export const TodoItem = memo(TodoItemComponent, (prevProps, nextProps) => {
     prevProps.categoryId === nextProps.categoryId &&
     prevProps.index === nextProps.index &&
     prevProps.siblings.length === nextProps.siblings.length &&
-    prevProps.parentId === nextProps.parentId
+    prevProps.parentId === nextProps.parentId &&
+    prevProps.isOver === nextProps.isOver
   );
 });

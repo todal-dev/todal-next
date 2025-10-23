@@ -122,14 +122,15 @@ export function useTodos(initialTodos: Todo[] = []) {
     startTime: string,
     endTime: string,
     recurrenceRule: RecurrenceRule,
-    selectedDate: Date
+    selectedDate: Date,
+    categoryId: string = 'cat-etc'
   ) => {
     const newRecurring: Todo = {
       id: `recurring-${Date.now()}`,
       text,
       completed: false,
       date: selectedDate,
-      categoryId: 'cat-etc',
+      categoryId,
       startTime,
       endTime,
       recurrenceRule,
@@ -144,7 +145,8 @@ export function useTodos(initialTodos: Todo[] = []) {
     text: string,
     startTime: string,
     endTime: string,
-    recurrenceRule: RecurrenceRule
+    recurrenceRule: RecurrenceRule,
+    categoryId: string
   ) => {
     setTodos(todos.map(todo => {
       if (todo.id === id) {
@@ -154,6 +156,7 @@ export function useTodos(initialTodos: Todo[] = []) {
           startTime,
           endTime,
           recurrenceRule,
+          categoryId,
         };
       }
       return todo;
@@ -171,13 +174,60 @@ export function useTodos(initialTodos: Todo[] = []) {
     todo: Omit<Todo, 'id'>,
     callback?: (id: string) => void
   ) => {
+    // recurrenceRule을 제외하고 나머지 속성만 복사
+    const { recurrenceRule, ...todoWithoutRecurrence } = todo as any;
+
     const newTodo: Todo = {
-      ...todo,
+      ...todoWithoutRecurrence,
       id: Date.now().toString(),
       subtasks: [],
     };
     setTodos([...todos, newTodo]);
     callback?.(newTodo.id);
+  };
+
+  // Toggle recurring instance (한 번에 excludeDates 업데이트 + 분리된 할일 생성)
+  const handleToggleRecurringInstance = (recurringId: string, date: Date) => {
+    setTodos(prevTodos => {
+      const recurringTodo = prevTodos.find(t => t.id === recurringId);
+      if (!recurringTodo) return prevTodos;
+
+      // 이미 분리된 할일이 있는지 확인
+      const existingSeparated = prevTodos.find(
+        t => t.isFromRecurring &&
+        t.originalRecurringId === recurringId &&
+        t.date.getFullYear() === date.getFullYear() &&
+        t.date.getMonth() === date.getMonth() &&
+        t.date.getDate() === date.getDate()
+      );
+
+      if (existingSeparated) {
+        // 이미 분리된 할일이 있으면 토글
+        return toggleRecursively(prevTodos, existingSeparated.id);
+      } else {
+        // 분리된 할일이 없으면 생성
+        // 1. excludeDates 업데이트
+        const updatedTodos = updateTodoRecursively(prevTodos, recurringId, {
+          excludeDates: [...(recurringTodo.excludeDates || []), date]
+        });
+
+        // 2. 분리된 할일 생성
+        const newTodo: Todo = {
+          id: Date.now().toString(),
+          text: recurringTodo.text,
+          completed: true,
+          date,
+          categoryId: recurringTodo.categoryId,
+          startTime: recurringTodo.startTime,
+          endTime: recurringTodo.endTime,
+          subtasks: [],
+          isFromRecurring: true,
+          originalRecurringId: recurringId,
+        };
+
+        return [...updatedTodos, newTodo];
+      }
+    });
   };
 
   return {
@@ -196,5 +246,6 @@ export function useTodos(initialTodos: Todo[] = []) {
     handleEditRecurring,
     handleDeleteRecurring,
     handleAddTodoFromCalendar,
+    handleToggleRecurringInstance,
   };
 }

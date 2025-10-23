@@ -32,6 +32,7 @@ export function BigCalendar() {
     onUpdateTodo: onEditTodo,
     onDeleteTodo,
     onMoveTodoToDate: onMoveTodo,
+    onToggleRecurringInstance,
   } = useTodoContext();
 
   const { categories } = useCategoryContext();
@@ -196,10 +197,26 @@ export function BigCalendar() {
     const allTodos: Todo[] = [];
     todos.forEach((todo) => {
       if (todo.recurrenceRule) {
-        allTodos.push(...generateRecurringEvents(todo, weekDays));
-      } else {
+        // 반복 이벤트 생성 (excludeDates 반영됨)
+        const generatedEvents = generateRecurringEvents(todo, weekDays);
+        // 각 생성된 이벤트에 대해 분리된 할일이 있는지 확인
+        generatedEvents.forEach(event => {
+          const separated = todos.find(
+            t => t.isFromRecurring &&
+            t.originalRecurringId === todo.id &&
+            t.date.getFullYear() === event.date.getFullYear() &&
+            t.date.getMonth() === event.date.getMonth() &&
+            t.date.getDate() === event.date.getDate()
+          );
+          // 분리된 할일이 있으면 그것을 사용, 없으면 생성된 이벤트 사용
+          allTodos.push(separated || event);
+        });
+      } else if (!todo.recurrenceId && !todo.isFromRecurring) {
+        // recurrenceId 없고 isFromRecurring도 아닌 일반 할일만 추가
+        // isFromRecurring은 위 반복 일정 확장에서 이미 처리됨
         allTodos.push(todo);
       }
+      // recurrenceId가 있는 것은 구버전 인스턴스이므로 무시
     });
 
     weekDays.forEach((day) => {
@@ -246,10 +263,31 @@ export function BigCalendar() {
   // Memoize toggle completion handler
   const handleToggleCompletion = useCallback((todoId: string) => {
     const todo = todos.find(t => t.id === todoId);
-    if (todo) {
+    if (!todo) return;
+
+    // 분리된 할일인 경우 일반 할일처럼 처리
+    if (todo.isFromRecurring) {
+      onEditTodo?.(todoId, { completed: !todo.completed });
+      return;
+    }
+
+    // 반복 일정에서 생성된 이벤트인지 확인 (ID 패턴: recurring-timestamp-ISODate)
+    if (todoId.startsWith('recurring-') && todoId.split('-').length > 2) {
+      // 생성된 반복 이벤트 - 원본 ID 추출
+      const parts = todoId.split('-');
+      const recurringId = `${parts[0]}-${parts[1]}`; // "recurring-timestamp" 형태
+
+      // 해당 날짜 찾기
+      const isoDatePart = todoId.substring(recurringId.length + 1);
+      const eventDate = new Date(isoDatePart);
+
+      // 한 번에 처리
+      onToggleRecurringInstance?.(recurringId, eventDate);
+    } else {
+      // 일반 할일
       onEditTodo?.(todoId, { completed: !todo.completed });
     }
-  }, [todos, onEditTodo]);
+  }, [todos, onEditTodo, onToggleRecurringInstance]);
 
   return (
     <div className="flex flex-col h-full bg-white">

@@ -39,6 +39,8 @@ interface CategorySectionProps {
   onEditCategory: (id: string, name: string) => void;
   onChangeColor: (id: string, color: string) => void;
   onDeleteCategory: (id: string) => void;
+  activeDragId?: string | null;
+  overId?: string | null;
 }
 
 const colorPalette = [
@@ -66,6 +68,8 @@ const CategorySectionComponent = ({
   onEditCategory,
   onChangeColor,
   onDeleteCategory,
+  activeDragId,
+  overId,
 }: CategorySectionProps) => {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
 
@@ -184,6 +188,7 @@ const CategorySectionComponent = ({
               onMove={onMoveTodo}
               onAddTodo={onAddTodo}
               selectedDate={selectedDate}
+              isOver={overId === todo.id && activeDragId !== todo.id}
             />
           ))}
         </SortableContext>
@@ -213,6 +218,8 @@ export const CategorySection = memo(CategorySectionComponent, (prevProps, nextPr
       item.startTime === nextProps.category.items[idx]?.startTime &&
       item.endTime === nextProps.category.items[idx]?.endTime
     ) &&
-    prevProps.selectedDate.getTime() === nextProps.selectedDate.getTime()
+    prevProps.selectedDate.getTime() === nextProps.selectedDate.getTime() &&
+    prevProps.activeDragId === nextProps.activeDragId &&
+    prevProps.overId === nextProps.overId
   );
 });

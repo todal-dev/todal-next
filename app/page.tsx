@@ -79,6 +79,7 @@ export default function Home() {
     handleEditRecurring,
     handleDeleteRecurring,
     handleAddTodoFromCalendar,
+    handleToggleRecurringInstance,
   } = useTodos(INITIAL_TODOS);
 
   // Category state and handlers
@@ -94,8 +95,48 @@ export default function Home() {
   const todosByDate = useMemo(() => {
     const grouped: Record<string, TodoByDate> = {};
 
-    // Only process top-level todos (don't count subtasks)
+    // 미니 캘린더에서 사용할 날짜 범위 생성 (현재 날짜 기준 ±2개월)
+    const today = new Date();
+    const startDate = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+    const endDate = new Date(today.getFullYear(), today.getMonth() + 3, 0);
+
+    const allDates: Date[] = [];
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      allDates.push(new Date(d));
+    }
+
+    // 할일 확장 (반복 일정 포함)
+    const expandedTodos: Todo[] = [];
     todos.forEach((todo) => {
+      if (todo.recurrenceRule) {
+        // 반복 일정 확장 (excludeDates 자동 반영됨)
+        const generated: Todo[] = [];
+        for (const date of allDates) {
+          // generateRecurringEvents가 weekDays를 받으므로 날짜 하나씩 처리
+          const events = require('@/utils/recurringUtils').generateRecurringEvents(todo, [date]);
+          // 각 생성된 이벤트에 대해 분리된 할일이 있는지 확인
+          events.forEach((event: Todo) => {
+            const separated = todos.find(
+              t => t.isFromRecurring &&
+              t.originalRecurringId === todo.id &&
+              t.date.getFullYear() === event.date.getFullYear() &&
+              t.date.getMonth() === event.date.getMonth() &&
+              t.date.getDate() === event.date.getDate()
+            );
+            // 분리된 할일이 있으면 그것을 사용, 없으면 생성된 이벤트 사용
+            generated.push(separated || event);
+          });
+        }
+        expandedTodos.push(...generated);
+      } else if (!todo.recurrenceId && !todo.isFromRecurring) {
+        // recurrenceId 없고 isFromRecurring도 아닌 일반 할일만 추가
+        // isFromRecurring은 위 반복 일정 확장에서 이미 처리됨
+        expandedTodos.push(todo);
+      }
+    });
+
+    // Only process top-level todos (don't count subtasks)
+    expandedTodos.forEach((todo) => {
       const year = todo.date.getFullYear();
       const month = String(todo.date.getMonth() + 1).padStart(2, '0');
       const day = String(todo.date.getDate()).padStart(2, '0');
@@ -145,9 +186,10 @@ export default function Home() {
     text: string,
     startTime: string,
     endTime: string,
-    recurrenceRule: any
+    recurrenceRule: any,
+    categoryId: string
   ) => {
-    handleAddRecurring(text, startTime, endTime, recurrenceRule, selectedDate);
+    handleAddRecurring(text, startTime, endTime, recurrenceRule, selectedDate, categoryId);
   }, [handleAddRecurring, selectedDate]);
 
   // Create context values
@@ -166,6 +208,7 @@ export default function Home() {
       onAddTodoFromCalendar: handleAddTodoFromCalendar,
       onUpdateTodo: handleUpdateTodo,
       onMoveTodoToDate: handleMoveTodoToDate,
+      onToggleRecurringInstance: handleToggleRecurringInstance,
     }),
     [
       todos,
@@ -180,6 +223,7 @@ export default function Home() {
       handleAddTodoFromCalendar,
       handleUpdateTodo,
       handleMoveTodoToDate,
+      handleToggleRecurringInstance,
     ]
   );
 

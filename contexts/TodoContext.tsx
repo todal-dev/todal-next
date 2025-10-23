@@ -17,6 +17,7 @@ interface TodoContextType {
   onAddTodoFromCalendar: (todo: Omit<Todo, 'id'>, callback?: (id: string) => void) => void;
   onUpdateTodo: (id: string, updates: Partial<Todo>) => void;
   onMoveTodoToDate: (id: string, newDate: Date) => void;
+  onToggleRecurringInstance: (recurringId: string, date: Date) => void;
 }
 
 const TodoContext = createContext<TodoContextType | undefined>(undefined);

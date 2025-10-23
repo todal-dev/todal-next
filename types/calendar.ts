@@ -17,7 +17,10 @@ export interface Todo {
   startTime?: string;
   endTime?: string;
   recurrenceRule?: RecurrenceRule;
-  recurrenceId?: string;
+  recurrenceId?: string; // 기존: 생성된 인스턴스가 참조하는 반복 일정 원본 ID
+  excludeDates?: Date[]; // 반복 일정 원본에서 제외할 날짜들
+  isFromRecurring?: boolean; // 반복 일정에서 분리된 독립 할일인지 여부
+  originalRecurringId?: string; // 분리된 할일이 원래 속했던 반복 일정 ID
 }
 
 export interface Category {

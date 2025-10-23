@@ -12,6 +12,12 @@ interface RecurrenceRule {
   daysOfWeek?: number[];
 }
 
+interface Category {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface AddRecurringDialogProps {
   isOpen: boolean;
   onClose: () => void;
@@ -19,15 +25,18 @@ interface AddRecurringDialogProps {
     text: string,
     startTime: string,
     endTime: string,
-    recurrenceRule: RecurrenceRule
+    recurrenceRule: RecurrenceRule,
+    categoryId: string
   ) => void;
   selectedDate: Date;
+  categories: Category[];
   editingTodo?: {
     id: string;
     text: string;
     startTime?: string;
     endTime?: string;
     recurrenceRule?: RecurrenceRule;
+    categoryId?: string;
   };
 }
 
@@ -36,11 +45,13 @@ export function AddRecurringDialog({
   onClose,
   onConfirm,
   selectedDate,
+  categories,
   editingTodo,
 }: AddRecurringDialogProps) {
   const [text, setText] = useState('');
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
+  const [categoryId, setCategoryId] = useState('cat-etc');
   const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [interval, setInterval] = useState(1);
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([1, 2, 3, 4, 5]); // 월-금
@@ -54,6 +65,7 @@ export function AddRecurringDialog({
       setText(editingTodo.text);
       setStartTime(editingTodo.startTime || '09:00');
       setEndTime(editingTodo.endTime || '10:00');
+      setCategoryId(editingTodo.categoryId || 'cat-etc');
       if (editingTodo.recurrenceRule) {
         setFrequency(editingTodo.recurrenceRule.frequency);
         setInterval(editingTodo.recurrenceRule.interval);
@@ -74,6 +86,7 @@ export function AddRecurringDialog({
       setText('');
       setStartTime('09:00');
       setEndTime('10:00');
+      setCategoryId('cat-etc');
       setFrequency('daily');
       setInterval(1);
       setDaysOfWeek([1, 2, 3, 4, 5]);
@@ -97,7 +110,7 @@ export function AddRecurringDialog({
       endDate: hasEndDate ? endDate : undefined,
     };
 
-    onConfirm(text.trim(), startTime, endTime, recurrenceRule);
+    onConfirm(text.trim(), startTime, endTime, recurrenceRule, categoryId);
     onClose();
   };
 
@@ -142,6 +155,24 @@ export function AddRecurringDialog({
             className="w-full px-3 py-2 border border-neutral-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             autoFocus
           />
+        </div>
+
+        {/* 카테고리 */}
+        <div>
+          <label className="block text-sm font-medium text-neutral-text-secondary mb-1">
+            카테고리
+          </label>
+          <select
+            value={categoryId}
+            onChange={(e) => setCategoryId(e.target.value)}
+            className="w-full px-3 py-2 border border-neutral-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* 시간 */}
