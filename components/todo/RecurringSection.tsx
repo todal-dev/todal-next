@@ -28,9 +28,16 @@ interface Todo {
   originalRecurringId?: string;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface RecurringSectionProps {
   todos: Todo[];
   selectedDate: Date;
+  categories: Category[];
   onToggleRecurringInstance: (recurringId: string) => void;
   onAddRecurring: () => void;
   onEditRecurring: (id: string) => void;
@@ -40,6 +47,7 @@ interface RecurringSectionProps {
 export function RecurringSection({
   todos,
   selectedDate,
+  categories,
   onToggleRecurringInstance,
   onAddRecurring,
   onEditRecurring,
@@ -108,9 +116,9 @@ export function RecurringSection({
   };
 
   return (
-    <div className="space-y-1.5">
+    <div>
       {/* Simple Header */}
-      <div className="flex items-center justify-between px-1">
+      <div className="flex items-center justify-between px-3 mb-1">
         <div className="flex items-center gap-1.5">
           <Repeat size={14} className="text-primary-500" />
           <span className="text-xs font-medium text-neutral-text-secondary">
@@ -133,7 +141,7 @@ export function RecurringSection({
 
       {/* Todo Items */}
       {recurringTodos.length > 0 && (
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           {recurringTodos.map((todo) => {
           // 오늘 날짜의 분리된 할일 찾기
           const todaySeparated = todos.find(
@@ -144,11 +152,21 @@ export function RecurringSection({
             t.date.getDate() === selectedDate.getDate()
           );
 
+          // 해당 할일의 카테고리 색상 찾기
+          const category = categories.find(cat => cat.id === todo.categoryId);
+          const categoryColor = category?.color || '#3B82F6'; // 기본값은 primary blue
+
           return (
             <div
               key={todo.id}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-md bg-primary-50/30 hover:bg-primary-50 transition-colors group border border-primary-200/50"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neutral-gray-50 transition-colors group relative"
             >
+              {/* Left accent bar - 카테고리 색상 */}
+              <div
+                className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 rounded-full"
+                style={{ backgroundColor: categoryColor }}
+              ></div>
+
               <Checkbox
                 checked={todaySeparated?.completed || false}
                 onChange={() => onToggleRecurringInstance(todo.id)}
@@ -164,7 +182,10 @@ export function RecurringSection({
                     {todo.text}
                   </span>
                   {todo.recurrenceRule && (
-                    <span className="text-xs text-primary-600 font-medium flex-shrink-0">
+                    <span
+                      className="text-xs font-medium flex-shrink-0"
+                      style={{ color: categoryColor }}
+                    >
                       {getRecurrenceText(todo.recurrenceRule)}
                     </span>
                   )}
@@ -178,14 +199,14 @@ export function RecurringSection({
               <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                 <button
                   onClick={() => onEditRecurring(todo.id)}
-                  className="p-1 rounded hover:bg-white text-neutral-text-secondary hover:text-primary-500 transition-colors"
+                  className="p-1 rounded hover:bg-neutral-gray-100 text-neutral-text-secondary hover:text-primary-500 transition-colors"
                   title="편집"
                 >
                   <Edit2 size={13} />
                 </button>
                 <button
                   onClick={() => onDeleteRecurring(todo.id)}
-                  className="p-1 rounded hover:bg-white text-neutral-text-secondary hover:text-red-500 transition-colors"
+                  className="p-1 rounded hover:bg-red-100 text-neutral-text-secondary hover:text-red-500 transition-colors"
                   title="삭제"
                 >
                   <Trash2 size={13} />

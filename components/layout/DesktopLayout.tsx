@@ -100,29 +100,35 @@ const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
       <div className="hidden md:flex w-full">
         {/* Left Panel - Mini Calendar + Recurring Section + Todo List (35%) */}
         <div className="flex-[35] border-r border-neutral-gray-300 flex flex-col bg-white">
-          {/* Top Section - Mini Calendar + Recurring Section (6:4 ratio) */}
-          <div className="shrink-0 flex border-b border-neutral-gray-300">
-            {/* Mini Calendar - 60% */}
-            <div className="flex-[6] border-r border-neutral-gray-300">
-              <MiniCalendar onDateSelect={onDateSelect} todosByDate={todosByDate} />
-            </div>
+          {/* Mini Calendar */}
+          <div className="shrink-0 border-b border-neutral-gray-300">
+            <MiniCalendar onDateSelect={onDateSelect} todosByDate={todosByDate} />
+          </div>
 
-            {/* Recurring Section - 40% */}
-            <div className="flex-[4] overflow-y-auto p-3">
+          {/* 오늘 할일 제목 */}
+          <div className="flex-shrink-0 px-5 pt-5 pb-3 border-b border-neutral-gray-300">
+            <h1 className="text-lg font-semibold text-neutral-text-primary">
+              {selectedDate.toLocaleString('ko-KR', { month: 'long', day: 'numeric' })}의 할일
+            </h1>
+          </div>
+
+          {/* Recurring Section + Todo List */}
+          <div className="flex-1 overflow-y-auto">
+            {/* Recurring Section */}
+            <div className="px-5 pt-2 pb-3">
               <RecurringSection
                 todos={todos}
                 selectedDate={selectedDate}
+                categories={categories}
                 onToggleRecurringInstance={handleToggleRecurringInstance}
                 onAddRecurring={handleAddRecurring}
                 onEditRecurring={handleEditRecurringClick}
                 onDeleteRecurring={handleDeleteRecurringClick}
               />
             </div>
-          </div>
 
-          {/* Bottom Section - Todo List (당일 할일만) */}
-          <div className="flex-1 overflow-y-auto">
-            <TodoList showRecurringSection={false} />
+            {/* Todo List (당일 할일만) */}
+            <TodoList showRecurringSection={false} hideTitle={true} />
           </div>
         </div>
 

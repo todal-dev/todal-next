@@ -32,9 +32,10 @@ interface RecurrenceRuleLocal {
 
 interface TodoListProps {
   showRecurringSection?: boolean;
+  hideTitle?: boolean;
 }
 
-export function TodoList({ showRecurringSection = true }: TodoListProps) {
+export function TodoList({ showRecurringSection = true, hideTitle = false }: TodoListProps) {
   // Get values from contexts
   const {
     todos,
@@ -223,13 +224,15 @@ export function TodoList({ showRecurringSection = true }: TodoListProps) {
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex flex-col h-full p-5 gap-2">
+      <div className={`flex flex-col h-full gap-2 ${hideTitle ? 'px-5 pb-5' : 'p-5'}`}>
         {/* Header */}
-        <div className="flex-shrink-0">
-          <h1 className="text-lg font-semibold text-neutral-text-primary">
-            {selectedDate.toLocaleString('ko-KR', { month: 'long', day: 'numeric' })}의 할일
-          </h1>
-        </div>
+        {!hideTitle && (
+          <div className="flex-shrink-0">
+            <h1 className="text-lg font-semibold text-neutral-text-primary">
+              {selectedDate.toLocaleString('ko-KR', { month: 'long', day: 'numeric' })}의 할일
+            </h1>
+          </div>
+        )}
 
         {/* Recurring Section - 고정 */}
         {showRecurringSection && (
@@ -237,6 +240,7 @@ export function TodoList({ showRecurringSection = true }: TodoListProps) {
             <RecurringSection
               todos={todos}
               selectedDate={selectedDate}
+              categories={categories}
               onToggleRecurringInstance={handleToggleRecurringInstance}
               onAddRecurring={handleAddRecurring}
               onEditRecurring={handleEditRecurringClick}
