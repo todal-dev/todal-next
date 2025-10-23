@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback } from 'react';
+import Image from 'next/image';
 import { DesktopLayout } from '@/components/layout/DesktopLayout';
 import { MobileLayout } from '@/components/layout/MobileLayout';
 import { useTodos } from '@/hooks/useTodos';
@@ -256,7 +257,9 @@ export default function Home() {
         <div className="flex flex-col h-screen bg-white">
           {/* Header */}
           <header className="border-b border-neutral-gray-300 bg-white h-12 px-5 flex items-center justify-between">
-            <h1 className="text-lg font-semibold text-neutral-text-primary">Todal</h1>
+            <div className="flex items-center gap-2">
+              <Image src="/logo.png" alt="Todal Logo" width={90} height={90} />
+            </div>
             <div className="flex gap-2">
               {/* Settings/profile buttons can be added later */}
             </div>
