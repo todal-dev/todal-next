@@ -82,17 +82,12 @@ export function RecurringSection({
     return true;
   });
 
-  // 완료 카운트 계산: recurringTodos 중 오늘 분리된 할일이 있고 완료된 것
-  const completedCount = recurringTodos.filter(recurringTodo => {
-    const todaySeparated = todos.find(
-      t => t.isFromRecurring &&
-      t.originalRecurringId === recurringTodo.id &&
-      t.date.getFullYear() === selectedDate.getFullYear() &&
-      t.date.getMonth() === selectedDate.getMonth() &&
-      t.date.getDate() === selectedDate.getDate()
-    );
-    return todaySeparated?.completed;
-  }).length;
+  // 완료 카운트 계산: completedDates에 오늘 날짜가 포함된 것
+  const todayString = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+
+  const completedCount = recurringTodos.filter(todo =>
+    todo.completedDates?.includes(todayString)
+  ).length;
 
   const totalCount = recurringTodos.length;
 
@@ -143,14 +138,8 @@ export function RecurringSection({
       {recurringTodos.length > 0 && (
         <div className="space-y-0.5">
           {recurringTodos.map((todo) => {
-          // 오늘 날짜의 분리된 할일 찾기
-          const todaySeparated = todos.find(
-            t => t.isFromRecurring &&
-            t.originalRecurringId === todo.id &&
-            t.date.getFullYear() === selectedDate.getFullYear() &&
-            t.date.getMonth() === selectedDate.getMonth() &&
-            t.date.getDate() === selectedDate.getDate()
-          );
+          // 오늘 날짜가 completedDates에 포함되어 있는지 확인
+          const isCompletedToday = todo.completedDates?.includes(todayString) || false;
 
           // 해당 할일의 카테고리 색상 찾기
           const category = categories.find(cat => cat.id === todo.categoryId);
@@ -168,14 +157,14 @@ export function RecurringSection({
               ></div>
 
               <Checkbox
-                checked={todaySeparated?.completed || false}
+                checked={isCompletedToday}
                 onChange={() => onToggleRecurringInstance(todo.id)}
                 className="flex-shrink-0"
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
                   <span className={`text-sm truncate ${
-                    todaySeparated?.completed
+                    isCompletedToday
                       ? 'line-through text-neutral-text-secondary'
                       : 'text-neutral-text-primary'
                   }`}>

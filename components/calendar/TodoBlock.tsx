@@ -72,7 +72,8 @@ const TodoBlockComponent = ({
   })();
 
   const style = getTodoBlockStyle(displayStartTime, displayEndTime, hourHeight, layout.width, layout.left);
-  const isRecurring = !!todo.recurrenceId;
+  // 반복 이벤트인지 확인 (ID 패턴: recurring-timestamp-ISODate)
+  const isRecurring = todo.id.startsWith('recurring-') && todo.id.split('-').length > 2;
 
   return (
     <div

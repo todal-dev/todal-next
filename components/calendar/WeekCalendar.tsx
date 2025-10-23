@@ -197,23 +197,19 @@ export function BigCalendar() {
     const allTodos: Todo[] = [];
     todos.forEach((todo) => {
       if (todo.recurrenceRule) {
-        // 반복 이벤트 생성 (excludeDates 반영됨)
+        // 반복 이벤트 생성
         const generatedEvents = generateRecurringEvents(todo, weekDays);
-        // 각 생성된 이벤트에 대해 분리된 할일이 있는지 확인
+        // 각 생성된 이벤트에 completedDates 기반으로 completed 설정
         generatedEvents.forEach(event => {
-          const separated = todos.find(
-            t => t.isFromRecurring &&
-            t.originalRecurringId === todo.id &&
-            t.date.getFullYear() === event.date.getFullYear() &&
-            t.date.getMonth() === event.date.getMonth() &&
-            t.date.getDate() === event.date.getDate()
-          );
-          // 분리된 할일이 있으면 그것을 사용, 없으면 생성된 이벤트 사용
-          allTodos.push(separated || event);
+          const dateString = `${event.date.getFullYear()}-${String(event.date.getMonth() + 1).padStart(2, '0')}-${String(event.date.getDate()).padStart(2, '0')}`;
+          const isCompleted = todo.completedDates?.includes(dateString) || false;
+          allTodos.push({
+            ...event,
+            completed: isCompleted
+          });
         });
-      } else if (!todo.recurrenceId && !todo.isFromRecurring) {
-        // recurrenceId 없고 isFromRecurring도 아닌 일반 할일만 추가
-        // isFromRecurring은 위 반복 일정 확장에서 이미 처리됨
+      } else if (!todo.recurrenceId) {
+        // 일반 할일만 추가
         allTodos.push(todo);
       }
       // recurrenceId가 있는 것은 구버전 인스턴스이므로 무시
@@ -262,29 +258,38 @@ export function BigCalendar() {
 
   // Memoize toggle completion handler
   const handleToggleCompletion = useCallback((todoId: string) => {
-    const todo = todos.find(t => t.id === todoId);
-    if (!todo) return;
-
-    // 분리된 할일인 경우 일반 할일처럼 처리
-    if (todo.isFromRecurring) {
-      onEditTodo?.(todoId, { completed: !todo.completed });
-      return;
-    }
+    console.log('[handleToggleCompletion] todoId:', todoId);
 
     // 반복 일정에서 생성된 이벤트인지 확인 (ID 패턴: recurring-timestamp-ISODate)
     if (todoId.startsWith('recurring-') && todoId.split('-').length > 2) {
+      console.log('[handleToggleCompletion] Recurring event detected');
       // 생성된 반복 이벤트 - 원본 ID 추출
       const parts = todoId.split('-');
       const recurringId = `${parts[0]}-${parts[1]}`; // "recurring-timestamp" 형태
+      console.log('[handleToggleCompletion] recurringId:', recurringId);
+
+      // 원본 할일 찾기
+      const originalTodo = todos.find(t => t.id === recurringId);
+      if (!originalTodo) {
+        console.log('[handleToggleCompletion] Original recurring todo not found');
+        return;
+      }
 
       // 해당 날짜 찾기
       const isoDatePart = todoId.substring(recurringId.length + 1);
       const eventDate = new Date(isoDatePart);
+      console.log('[handleToggleCompletion] eventDate:', eventDate);
 
-      // 한 번에 처리
+      // completedDates 토글
       onToggleRecurringInstance?.(recurringId, eventDate);
     } else {
+      console.log('[handleToggleCompletion] Regular todo');
       // 일반 할일
+      const todo = todos.find(t => t.id === todoId);
+      if (!todo) {
+        console.log('[handleToggleCompletion] todo not found');
+        return;
+      }
       onEditTodo?.(todoId, { completed: !todo.completed });
     }
   }, [todos, onEditTodo, onToggleRecurringInstance]);

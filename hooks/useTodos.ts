@@ -186,47 +186,30 @@ export function useTodos(initialTodos: Todo[] = []) {
     callback?.(newTodo.id);
   };
 
-  // Toggle recurring instance (한 번에 excludeDates 업데이트 + 분리된 할일 생성)
+  // Toggle recurring instance (completedDates 토글)
   const handleToggleRecurringInstance = (recurringId: string, date: Date) => {
     setTodos(prevTodos => {
       const recurringTodo = prevTodos.find(t => t.id === recurringId);
       if (!recurringTodo) return prevTodos;
 
-      // 이미 분리된 할일이 있는지 확인
-      const existingSeparated = prevTodos.find(
-        t => t.isFromRecurring &&
-        t.originalRecurringId === recurringId &&
-        t.date.getFullYear() === date.getFullYear() &&
-        t.date.getMonth() === date.getMonth() &&
-        t.date.getDate() === date.getDate()
-      );
+      // 날짜를 YYYY-MM-DD 형식으로 변환
+      const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 
-      if (existingSeparated) {
-        // 이미 분리된 할일이 있으면 토글
-        return toggleRecursively(prevTodos, existingSeparated.id);
-      } else {
-        // 분리된 할일이 없으면 생성
-        // 1. excludeDates 업데이트
-        const updatedTodos = updateTodoRecursively(prevTodos, recurringId, {
-          excludeDates: [...(recurringTodo.excludeDates || []), date]
-        });
+      // 현재 completedDates 가져오기
+      const completedDates = recurringTodo.completedDates || [];
 
-        // 2. 분리된 할일 생성
-        const newTodo: Todo = {
-          id: Date.now().toString(),
-          text: recurringTodo.text,
-          completed: true,
-          date,
-          categoryId: recurringTodo.categoryId,
-          startTime: recurringTodo.startTime,
-          endTime: recurringTodo.endTime,
-          subtasks: [],
-          isFromRecurring: true,
-          originalRecurringId: recurringId,
-        };
+      // 해당 날짜가 이미 완료되어 있는지 확인
+      const isCompleted = completedDates.includes(dateString);
 
-        return [...updatedTodos, newTodo];
-      }
+      // 토글: 있으면 제거, 없으면 추가
+      const newCompletedDates = isCompleted
+        ? completedDates.filter(d => d !== dateString)
+        : [...completedDates, dateString];
+
+      // 업데이트
+      return updateTodoRecursively(prevTodos, recurringId, {
+        completedDates: newCompletedDates
+      });
     });
   };
 

@@ -75,19 +75,6 @@ export function generateRecurringEvents(todo: Todo, weekDays: Date[]): Todo[] {
       }
     }
 
-    // Check if this date is excluded
-    if (todo.excludeDates && todo.excludeDates.length > 0) {
-      const isExcluded = todo.excludeDates.some(excludeDate => {
-        const exclude = new Date(excludeDate);
-        return exclude.getFullYear() === weekDay.getFullYear() &&
-               exclude.getMonth() === weekDay.getMonth() &&
-               exclude.getDate() === weekDay.getDate();
-      });
-      if (isExcluded) {
-        shouldInclude = false;
-      }
-    }
-
     if (shouldInclude) {
       events.push({
         ...todo,
