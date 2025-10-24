@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { BaseDialog, DialogFooter } from './BaseDialog';
-import { DatePickerInput } from './DatePickerInput';
-import { CategorySelect } from './CategorySelect';
-import { CustomSelect, SelectOption } from './CustomSelect';
+import { DatePickerInput } from '../calendar/DatePickerInput';
+import { CategorySelect } from '../forms/CategorySelect';
+import { CustomSelect, SelectOption } from '../forms/CustomSelect';
 
 interface RecurrenceRule {
   frequency: 'daily' | 'weekly' | 'monthly';

@@ -15,10 +15,10 @@ import {
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Plus } from 'lucide-react';
 import { CategorySection } from './CategorySection';
-import { Checkbox } from '@/components/ui/Checkbox';
+import { Checkbox } from '@/components/ui/forms/Checkbox';
 import { RecurringSection } from './RecurringSection';
-import { AddRecurringDialog } from '@/components/ui/AddRecurringDialog';
-import { ConvertRecurringToRegularModal } from '@/components/ui/ConvertRecurringToRegularModal';
+import { AddRecurringDialog } from '@/components/ui/dialogs/AddRecurringDialog';
+import { ConvertRecurringToRegularModal } from '@/components/ui/dialogs/ConvertRecurringToRegularModal';
 import { useTodoContext } from '@/contexts/TodoContext';
 import { useCategoryContext } from '@/contexts/CategoryContext';
 import type { Todo } from '@/types/calendar';

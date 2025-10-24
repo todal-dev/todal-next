@@ -14,7 +14,8 @@
       "Bash(timeout 5 sh:*)",
       "Bash(if exist .next rmdir /s /q .next)",
       "Bash(find:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [],
     "ask": []

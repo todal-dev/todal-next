@@ -4,8 +4,8 @@ import { Plus, Repeat, Edit2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Checkbox } from '@/components/ui/Checkbox';
-import { DeleteRecurringModal } from '@/components/ui/DeleteRecurringModal';
+import { Checkbox } from '@/components/ui/forms/Checkbox';
+import { DeleteRecurringModal } from '@/components/ui/dialogs/DeleteRecurringModal';
 import { formatDateKey } from '@/utils/calendarUtils';
 import type { Todo, Category, RecurrenceRule } from '@/types/calendar';
 

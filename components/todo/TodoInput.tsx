@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
-import { Checkbox } from '@/components/ui/Checkbox';
+import { Checkbox } from '@/components/ui/forms/Checkbox';
 
 interface TodoInputProps {
   categoryId: string;

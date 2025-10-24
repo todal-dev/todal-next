@@ -3,8 +3,8 @@
 import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Checkbox } from '@/components/ui/Checkbox';
-import { TimePicker } from '@/components/ui/TimePicker';
+import { Checkbox } from '@/components/ui/forms/Checkbox';
+import { TimePicker } from '@/components/ui/calendar/TimePicker';
 import { Clock, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 

@@ -5,7 +5,7 @@ import { MiniCalendar } from '@/components/calendar/MiniCalendar';
 import { BigCalendar } from '@/components/calendar/WeekCalendar';
 import { TodoList } from '@/components/todo/TodoList';
 import { RecurringSection } from '@/components/todo/RecurringSection';
-import { AddRecurringDialog } from '@/components/ui/AddRecurringDialog';
+import { AddRecurringDialog } from '@/components/ui/dialogs/AddRecurringDialog';
 import { useTodoContext } from '@/contexts/TodoContext';
 import { useCategoryContext } from '@/contexts/CategoryContext';
 

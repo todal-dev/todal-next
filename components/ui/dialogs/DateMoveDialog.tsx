@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { BaseDialog, DialogFooter } from './BaseDialog';
-import { DatePicker } from './DatePicker';
+import { DatePicker } from '../calendar/DatePicker';
 
 interface DateMoveDialogProps {
   isOpen: boolean;
