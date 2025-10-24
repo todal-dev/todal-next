@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, ReactNode } from 'react';
-import type { Todo } from '@/types/calendar';
+import type { Todo, RecurrenceRule } from '@/types/calendar';
 
 interface TodoContextType {
   todos: Todo[];
@@ -20,6 +20,9 @@ interface TodoContextType {
   onToggleRecurringInstance: (recurringId: string, date: Date) => void;
   onSkipRecurringInstance: (recurringId: string, date: Date) => void;
   onDeleteRecurringAfter: (recurringId: string, date: Date) => void;
+  onConvertRecurringToRegular: (recurringId: string, date: Date, categoryId: string) => void;
+  onConvertRegularToRecurring: (todoId: string, text: string, startTime: string, endTime: string, recurrenceRule: RecurrenceRule, categoryId: string) => void;
+  onConvertRecurringToRegularAll: (recurringId: string, date: Date, categoryId: string) => void;
 }
 
 const TodoContext = createContext<TodoContextType | undefined>(undefined);

@@ -245,6 +245,103 @@ export function useTodos(initialTodos: Todo[] = []) {
     });
   }, []);
 
+  // Convert recurring to regular (특정 날짜만 일반 할일로 분리)
+  const handleConvertRecurringToRegular = useCallback((
+    recurringId: string,
+    date: Date,
+    categoryId: string
+  ) => {
+    setTodos(prevTodos => {
+      const recurringTodo = prevTodos.find(t => t.id === recurringId);
+      if (!recurringTodo || !recurringTodo.recurrenceRule) return prevTodos;
+
+      const dateString = formatDateKey(date);
+
+      // 1. skippedDates에 해당 날짜 추가
+      const skippedDates = recurringTodo.skippedDates || [];
+      const updatedRecurring = updateTodoRecursively(prevTodos, recurringId, {
+        skippedDates: [...skippedDates, dateString]
+      });
+
+      // 2. 새로운 일반 할일 생성
+      const newRegularTodo: Todo = {
+        id: `regular-${Date.now()}`,
+        text: recurringTodo.text,
+        completed: false,
+        date: new Date(date),
+        categoryId,
+        startTime: recurringTodo.startTime,
+        endTime: recurringTodo.endTime,
+        subtasks: [],
+      };
+
+      return [...updatedRecurring, newRegularTodo];
+    });
+  }, []);
+
+  // Convert regular to recurring (일반 할일을 반복으로 변환)
+  const handleConvertRegularToRecurring = useCallback((
+    todoId: string,
+    text: string,
+    startTime: string,
+    endTime: string,
+    recurrenceRule: RecurrenceRule,
+    categoryId: string
+  ) => {
+    setTodos(prevTodos => {
+      const todo = prevTodos.find(t => t.id === todoId);
+      if (!todo || todo.recurrenceRule) return prevTodos;
+
+      // 기존 일반 할일 삭제
+      const filteredTodos = prevTodos.filter(t => t.id !== todoId);
+
+      // 새로운 반복 할일 생성
+      const newRecurring: Todo = {
+        id: `recurring-${Date.now()}`,
+        text,
+        completed: false,
+        date: todo.date,
+        categoryId,
+        startTime,
+        endTime,
+        recurrenceRule,
+        subtasks: [],
+      };
+
+      return [...filteredTodos, newRecurring];
+    });
+  }, []);
+
+  // Convert recurring to regular (모든 반복 항목을 일반으로 변환)
+  const handleConvertRecurringToRegularAll = useCallback((
+    recurringId: string,
+    date: Date,
+    categoryId: string
+  ) => {
+    setTodos(prevTodos => {
+      const recurringTodo = prevTodos.find(t => t.id === recurringId);
+      if (!recurringTodo || !recurringTodo.recurrenceRule) return prevTodos;
+
+      // 기존 반복 할일 삭제
+      const filteredTodos = prevTodos.filter(t => t.id !== recurringId);
+
+      // 새로운 일반 할일 생성 (반복 규칙 제거)
+      const newRegularTodo: Todo = {
+        id: `regular-${Date.now()}`,
+        text: recurringTodo.text,
+        completed: false,
+        date: new Date(date),
+        categoryId,
+        startTime: recurringTodo.startTime,
+        endTime: recurringTodo.endTime,
+        subtasks: [],
+        // recurrenceRule 제거됨
+      };
+
+      return [...filteredTodos, newRegularTodo];
+    });
+  }, []);
+
   return {
     todos,
     setTodos,
@@ -264,5 +361,8 @@ export function useTodos(initialTodos: Todo[] = []) {
     handleToggleRecurringInstance,
     handleSkipRecurringInstance,
     handleDeleteRecurringAfter,
+    handleConvertRecurringToRegular,
+    handleConvertRegularToRecurring,
+    handleConvertRecurringToRegularAll,
   };
 }

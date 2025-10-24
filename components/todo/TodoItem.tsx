@@ -1,11 +1,11 @@
 'use client';
 
 import { memo } from 'react';
-import { motion } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { TimePicker } from '@/components/ui/TimePicker';
+import { DragPlaceholder } from '@/components/ui/DragPlaceholder';
 import { Clock, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -61,11 +61,12 @@ const TodoItemComponent = ({
     listeners,
     setNodeRef,
     transform,
-    transition,
     isDragging,
   } = useSortable({
     id: todo.id,
     data: {
+      type: 'todo',
+      id: todo.id,
       categoryId,
       parentId,
       index,
@@ -74,7 +75,7 @@ const TodoItemComponent = ({
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: 'none',
     visibility: isDragging ? ('hidden' as const) : ('visible' as const),
   };
 
@@ -83,21 +84,13 @@ const TodoItemComponent = ({
   return (
     <div style={{ paddingLeft: `${level * 24}px` }}>
       {isOver && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: '36px' }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.15 }}
-          className="mb-1 flex items-center justify-center"
-        >
-          <div className="w-full h-1 bg-primary-500 rounded-full opacity-50" />
-        </motion.div>
+        <div className="mb-0.5">
+          <DragPlaceholder height={36} />
+        </div>
       )}
-      <motion.div
+      <div
         ref={setNodeRef}
         style={style}
-        layout
-        transition={{ duration: 0.2 }}
         {...attributes}
         {...listeners}
         className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neutral-gray-50 transition-colors group cursor-grab active:cursor-grabbing"
@@ -283,7 +276,7 @@ const TodoItemComponent = ({
             <Trash2 size={14} />
           </button>
         </div>
-      </motion.div>
+      </div>
 
       {todo.subtasks && todo.subtasks.length > 0 && (
         <div>

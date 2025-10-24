@@ -83,6 +83,9 @@ export default function Home() {
     handleToggleRecurringInstance,
     handleSkipRecurringInstance,
     handleDeleteRecurringAfter,
+    handleConvertRecurringToRegular,
+    handleConvertRegularToRecurring,
+    handleConvertRecurringToRegularAll,
   } = useTodos(INITIAL_TODOS);
 
   // Category state and handlers
@@ -92,6 +95,7 @@ export default function Home() {
     handleEditCategory,
     handleChangeColor,
     handleDeleteCategory,
+    handleMoveCategory,
   } = useCategories(undefined, todos);
 
   // Group todos by date (for mini calendar)
@@ -208,6 +212,9 @@ export default function Home() {
       onToggleRecurringInstance: handleToggleRecurringInstance,
       onSkipRecurringInstance: handleSkipRecurringInstance,
       onDeleteRecurringAfter: handleDeleteRecurringAfter,
+      onConvertRecurringToRegular: handleConvertRecurringToRegular,
+      onConvertRegularToRecurring: handleConvertRegularToRecurring,
+      onConvertRecurringToRegularAll: handleConvertRecurringToRegularAll,
     }),
     [
       todos,
@@ -225,6 +232,9 @@ export default function Home() {
       handleToggleRecurringInstance,
       handleSkipRecurringInstance,
       handleDeleteRecurringAfter,
+      handleConvertRecurringToRegular,
+      handleConvertRegularToRecurring,
+      handleConvertRecurringToRegularAll,
     ]
   );
 
@@ -235,6 +245,7 @@ export default function Home() {
       onEditCategory: handleEditCategory,
       onChangeColor: handleChangeColor,
       onDeleteCategory: handleDeleteCategoryWithTodos,
+      onMoveCategory: handleMoveCategory,
       onAddRecurring: handleAddRecurringWrapper,
       onEditRecurring: handleEditRecurring,
       onDeleteRecurring: handleDeleteRecurring,
@@ -245,6 +256,7 @@ export default function Home() {
       handleEditCategory,
       handleChangeColor,
       handleDeleteCategoryWithTodos,
+      handleMoveCategory,
       handleAddRecurringWrapper,
       handleEditRecurring,
       handleDeleteRecurring,

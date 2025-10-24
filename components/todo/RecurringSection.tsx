@@ -2,6 +2,8 @@
 
 import { Plus, Repeat, Edit2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { DeleteRecurringModal } from '@/components/ui/DeleteRecurringModal';
 import { formatDateKey } from '@/utils/calendarUtils';
@@ -17,6 +19,124 @@ interface RecurringSectionProps {
   onSkipRecurringInstance: (recurringId: string) => void;
   onDeleteRecurringAfter: (recurringId: string) => void;
   onDeleteRecurring: (recurringId: string) => void;
+}
+
+interface RecurringTodoItemProps {
+  todo: Todo;
+  isCompletedToday: boolean;
+  categoryColor: string;
+  recurrenceText: string;
+  onToggle: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  index: number;
+}
+
+function RecurringTodoItem({
+  todo,
+  isCompletedToday,
+  categoryColor,
+  recurrenceText,
+  onToggle,
+  onEdit,
+  onDelete,
+  index,
+}: RecurringTodoItemProps) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useSortable({
+    id: todo.id,
+    data: {
+      type: 'recurring',
+      id: todo.id,
+      recurringId: todo.id,
+      index,
+    },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: 'none',
+    visibility: isDragging ? ('hidden' as const) : ('visible' as const),
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neutral-gray-50 transition-colors group relative cursor-grab active:cursor-grabbing"
+      {...attributes}
+      {...listeners}
+    >
+      {/* Left accent bar - 카테고리 색상 */}
+      <div
+        className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 rounded-full"
+        style={{ backgroundColor: categoryColor }}
+      ></div>
+
+      <div
+        onMouseDown={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
+        <Checkbox
+          checked={isCompletedToday}
+          onChange={onToggle}
+          className="flex-shrink-0"
+        />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-1.5">
+          <span className={`text-sm truncate ${
+            isCompletedToday
+              ? 'line-through text-neutral-text-secondary'
+              : 'text-neutral-text-primary'
+          }`}>
+            {todo.text}
+          </span>
+          {recurrenceText && (
+            <span
+              className="text-xs font-medium flex-shrink-0"
+              style={{ color: categoryColor }}
+            >
+              {recurrenceText}
+            </span>
+          )}
+        </div>
+        {todo.startTime && todo.endTime && (
+          <div className="text-xs text-neutral-text-tertiary mt-0.5">
+            {todo.startTime} - {todo.endTime}
+          </div>
+        )}
+      </div>
+      <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+        <button
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          className="p-1 rounded hover:bg-neutral-gray-100 text-neutral-text-secondary hover:text-primary-500 transition-colors"
+          title="편집"
+        >
+          <Edit2 size={13} />
+        </button>
+        <button
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="p-1 rounded hover:bg-red-100 text-neutral-text-secondary hover:text-red-500 transition-colors cursor-pointer"
+          title="삭제"
+        >
+          <Trash2 size={13} />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 export function RecurringSection({
@@ -121,73 +241,19 @@ export function RecurringSection({
       {/* Todo Items */}
       {recurringTodos.length > 0 && (
         <div className="space-y-0.5">
-          {recurringTodos.map((todo) => {
-          // 오늘 날짜가 completedDates에 포함되어 있는지 확인
-          const isCompletedToday = todo.completedDates?.includes(todayString) || false;
-
-          // 해당 할일의 카테고리 색상 찾기
-          const category = categories.find(cat => cat.id === todo.categoryId);
-          const categoryColor = category?.color || '#3B82F6'; // 기본값은 primary blue
-
-          return (
-            <div
+          {recurringTodos.map((todo, index) => (
+            <RecurringTodoItem
               key={todo.id}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neutral-gray-50 transition-colors group relative"
-            >
-              {/* Left accent bar - 카테고리 색상 */}
-              <div
-                className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 rounded-full"
-                style={{ backgroundColor: categoryColor }}
-              ></div>
-
-              <Checkbox
-                checked={isCompletedToday}
-                onChange={() => onToggleRecurringInstance(todo.id)}
-                className="flex-shrink-0"
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5">
-                  <span className={`text-sm truncate ${
-                    isCompletedToday
-                      ? 'line-through text-neutral-text-secondary'
-                      : 'text-neutral-text-primary'
-                  }`}>
-                    {todo.text}
-                  </span>
-                  {todo.recurrenceRule && (
-                    <span
-                      className="text-xs font-medium flex-shrink-0"
-                      style={{ color: categoryColor }}
-                    >
-                      {getRecurrenceText(todo.recurrenceRule)}
-                    </span>
-                  )}
-                </div>
-                {todo.startTime && todo.endTime && (
-                  <div className="text-xs text-neutral-text-tertiary mt-0.5">
-                    {todo.startTime} - {todo.endTime}
-                  </div>
-                )}
-              </div>
-              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                <button
-                  onClick={() => onEditRecurring(todo.id)}
-                  className="p-1 rounded hover:bg-neutral-gray-100 text-neutral-text-secondary hover:text-primary-500 transition-colors"
-                  title="편집"
-                >
-                  <Edit2 size={13} />
-                </button>
-                <button
-                  onClick={() => handleDeleteClick(todo.id)}
-                  className="p-1 rounded hover:bg-red-100 text-neutral-text-secondary hover:text-red-500 transition-colors cursor-pointer"
-                  title="삭제"
-                >
-                  <Trash2 size={13} />
-                </button>
-              </div>
-            </div>
-          );
-        })}
+              todo={todo}
+              isCompletedToday={todo.completedDates?.includes(todayString) || false}
+              categoryColor={categories.find(cat => cat.id === todo.categoryId)?.color || '#3B82F6'}
+              recurrenceText={todo.recurrenceRule ? getRecurrenceText(todo.recurrenceRule) : ''}
+              onToggle={() => onToggleRecurringInstance(todo.id)}
+              onEdit={() => onEditRecurring(todo.id)}
+              onDelete={() => handleDeleteClick(todo.id)}
+              index={index}
+            />
+          ))}
         </div>
       )}
 

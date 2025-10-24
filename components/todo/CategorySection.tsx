@@ -2,10 +2,13 @@
 
 import { memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Trash2, Plus } from 'lucide-react';
+import { useSortable } from '@dnd-kit/sortable';
+import { useDroppable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
+import { Trash2, Plus, GripVertical } from 'lucide-react';
 import { TodoItem } from './TodoItem';
 import { TodoInput } from './TodoInput';
+import { DragPlaceholder } from '@/components/ui/DragPlaceholder';
 import { useState, useEffect } from 'react';
 
 interface Todo {
@@ -29,6 +32,7 @@ interface Category {
 
 interface CategorySectionProps {
   category: Category;
+  categoryIndex: number;
   selectedDate: Date;
   onToggleTodo: (id: string) => void;
   onEditTodo: (id: string, text: string) => void;
@@ -58,6 +62,7 @@ const colorPalette = [
 
 const CategorySectionComponent = ({
   category,
+  categoryIndex,
   selectedDate,
   onToggleTodo,
   onEditTodo,
@@ -73,6 +78,42 @@ const CategorySectionComponent = ({
 }: CategorySectionProps) => {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [isAddingTodo, setIsAddingTodo] = useState(false);
+
+  // Make category draggable
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useSortable({
+    id: category.id,
+    data: {
+      type: 'category',
+      id: category.id,
+      index: categoryIndex,
+    },
+  });
+
+  // Make category droppable for todos
+  const { setNodeRef: setDroppableRef, isOver: isDroppableOver } = useDroppable({
+    id: `category-drop-${category.id}`,
+    data: {
+      type: 'category-drop',
+      categoryId: category.id,
+      index: 0, // 빈 카테고리면 첫 번째 위치에 추가
+    },
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition: 'none',
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  // Check if this category is being hovered over
+  const isCategoryOver = overId === category.id && activeDragId !== category.id;
+  const isEmptyCategoryOver = isDroppableOver && category.items.length === 0;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -90,99 +131,112 @@ const CategorySectionComponent = ({
   const totalCount = category.items.length;
 
   return (
-    <motion.div
-      layout
-      transition={{ duration: 0.2 }}
-      className="mb-4"
-    >
-      <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-neutral-gray-100 group relative mb-1">
-        <div className="relative color-picker-container">
-          <button
-            onClick={() => setColorPickerOpen(!colorPickerOpen)}
-            className="flex-shrink-0 w-4 h-4 rounded-full hover:ring-2 hover:ring-offset-1 hover:ring-neutral-gray-400 transition-all cursor-pointer"
-            style={{ backgroundColor: category.color }}
-            title="Change color"
+    <div ref={setNodeRef} style={style}>
+      {/* Placeholder when dragging category */}
+      {isCategoryOver && (
+        <div className="mb-2">
+          <DragPlaceholder height={60} />
+        </div>
+      )}
+
+      <div className="mb-4">
+        <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-neutral-gray-100 group relative mb-1">
+          {/* Drag Handle */}
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+            suppressHydrationWarning
+          >
+            <GripVertical size={16} className="text-neutral-text-tertiary" />
+          </div>
+
+          <div className="relative color-picker-container">
+            <button
+              onClick={() => setColorPickerOpen(!colorPickerOpen)}
+              className="flex-shrink-0 w-4 h-4 rounded-full hover:ring-2 hover:ring-offset-1 hover:ring-neutral-gray-400 transition-all cursor-pointer"
+              style={{ backgroundColor: category.color }}
+              title="Change color"
+            />
+
+            <AnimatePresence>
+              {colorPickerOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute top-full left-0 mt-2 p-4 bg-white border border-neutral-gray-300 rounded-lg shadow-lg z-50 min-w-[240px]"
+                >
+                  <div className="grid grid-cols-5 gap-4">
+                    {colorPalette.map((color) => (
+                      <button
+                        key={color}
+                        onClick={() => {
+                          onChangeColor(category.id, color);
+                          setColorPickerOpen(false);
+                        }}
+                        className={`w-7 h-7 rounded-full hover:scale-110 transition-transform ${
+                          category.color === color ? 'ring-2 ring-offset-2 ring-neutral-gray-500' : ''
+                        }`}
+                        style={{ backgroundColor: color }}
+                        title={color}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          <input
+            type="text"
+            defaultValue={category.name}
+            disabled={category.id === 'cat-etc'}
+            className={`flex-1 font-semibold text-sm bg-transparent text-neutral-text-primary focus:outline-none border-0 focus:ring-0 ${
+              category.id === 'cat-etc' ? 'cursor-default' : ''
+            }`}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.currentTarget.blur();
+              }
+            }}
+            onBlur={(e) => {
+              const newName = e.currentTarget.value.trim();
+              if (newName && newName !== category.name) {
+                onEditCategory(category.id, newName);
+              } else if (!newName) {
+                e.currentTarget.value = category.name;
+              }
+            }}
           />
 
-          <AnimatePresence>
-            {colorPickerOpen && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: -5 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                transition={{ duration: 0.15 }}
-                className="absolute top-full left-0 mt-2 p-4 bg-white border border-neutral-gray-300 rounded-lg shadow-lg z-50 min-w-[240px]"
-              >
-                <div className="grid grid-cols-5 gap-4">
-                  {colorPalette.map((color) => (
-                    <button
-                      key={color}
-                      onClick={() => {
-                        onChangeColor(category.id, color);
-                        setColorPickerOpen(false);
-                      }}
-                      className={`w-7 h-7 rounded-full hover:scale-110 transition-transform ${
-                        category.color === color ? 'ring-2 ring-offset-2 ring-neutral-gray-500' : ''
-                      }`}
-                      style={{ backgroundColor: color }}
-                      title={color}
-                    />
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <span className="text-xs text-neutral-text-secondary">
+            {completedCount}/{totalCount}
+          </span>
+
+          {/* 할일 추가 버튼 */}
+          <button
+            onClick={() => setIsAddingTodo(true)}
+            className="flex-shrink-0 p-1 hover:bg-primary-100 rounded transition-colors text-neutral-text-secondary hover:text-primary-500 cursor-pointer"
+            title="할일 추가"
+          >
+            <Plus size={16} />
+          </button>
+
+          {/* "기타" 카테고리는 삭제 불가 */}
+          {category.id !== 'cat-etc' && (
+            <button
+              onClick={() => onDeleteCategory(category.id)}
+              className="flex-shrink-0 p-1 hover:bg-red-100 rounded transition-colors text-neutral-text-secondary hover:text-red-600 opacity-0 group-hover:opacity-100"
+              title="Delete category"
+            >
+              <Trash2 size={14} />
+            </button>
+          )}
         </div>
 
-        <input
-          type="text"
-          defaultValue={category.name}
-          disabled={category.id === 'cat-etc'}
-          className={`flex-1 font-semibold text-sm bg-transparent text-neutral-text-primary focus:outline-none border-0 focus:ring-0 ${
-            category.id === 'cat-etc' ? 'cursor-default' : ''
-          }`}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.currentTarget.blur();
-            }
-          }}
-          onBlur={(e) => {
-            const newName = e.currentTarget.value.trim();
-            if (newName && newName !== category.name) {
-              onEditCategory(category.id, newName);
-            } else if (!newName) {
-              e.currentTarget.value = category.name;
-            }
-          }}
-        />
-
-        <span className="text-xs text-neutral-text-secondary">
-          {completedCount}/{totalCount}
-        </span>
-
-        {/* 할일 추가 버튼 */}
-        <button
-          onClick={() => setIsAddingTodo(true)}
-          className="flex-shrink-0 p-1 hover:bg-primary-100 rounded transition-colors text-neutral-text-secondary hover:text-primary-500 cursor-pointer"
-          title="할일 추가"
-        >
-          <Plus size={16} />
-        </button>
-
-        {/* "기타" 카테고리는 삭제 불가 */}
-        {category.id !== 'cat-etc' && (
-          <button
-            onClick={() => onDeleteCategory(category.id)}
-            className="flex-shrink-0 p-1 hover:bg-red-100 rounded transition-colors text-neutral-text-secondary hover:text-red-600 opacity-0 group-hover:opacity-100"
-            title="Delete category"
-          >
-            <Trash2 size={14} />
-          </button>
-        )}
-      </div>
-
-      <div className="space-y-0.5">
-        <SortableContext items={category.items.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+        <div className="space-y-0.5" ref={setDroppableRef}>
           {category.items.map((todo, idx) => (
             <TodoItem
               key={todo.id}
@@ -201,18 +255,25 @@ const CategorySectionComponent = ({
               isOver={overId === todo.id && activeDragId !== todo.id}
             />
           ))}
-        </SortableContext>
 
-        <TodoInput
-          categoryId={category.id}
-          selectedDate={selectedDate}
-          onAddTodo={onAddTodo}
-          hideButton={true}
-          isAdding={isAddingTodo}
-          onIsAddingChange={setIsAddingTodo}
-        />
+          {/* 빈 카테고리일 때 드롭 영역 표시 */}
+          {isEmptyCategoryOver && (
+            <div className="py-2">
+              <DragPlaceholder height={36} />
+            </div>
+          )}
+
+          <TodoInput
+            categoryId={category.id}
+            selectedDate={selectedDate}
+            onAddTodo={onAddTodo}
+            hideButton={true}
+            isAdding={isAddingTodo}
+            onIsAddingChange={setIsAddingTodo}
+          />
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -223,6 +284,7 @@ export const CategorySection = memo(CategorySectionComponent, (prevProps, nextPr
     prevProps.category.id === nextProps.category.id &&
     prevProps.category.name === nextProps.category.name &&
     prevProps.category.color === nextProps.category.color &&
+    prevProps.categoryIndex === nextProps.categoryIndex &&
     prevProps.category.items.length === nextProps.category.items.length &&
     prevProps.category.items.every((item, idx) =>
       item.id === nextProps.category.items[idx]?.id &&

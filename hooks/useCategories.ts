@@ -61,6 +61,20 @@ export function useCategories(
     setCategories(prev => prev.filter(cat => cat.id !== id));
   }, [todos]);
 
+  // Move category to new position
+  const handleMoveCategory = useCallback((categoryId: string, newIndex: number) => {
+    setCategories(prev => {
+      const oldIndex = prev.findIndex(cat => cat.id === categoryId);
+      if (oldIndex === -1) return prev;
+
+      const newCategories = [...prev];
+      const [movedCategory] = newCategories.splice(oldIndex, 1);
+      newCategories.splice(newIndex, 0, movedCategory);
+
+      return newCategories;
+    });
+  }, []);
+
   return {
     categories,
     setCategories,
@@ -68,5 +82,6 @@ export function useCategories(
     handleEditCategory,
     handleChangeColor,
     handleDeleteCategory,
+    handleMoveCategory,
   };
 }

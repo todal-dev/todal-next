@@ -13,11 +13,13 @@ import {
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { Plus } from 'lucide-react';
 import { CategorySection } from './CategorySection';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { RecurringSection } from './RecurringSection';
 import { AddRecurringDialog } from '@/components/ui/AddRecurringDialog';
+import { ConvertRecurringToRegularModal } from '@/components/ui/ConvertRecurringToRegularModal';
 import { useTodoContext } from '@/contexts/TodoContext';
 import { useCategoryContext } from '@/contexts/CategoryContext';
 import type { Todo } from '@/types/calendar';
@@ -49,6 +51,9 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
     onToggleRecurringInstance,
     onSkipRecurringInstance,
     onDeleteRecurringAfter,
+    onConvertRecurringToRegular,
+    onConvertRegularToRecurring,
+    onConvertRecurringToRegularAll,
   } = useTodoContext();
 
   const {
@@ -57,6 +62,7 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
     onEditCategory,
     onChangeColor,
     onDeleteCategory,
+    onMoveCategory,
     onAddRecurring,
     onEditRecurring,
   } = useCategoryContext();
@@ -73,6 +79,18 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
     endTime?: string;
     recurrenceRule?: RecurrenceRuleLocal;
     categoryId?: string;
+  } | undefined>(undefined);
+  const [convertingToRecurring, setConvertingToRecurring] = useState<{
+    todoId: string;
+    text: string;
+    startTime?: string;
+    endTime?: string;
+    categoryId: string;
+  } | undefined>(undefined);
+  const [convertModalOpen, setConvertModalOpen] = useState(false);
+  const [convertingRecurring, setConvertingRecurring] = useState<{
+    recurringId: string;
+    categoryId: string;
   } | undefined>(undefined);
 
   // DnD sensors
@@ -111,6 +129,16 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
       return 0;
     });
 
+  // 반복 할일만 필터링
+  const recurringTodos = todos.filter(todo => todo.recurrenceRule);
+
+  // 모든 할일 ID 수집 (반복 + 일반 + 카테고리)
+  const allItemIds = [
+    ...recurringTodos.map(t => t.id),
+    ...filteredTodos.map(t => t.id),
+    ...categories.map(c => c.id),
+  ];
+
   // 드래그 중인 Todo 찾기
   const findTodo = (id: string, todoList: Todo[]): Todo | null => {
     for (const todo of todoList) {
@@ -123,7 +151,8 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
     return null;
   };
 
-  const activeTodo = activeDragId ? findTodo(activeDragId, filteredTodos) : null;
+  // 반복 할일도 포함해서 찾기
+  const activeTodo = activeDragId ? findTodo(activeDragId, todos) : null;
 
   // 반복 일정 핸들러
   const handleAddRecurring = () => {
@@ -153,13 +182,26 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
     recurrenceRule: RecurrenceRuleLocal,
     categoryId: string
   ) => {
-    if (editingRecurring) {
+    if (convertingToRecurring) {
+      // 일반 할일 → 반복 할일 변환
+      onConvertRegularToRecurring?.(
+        convertingToRecurring.todoId,
+        text,
+        startTime,
+        endTime,
+        recurrenceRule,
+        categoryId
+      );
+      setConvertingToRecurring(undefined);
+    } else if (editingRecurring) {
+      // 기존 반복 할일 편집
       onEditRecurring?.(editingRecurring.id, text, startTime, endTime, recurrenceRule, categoryId);
+      setEditingRecurring(undefined);
     } else {
+      // 새 반복 할일 추가
       onAddRecurring?.(text, startTime, endTime, recurrenceRule, categoryId);
     }
     setRecurringDialogOpen(false);
-    setEditingRecurring(undefined);
   };
 
 
@@ -185,7 +227,7 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
     setActiveDragId(null);
     setOverId(null);
 
-    if (!over || !onMoveTodo) return;
+    if (!over) return;
 
     const activeId = active.id as string;
     const overIdLocal = over.id as string;
@@ -195,14 +237,88 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
     const activeData = active.data.current;
     const overData = over.data.current;
 
-    if (!activeData || !overData) return;
+    // Case 1: 반복 할일 → 일반 카테고리 (할일 위로 드롭)
+    if (activeData?.type === 'recurring' && overData?.type === 'todo') {
+      const recurringTodo = todos.find(t => t.id === activeId);
+      if (recurringTodo) {
+        // 모달 띄워서 선택받기
+        setConvertingRecurring({
+          recurringId: activeId,
+          categoryId: overData.categoryId,
+        });
+        setConvertModalOpen(true);
+      }
+      return;
+    }
 
-    onMoveTodo(
-      activeId,
-      overData.categoryId,
-      overData.parentId,
-      overData.index
-    );
+    // Case 1-2: 반복 할일 → 빈 카테고리로 드롭
+    if (activeData?.type === 'recurring' && overData?.type === 'category-drop') {
+      const recurringTodo = todos.find(t => t.id === activeId);
+      if (recurringTodo) {
+        // 모달 띄워서 선택받기
+        setConvertingRecurring({
+          recurringId: activeId,
+          categoryId: overData.categoryId,
+        });
+        setConvertModalOpen(true);
+      }
+      return;
+    }
+
+    // Case 2: 일반 할일 → 반복 할일 (반복 섹션으로 드롭)
+    if (activeData?.type === 'todo' && overData?.type === 'recurring') {
+      const regularTodo = todos.find(t => t.id === activeId);
+      if (regularTodo && !regularTodo.recurrenceRule) {
+        // 모달 띄워서 반복 설정 받기
+        setConvertingToRecurring({
+          todoId: activeId,
+          text: regularTodo.text,
+          startTime: regularTodo.startTime || '09:00',
+          endTime: regularTodo.endTime || '10:00',
+          categoryId: regularTodo.categoryId,
+        });
+        setRecurringDialogOpen(true);
+      }
+      return;
+    }
+
+    // Case 3: 반복 할일 → 반복 할일 (순서 변경 - 아무것도 안 함)
+    if (activeData?.type === 'recurring' && overData?.type === 'recurring') {
+      // 반복 할일끼리는 순서 변경 안 함
+      return;
+    }
+
+    // Case 4: 카테고리 → 카테고리
+    if (activeData?.type === 'category' && overData?.type === 'category') {
+      if (onMoveCategory) {
+        onMoveCategory(activeId, overData.index);
+      }
+      return;
+    }
+
+    // Case 5: 일반 할일 → 빈 카테고리
+    if (activeData?.type === 'todo' && overData?.type === 'category-drop') {
+      if (onMoveTodo) {
+        onMoveTodo(
+          activeId,
+          overData.categoryId,
+          undefined,
+          overData.index
+        );
+      }
+      return;
+    }
+
+    // Case 6: 일반 할일 → 일반 할일
+    if (activeData?.type === 'todo' && overData?.type === 'todo' && onMoveTodo) {
+      onMoveTodo(
+        activeId,
+        overData.categoryId,
+        overData.parentId,
+        overData.index
+      );
+      return;
+    }
   };
 
   return (
@@ -284,45 +400,49 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
           </div>
         )}
 
-        {/* Recurring Section - 고정 */}
-        {showRecurringSection && (
-          <div className="flex-shrink-0">
-            <RecurringSection
-              todos={todos}
-              selectedDate={selectedDate}
-              categories={categories}
-              onToggleRecurringInstance={handleToggleRecurringInstance}
-              onAddRecurring={handleAddRecurring}
-              onEditRecurring={handleEditRecurringClick}
-              onSkipRecurringInstance={(recurringId: string) => onSkipRecurringInstance(recurringId, selectedDate)}
-              onDeleteRecurringAfter={(recurringId: string) => onDeleteRecurringAfter(recurringId, selectedDate)}
-              onDeleteRecurring={(recurringId: string) => onDeleteTodo(recurringId)}
-            />
-          </div>
-        )}
-
-        {/* Categories - 스크롤 영역 */}
+        {/* All items - 스크롤 영역 */}
         <div className="flex-1 overflow-y-auto space-y-2">
-          <AnimatePresence>
-            {todosByCategory.map((category) => (
-              <CategorySection
-                key={category.id}
-                category={category}
-                selectedDate={selectedDate}
-                onToggleTodo={onToggleTodo}
-                onEditTodo={onEditTodo}
-                onDeleteTodo={onDeleteTodo}
-                onUpdateTodoTime={onUpdateTodoTime}
-                onMoveTodo={onMoveTodo}
-                onAddTodo={onAddTodo}
-                onEditCategory={onEditCategory}
-                onChangeColor={onChangeColor}
-                onDeleteCategory={onDeleteCategory}
-                activeDragId={activeDragId}
-                overId={overId}
-              />
-            ))}
-          </AnimatePresence>
+          <SortableContext items={allItemIds} strategy={verticalListSortingStrategy}>
+            {/* Recurring Section - 고정 */}
+            {showRecurringSection && (
+              <div className="flex-shrink-0">
+                <RecurringSection
+                  todos={todos}
+                  selectedDate={selectedDate}
+                  categories={categories}
+                  onToggleRecurringInstance={handleToggleRecurringInstance}
+                  onAddRecurring={handleAddRecurring}
+                  onEditRecurring={handleEditRecurringClick}
+                  onSkipRecurringInstance={(recurringId: string) => onSkipRecurringInstance(recurringId, selectedDate)}
+                  onDeleteRecurringAfter={(recurringId: string) => onDeleteRecurringAfter(recurringId, selectedDate)}
+                  onDeleteRecurring={(recurringId: string) => onDeleteTodo(recurringId)}
+                />
+              </div>
+            )}
+
+            {/* Categories */}
+            <AnimatePresence>
+              {todosByCategory.map((category, index) => (
+                <CategorySection
+                  key={category.id}
+                  category={category}
+                  categoryIndex={index}
+                  selectedDate={selectedDate}
+                  onToggleTodo={onToggleTodo}
+                  onEditTodo={onEditTodo}
+                  onDeleteTodo={onDeleteTodo}
+                  onUpdateTodoTime={onUpdateTodoTime}
+                  onMoveTodo={onMoveTodo}
+                  onAddTodo={onAddTodo}
+                  onEditCategory={onEditCategory}
+                  onChangeColor={onChangeColor}
+                  onDeleteCategory={onDeleteCategory}
+                  activeDragId={activeDragId}
+                  overId={overId}
+                />
+              ))}
+            </AnimatePresence>
+          </SortableContext>
         </div>
       </div>
 
@@ -348,11 +468,47 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
         onClose={() => {
           setRecurringDialogOpen(false);
           setEditingRecurring(undefined);
+          setConvertingToRecurring(undefined);
         }}
         onConfirm={handleConfirmRecurring}
         selectedDate={selectedDate}
         categories={categories}
-        editingTodo={editingRecurring}
+        editingTodo={editingRecurring || (convertingToRecurring ? {
+          id: convertingToRecurring.todoId,
+          text: convertingToRecurring.text,
+          startTime: convertingToRecurring.startTime,
+          endTime: convertingToRecurring.endTime,
+          categoryId: convertingToRecurring.categoryId,
+        } : undefined)}
+      />
+
+      {/* Convert Recurring to Regular Modal */}
+      <ConvertRecurringToRegularModal
+        isOpen={convertModalOpen}
+        onClose={() => {
+          setConvertModalOpen(false);
+          setConvertingRecurring(undefined);
+        }}
+        onConvertThisOnly={() => {
+          if (convertingRecurring && onConvertRecurringToRegular) {
+            onConvertRecurringToRegular(
+              convertingRecurring.recurringId,
+              selectedDate,
+              convertingRecurring.categoryId
+            );
+          }
+          setConvertingRecurring(undefined);
+        }}
+        onConvertAll={() => {
+          if (convertingRecurring && onConvertRecurringToRegularAll) {
+            onConvertRecurringToRegularAll(
+              convertingRecurring.recurringId,
+              selectedDate,
+              convertingRecurring.categoryId
+            );
+          }
+          setConvertingRecurring(undefined);
+        }}
       />
     </DndContext>
   );

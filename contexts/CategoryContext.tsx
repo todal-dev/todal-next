@@ -9,6 +9,7 @@ interface CategoryContextType {
   onEditCategory: (id: string, name: string) => void;
   onChangeColor: (id: string, color: string) => void;
   onDeleteCategory: (id: string) => void;
+  onMoveCategory: (categoryId: string, newIndex: number) => void;
   onAddRecurring: (text: string, startTime: string, endTime: string, recurrenceRule: RecurrenceRule, categoryId: string) => void;
   onEditRecurring: (id: string, text: string, startTime: string, endTime: string, recurrenceRule: RecurrenceRule, categoryId: string) => void;
   onDeleteRecurring: (id: string) => void;
