@@ -5,7 +5,6 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { TimePicker } from '@/components/ui/TimePicker';
-import { DragPlaceholder } from '@/components/ui/DragPlaceholder';
 import { Clock, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -35,7 +34,6 @@ interface TodoItemProps {
   onMove?: (todoId: string, newCategoryId: string, newParentId?: string, newIndex?: number) => void;
   onAddTodo: (text: string, categoryId: string, date: Date, parentId?: string) => void;
   selectedDate: Date;
-  isOver?: boolean;
 }
 
 const TodoItemComponent = ({
@@ -52,7 +50,6 @@ const TodoItemComponent = ({
   onMove,
   onAddTodo,
   selectedDate,
-  isOver = false,
 }: TodoItemProps) => {
   const [editingTime, setEditingTime] = useState(false);
 
@@ -61,6 +58,7 @@ const TodoItemComponent = ({
     listeners,
     setNodeRef,
     transform,
+    transition,
     isDragging,
   } = useSortable({
     id: todo.id,
@@ -75,19 +73,14 @@ const TodoItemComponent = ({
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: 'none',
-    visibility: isDragging ? ('hidden' as const) : ('visible' as const),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
   };
 
   const hasTime = todo.startTime && todo.endTime;
 
   return (
     <div style={{ paddingLeft: `${level * 24}px` }}>
-      {isOver && (
-        <div className="mb-0.5">
-          <DragPlaceholder height={36} />
-        </div>
-      )}
       <div
         ref={setNodeRef}
         style={style}
@@ -98,6 +91,7 @@ const TodoItemComponent = ({
         <div
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
+          className="cursor-default"
         >
           <Checkbox
             checked={todo.completed}
@@ -109,9 +103,10 @@ const TodoItemComponent = ({
         <input
           type="text"
           defaultValue={todo.text}
+          size={Math.max(todo.text.length, 10)}
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
-          className={`flex-1 text-sm bg-transparent focus:outline-none border-0 focus:ring-0 ${
+          className={`text-sm bg-transparent focus:outline-none border-0 focus:ring-0 cursor-text min-w-[100px] max-w-[400px] ${
             todo.completed
               ? 'line-through text-neutral-text-secondary'
               : 'text-neutral-text-primary'
@@ -296,7 +291,6 @@ const TodoItemComponent = ({
               onMove={onMove}
               onAddTodo={onAddTodo}
               selectedDate={selectedDate}
-              isOver={false}
             />
           ))}
         </div>
@@ -305,9 +299,8 @@ const TodoItemComponent = ({
   );
 };
 
-// Memoize TodoItem to prevent unnecessary re-renders, especially important for recursive rendering
+// Memoize TodoItem to prevent unnecessary re-renders
 export const TodoItem = memo(TodoItemComponent, (prevProps, nextProps) => {
-  // Only re-render if these critical props change
   return (
     prevProps.todo.id === nextProps.todo.id &&
     prevProps.todo.text === nextProps.todo.text &&
@@ -319,7 +312,6 @@ export const TodoItem = memo(TodoItemComponent, (prevProps, nextProps) => {
     prevProps.categoryId === nextProps.categoryId &&
     prevProps.index === nextProps.index &&
     prevProps.siblings.length === nextProps.siblings.length &&
-    prevProps.parentId === nextProps.parentId &&
-    prevProps.isOver === nextProps.isOver
+    prevProps.parentId === nextProps.parentId
   );
 });

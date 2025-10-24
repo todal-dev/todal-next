@@ -153,6 +153,12 @@ export function AddRecurringDialog({
             type="text"
             value={text}
             onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleConfirm();
+              }
+            }}
             placeholder="예: 아침 운동"
             className="w-full px-3 py-2 border border-neutral-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
             autoFocus

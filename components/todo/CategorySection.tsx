@@ -1,15 +1,14 @@
 'use client';
 
 import { memo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useSortable } from '@dnd-kit/sortable';
-import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Trash2, Plus, GripVertical } from 'lucide-react';
 import { TodoItem } from './TodoItem';
 import { TodoInput } from './TodoInput';
-import { DragPlaceholder } from '@/components/ui/DragPlaceholder';
 import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Todo {
   id: string;
@@ -43,8 +42,6 @@ interface CategorySectionProps {
   onEditCategory: (id: string, name: string) => void;
   onChangeColor: (id: string, color: string) => void;
   onDeleteCategory: (id: string) => void;
-  activeDragId?: string | null;
-  overId?: string | null;
 }
 
 const colorPalette = [
@@ -73,8 +70,6 @@ const CategorySectionComponent = ({
   onEditCategory,
   onChangeColor,
   onDeleteCategory,
-  activeDragId,
-  overId,
 }: CategorySectionProps) => {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [isAddingTodo, setIsAddingTodo] = useState(false);
@@ -85,6 +80,7 @@ const CategorySectionComponent = ({
     listeners,
     setNodeRef,
     transform,
+    transition,
     isDragging,
   } = useSortable({
     id: category.id,
@@ -95,25 +91,11 @@ const CategorySectionComponent = ({
     },
   });
 
-  // Make category droppable for todos
-  const { setNodeRef: setDroppableRef, isOver: isDroppableOver } = useDroppable({
-    id: `category-drop-${category.id}`,
-    data: {
-      type: 'category-drop',
-      categoryId: category.id,
-      index: 0, // 빈 카테고리면 첫 번째 위치에 추가
-    },
-  });
-
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: 'none',
+    transition,
     opacity: isDragging ? 0.5 : 1,
   };
-
-  // Check if this category is being hovered over
-  const isCategoryOver = overId === category.id && activeDragId !== category.id;
-  const isEmptyCategoryOver = isDroppableOver && category.items.length === 0;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -130,15 +112,11 @@ const CategorySectionComponent = ({
   const completedCount = category.items.filter((t) => t.completed).length;
   const totalCount = category.items.length;
 
+  // Get all todo IDs for this category
+  const todoIds = category.items.map(item => item.id);
+
   return (
     <div ref={setNodeRef} style={style}>
-      {/* Placeholder when dragging category */}
-      {isCategoryOver && (
-        <div className="mb-2">
-          <DragPlaceholder height={60} />
-        </div>
-      )}
-
       <div className="mb-4">
         <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-neutral-gray-100 group relative mb-1">
           {/* Drag Handle */}
@@ -236,49 +214,43 @@ const CategorySectionComponent = ({
           )}
         </div>
 
-        <div className="space-y-0.5" ref={setDroppableRef}>
-          {category.items.map((todo, idx) => (
-            <TodoItem
-              key={todo.id}
-              todo={todo}
-              level={0}
+        {/* SortableContext for todos in this category */}
+        <SortableContext items={todoIds} strategy={verticalListSortingStrategy}>
+          <div className="space-y-0.5">
+            {category.items.map((todo, idx) => (
+              <TodoItem
+                key={todo.id}
+                todo={todo}
+                level={0}
+                categoryId={category.id}
+                index={idx}
+                siblings={category.items}
+                onToggle={onToggleTodo}
+                onEdit={onEditTodo}
+                onDelete={onDeleteTodo}
+                onUpdateTime={onUpdateTodoTime}
+                onMove={onMoveTodo}
+                onAddTodo={onAddTodo}
+                selectedDate={selectedDate}
+              />
+            ))}
+
+            <TodoInput
               categoryId={category.id}
-              index={idx}
-              siblings={category.items}
-              onToggle={onToggleTodo}
-              onEdit={onEditTodo}
-              onDelete={onDeleteTodo}
-              onUpdateTime={onUpdateTodoTime}
-              onMove={onMoveTodo}
-              onAddTodo={onAddTodo}
               selectedDate={selectedDate}
-              isOver={overId === todo.id && activeDragId !== todo.id}
+              onAddTodo={onAddTodo}
+              hideButton={true}
+              isAdding={isAddingTodo}
+              onIsAddingChange={setIsAddingTodo}
             />
-          ))}
-
-          {/* 빈 카테고리일 때 드롭 영역 표시 */}
-          {isEmptyCategoryOver && (
-            <div className="py-2">
-              <DragPlaceholder height={36} />
-            </div>
-          )}
-
-          <TodoInput
-            categoryId={category.id}
-            selectedDate={selectedDate}
-            onAddTodo={onAddTodo}
-            hideButton={true}
-            isAdding={isAddingTodo}
-            onIsAddingChange={setIsAddingTodo}
-          />
-        </div>
+          </div>
+        </SortableContext>
       </div>
     </div>
   );
 };
 
 // Memoize CategorySection to prevent unnecessary re-renders
-// Custom comparison to check if category items have changed
 export const CategorySection = memo(CategorySectionComponent, (prevProps, nextProps) => {
   return (
     prevProps.category.id === nextProps.category.id &&
@@ -293,8 +265,6 @@ export const CategorySection = memo(CategorySectionComponent, (prevProps, nextPr
       item.startTime === nextProps.category.items[idx]?.startTime &&
       item.endTime === nextProps.category.items[idx]?.endTime
     ) &&
-    prevProps.selectedDate.getTime() === nextProps.selectedDate.getTime() &&
-    prevProps.activeDragId === nextProps.activeDragId &&
-    prevProps.overId === nextProps.overId
+    prevProps.selectedDate.getTime() === nextProps.selectedDate.getTime()
   );
 });
