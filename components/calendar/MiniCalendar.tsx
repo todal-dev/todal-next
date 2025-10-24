@@ -361,7 +361,7 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
               disabled={!day}
               className={`
                 flex flex-col items-center justify-center rounded transition-all duration-150
-                min-h-9 p-0.5
+                min-h-11 p-0.5
                 ${day ? 'cursor-pointer' : 'cursor-default disabled:cursor-default'}
                 ${
                   selected
