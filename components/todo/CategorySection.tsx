@@ -74,7 +74,7 @@ const CategorySectionComponent = ({
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [isAddingTodo, setIsAddingTodo] = useState(false);
 
-  // Make category draggable
+  // Make category draggable (except "기타")
   const {
     attributes,
     listeners,
@@ -89,6 +89,7 @@ const CategorySectionComponent = ({
       id: category.id,
       index: categoryIndex,
     },
+    disabled: category.id === 'cat-etc',
   });
 
   const style = {
@@ -121,7 +122,10 @@ const CategorySectionComponent = ({
         <div
           {...attributes}
           {...listeners}
-          className="flex items-center gap-2 px-3 py-2 rounded-md bg-neutral-gray-100 group relative mb-1 cursor-grab active:cursor-grabbing"
+          className={`flex items-center gap-2 px-3 py-2 rounded-md bg-neutral-gray-100 group relative mb-1 ${
+            category.id !== 'cat-etc' ? 'cursor-grab active:cursor-grabbing' : ''
+          }`}
+          suppressHydrationWarning
         >
           <div
             className="relative color-picker-container"

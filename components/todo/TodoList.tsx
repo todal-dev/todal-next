@@ -219,7 +219,13 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
       if (onMoveCategory) {
         const oldIndex = categories.findIndex(c => c.id === activeId);
         const newIndex = categories.findIndex(c => c.id === overId);
+        const etcIndex = categories.findIndex(c => c.id === 'cat-etc');
+
         if (oldIndex !== -1 && newIndex !== -1) {
+          // "기타" 카테고리 아래로는 이동 불가
+          if (etcIndex !== -1 && newIndex >= etcIndex) {
+            return;
+          }
           onMoveCategory(activeId, newIndex);
         }
       }
