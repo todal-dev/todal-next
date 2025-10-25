@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { Checkbox } from '@/components/ui/forms/Checkbox';
 import { getDraggableStyle } from '@/utils/dragUtils';
 import { TimePicker } from '@/components/ui/calendar/TimePicker';
-import { Clock, Trash2 } from 'lucide-react';
+import { Clock, Trash2, Calendar } from 'lucide-react';
 import { useState } from 'react';
 
 interface Todo {
@@ -243,18 +243,43 @@ const TodoItemComponent = ({
                   </span>
                 </button>
               ) : (
-                <button
-                  onClick={() => {
-                    setEditingTime(true);
-                    onUpdateTime?.(todo.id, '09:00', '10:00');
-                  }}
-                  onMouseDown={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
-                  className="text-xs text-neutral-text-tertiary hover:text-primary-500 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Clock size={12} />
-                  <span>Add time</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => {
+                      setEditingTime(true);
+                      onUpdateTime?.(todo.id, '09:00', '10:00');
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    className="text-xs text-neutral-text-tertiary hover:text-primary-500 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Clock size={12} />
+                    <span>Add time</span>
+                  </button>
+
+                  {/* Calendar drag handle - next to time button */}
+                  <div
+                    draggable={true}
+                    onDragStart={(e) => {
+                      e.stopPropagation();
+                      const dragData = {
+                        id: todo.id,
+                        text: todo.text,
+                        startTime: todo.startTime,
+                        endTime: todo.endTime,
+                        categoryId,
+                      };
+                      e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
+                      e.dataTransfer.effectAllowed = 'move';
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity cursor-move text-neutral-text-tertiary hover:text-primary-500 p-1"
+                    title="캘린더로 드래그"
+                  >
+                    <Calendar size={14} />
+                  </div>
+                </>
               )}
             </>
           )}

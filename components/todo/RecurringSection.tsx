@@ -1,6 +1,6 @@
 'use client';
 
-import { Plus, Repeat, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Repeat, Edit2, Trash2, Calendar } from 'lucide-react';
 import { useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -58,6 +58,8 @@ function RecurringTodoItem({
     visibility: isDragging ? ('hidden' as const) : ('visible' as const),
   };
 
+  const hasTime = todo.startTime && todo.endTime;
+
   return (
     <div
       ref={setNodeRef}
@@ -101,11 +103,38 @@ function RecurringTodoItem({
             </span>
           )}
         </div>
-        {todo.startTime && todo.endTime && (
-          <div className="text-xs text-neutral-text-tertiary mt-0.5">
-            {todo.startTime} - {todo.endTime}
-          </div>
-        )}
+        <div className="flex items-center gap-1 mt-0.5">
+          {todo.startTime && todo.endTime && (
+            <div className="text-xs text-neutral-text-tertiary">
+              {todo.startTime} - {todo.endTime}
+            </div>
+          )}
+
+          {/* Calendar drag handle - next to time */}
+          {!hasTime && (
+            <div
+              draggable={true}
+              onDragStart={(e) => {
+                e.stopPropagation();
+                const dragData = {
+                  id: todo.id,
+                  text: todo.text,
+                  startTime: todo.startTime,
+                  endTime: todo.endTime,
+                  categoryId: todo.categoryId,
+                };
+                e.dataTransfer.setData('text/plain', JSON.stringify(dragData));
+                e.dataTransfer.effectAllowed = 'move';
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
+              onPointerDown={(e) => e.stopPropagation()}
+              className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity cursor-move text-neutral-text-tertiary hover:text-primary-500"
+              title="캘린더로 드래그"
+            >
+              <Calendar size={12} />
+            </div>
+          )}
+        </div>
       </div>
       <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
         <button
