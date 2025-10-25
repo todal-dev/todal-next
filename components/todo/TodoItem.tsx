@@ -2,8 +2,8 @@
 
 import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { Checkbox } from '@/components/ui/forms/Checkbox';
+import { getDraggableStyle } from '@/utils/dragUtils';
 import { TimePicker } from '@/components/ui/calendar/TimePicker';
 import { Clock, Trash2 } from 'lucide-react';
 import { useState } from 'react';
@@ -71,11 +71,7 @@ const TodoItemComponent = ({
     },
   });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
+  const style = getDraggableStyle(transform, transition, isDragging, 0, false);
 
   const hasTime = todo.startTime && todo.endTime;
 

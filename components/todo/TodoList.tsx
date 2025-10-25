@@ -5,8 +5,9 @@ import { motion } from 'framer-motion';
 import {
   DndContext,
   DragEndEvent,
-  DragOverlay,
   DragStartEvent,
+  DragOverEvent,
+  DragOverlay,
   closestCenter,
   PointerSensor,
   useSensor,
@@ -68,8 +69,9 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
   const [addingNewCategory, setAddingNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
-  const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
+  const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [overCategoryId, setOverCategoryId] = useState<string | null>(null);
   const [editingRecurring, setEditingRecurring] = useState<{
     id: string;
     text: string;
@@ -128,6 +130,11 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
 
   // 카테고리 ID 목록
   const categoryIds = categories.map(c => c.id);
+
+  // 드래그 중인 todo의 카테고리 찾기
+  const draggedTodoCategoryId = activeDragId
+    ? filteredTodos.find(t => t.id === activeDragId)?.categoryId
+    : null;
 
   // 드래그 중인 Todo 찾기
   const findTodo = (id: string, todoList: Todo[]): Todo | null => {
@@ -196,13 +203,46 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
 
   // 드래그 시작
   const handleDragStart = (event: DragStartEvent) => {
-    setActiveDragId(event.active.id as string);
+    const { active } = event;
+    const activeData = active.data.current;
+
+    // todo 타입만 추적 (카테고리는 제외)
+    if (activeData?.type === 'todo') {
+      setActiveDragId(active.id as string);
+    }
+  };
+
+  // 드래그 오버
+  const handleDragOver = (event: DragOverEvent) => {
+    const { over } = event;
+
+    if (!over || !activeDragId) {
+      setOverCategoryId(null);
+      return;
+    }
+
+    const overData = over.data.current;
+
+    // 카테고리 위에 hover 중
+    if (overData?.type === 'category') {
+      setOverCategoryId(overData.id);
+    }
+    // todo 위에 hover 중 -> 그 todo의 카테고리
+    else if (overData?.type === 'todo') {
+      setOverCategoryId(overData.categoryId);
+    }
+    else {
+      setOverCategoryId(null);
+    }
   };
 
   // 드래그 종료
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+
+    // 상태 초기화
     setActiveDragId(null);
+    setOverCategoryId(null);
 
     if (!over) return;
 
@@ -258,7 +298,16 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
       return;
     }
 
-    // Case 4: 같은 카테고리 내에서 할일 정렬
+    // Case 4: 할일을 카테고리로 이동 (빈 카테고리 포함)
+    if (activeData?.type === 'todo' && overData?.type === 'category') {
+      const overCategoryId = overData.id;
+      if (onMoveTodo) {
+        onMoveTodo(activeId, overCategoryId, undefined, 0);
+      }
+      return;
+    }
+
+    // Case 5: 같은 카테고리 내에서 할일 정렬
     if (activeData?.type === 'todo' && overData?.type === 'todo') {
       const activeCategoryId = activeData.categoryId;
       const overCategoryId = overData.categoryId;
@@ -280,6 +329,7 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragStart={handleDragStart}
+      onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <div className={`flex flex-col gap-2 ${hideTitle ? 'px-5 pb-5' : 'p-5'}`}>
@@ -389,13 +439,19 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
                 onEditCategory={onEditCategory}
                 onChangeColor={onChangeColor}
                 onDeleteCategory={onDeleteCategory}
+                isDraggingTodoFromOtherCategory={
+                  activeDragId !== null &&
+                  draggedTodoCategoryId !== null &&
+                  draggedTodoCategoryId !== category.id &&
+                  overCategoryId === category.id
+                }
               />
             ))}
           </SortableContext>
         </div>
       </div>
 
-      {/* DragOverlay */}
+      {/* DragOverlay - follows cursor */}
       <DragOverlay>
         {activeTodo ? (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white shadow-lg border border-neutral-gray-300">

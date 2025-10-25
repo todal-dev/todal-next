@@ -3,8 +3,8 @@
 import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 import { Trash2, Plus } from 'lucide-react';
+import { getDraggableStyle } from '@/utils/dragUtils';
 import { TodoItem } from './TodoItem';
 import { TodoInput } from './TodoInput';
 import { useState, useEffect } from 'react';
@@ -42,6 +42,7 @@ interface CategorySectionProps {
   onEditCategory: (id: string, name: string) => void;
   onChangeColor: (id: string, color: string) => void;
   onDeleteCategory: (id: string) => void;
+  isDraggingTodoFromOtherCategory?: boolean;
 }
 
 const colorPalette = [
@@ -70,6 +71,7 @@ const CategorySectionComponent = ({
   onEditCategory,
   onChangeColor,
   onDeleteCategory,
+  isDraggingTodoFromOtherCategory = false,
 }: CategorySectionProps) => {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [isAddingTodo, setIsAddingTodo] = useState(false);
@@ -92,11 +94,7 @@ const CategorySectionComponent = ({
     disabled: category.id === 'cat-etc',
   });
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
+  const style = getDraggableStyle(transform, transition, isDragging);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -246,6 +244,13 @@ const CategorySectionComponent = ({
               />
             ))}
 
+            {/* Placeholder for empty category when dragging from another category */}
+            {isDraggingTodoFromOtherCategory && category.items.length === 0 && (
+              <div className="px-3 py-1.5 rounded-md">
+                <div className="h-5" />
+              </div>
+            )}
+
             <TodoInput
               categoryId={category.id}
               selectedDate={selectedDate}
@@ -276,6 +281,7 @@ export const CategorySection = memo(CategorySectionComponent, (prevProps, nextPr
       item.startTime === nextProps.category.items[idx]?.startTime &&
       item.endTime === nextProps.category.items[idx]?.endTime
     ) &&
-    prevProps.selectedDate.getTime() === nextProps.selectedDate.getTime()
+    prevProps.selectedDate.getTime() === nextProps.selectedDate.getTime() &&
+    prevProps.isDraggingTodoFromOtherCategory === nextProps.isDraggingTodoFromOtherCategory
   );
 });

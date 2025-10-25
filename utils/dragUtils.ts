@@ -42,3 +42,36 @@ export function canDrop(activeData: DragData, overData: DragData): boolean {
 
   return false;
 }
+
+/**
+ * 드래그 가능한 아이템의 공통 스타일 생성
+ * 카테고리와 할일 모두에 적용 가능
+ */
+export function getDraggableStyle(
+  transform: { x: number; y: number; scaleX: number; scaleY: number } | null,
+  transition: string | undefined,
+  isDragging: boolean,
+  dragOpacity: number = 0.5,
+  removeSpace: boolean = false
+) {
+  const baseStyle = {
+    transform: transform
+      ? `translate3d(${transform.x}px, ${transform.y}px, 0) scaleX(${transform.scaleX}) scaleY(${transform.scaleY})`
+      : undefined,
+    transition,
+    opacity: isDragging ? dragOpacity : 1,
+  };
+
+  // 드래그 중이고 공간 제거 옵션이 true면 높이와 여백 제거
+  if (isDragging && removeSpace) {
+    return {
+      ...baseStyle,
+      height: 0,
+      overflow: 'hidden' as const,
+      margin: 0,
+      padding: 0,
+    };
+  }
+
+  return baseStyle;
+}
