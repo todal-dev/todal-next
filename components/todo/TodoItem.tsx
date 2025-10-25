@@ -34,6 +34,8 @@ interface TodoItemProps {
   onMove?: (todoId: string, newCategoryId: string, newParentId?: string, newIndex?: number) => void;
   onAddTodo: (text: string, categoryId: string, date: Date, parentId?: string) => void;
   selectedDate: Date;
+  activeDragId?: string | null;
+  overTodoId?: string | null;
 }
 
 const TodoItemComponent = ({
@@ -50,6 +52,8 @@ const TodoItemComponent = ({
   onMove,
   onAddTodo,
   selectedDate,
+  activeDragId = null,
+  overTodoId = null,
 }: TodoItemProps) => {
   const [editingTime, setEditingTime] = useState(false);
 
@@ -71,7 +75,11 @@ const TodoItemComponent = ({
     },
   });
 
-  const style = getDraggableStyle(transform, transition, isDragging, 0, false);
+  // 내가 드래그 중이고, 다른 곳으로 hover 중이면 공간 제거
+  // 원래 자리로 돌아오면 (overTodoId === todo.id) 공간 유지
+  const shouldRemoveSpace = isDragging && activeDragId === todo.id && overTodoId !== todo.id;
+
+  const style = getDraggableStyle(transform, transition, isDragging, 0, shouldRemoveSpace);
 
   const hasTime = todo.startTime && todo.endTime;
 
@@ -287,6 +295,8 @@ const TodoItemComponent = ({
               onMove={onMove}
               onAddTodo={onAddTodo}
               selectedDate={selectedDate}
+              activeDragId={activeDragId}
+              overTodoId={overTodoId}
             />
           ))}
         </div>
@@ -308,6 +318,8 @@ export const TodoItem = memo(TodoItemComponent, (prevProps, nextProps) => {
     prevProps.categoryId === nextProps.categoryId &&
     prevProps.index === nextProps.index &&
     prevProps.siblings.length === nextProps.siblings.length &&
-    prevProps.parentId === nextProps.parentId
+    prevProps.parentId === nextProps.parentId &&
+    prevProps.activeDragId === nextProps.activeDragId &&
+    prevProps.overTodoId === nextProps.overTodoId
   );
 });

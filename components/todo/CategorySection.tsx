@@ -43,6 +43,8 @@ interface CategorySectionProps {
   onChangeColor: (id: string, color: string) => void;
   onDeleteCategory: (id: string) => void;
   isDraggingTodoFromOtherCategory?: boolean;
+  activeDragId?: string | null;
+  overTodoId?: string | null;
 }
 
 const colorPalette = [
@@ -72,6 +74,8 @@ const CategorySectionComponent = ({
   onChangeColor,
   onDeleteCategory,
   isDraggingTodoFromOtherCategory = false,
+  activeDragId = null,
+  overTodoId = null,
 }: CategorySectionProps) => {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [isAddingTodo, setIsAddingTodo] = useState(false);
@@ -241,6 +245,8 @@ const CategorySectionComponent = ({
                 onMove={onMoveTodo}
                 onAddTodo={onAddTodo}
                 selectedDate={selectedDate}
+                activeDragId={activeDragId}
+                overTodoId={overTodoId}
               />
             ))}
 
@@ -282,6 +288,8 @@ export const CategorySection = memo(CategorySectionComponent, (prevProps, nextPr
       item.endTime === nextProps.category.items[idx]?.endTime
     ) &&
     prevProps.selectedDate.getTime() === nextProps.selectedDate.getTime() &&
-    prevProps.isDraggingTodoFromOtherCategory === nextProps.isDraggingTodoFromOtherCategory
+    prevProps.isDraggingTodoFromOtherCategory === nextProps.isDraggingTodoFromOtherCategory &&
+    prevProps.activeDragId === nextProps.activeDragId &&
+    prevProps.overTodoId === nextProps.overTodoId
   );
 });

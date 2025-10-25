@@ -72,6 +72,7 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
   const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
   const [overCategoryId, setOverCategoryId] = useState<string | null>(null);
+  const [overTodoId, setOverTodoId] = useState<string | null>(null);
   const [editingRecurring, setEditingRecurring] = useState<{
     id: string;
     text: string;
@@ -218,6 +219,7 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
 
     if (!over || !activeDragId) {
       setOverCategoryId(null);
+      setOverTodoId(null);
       return;
     }
 
@@ -226,13 +228,16 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
     // 카테고리 위에 hover 중
     if (overData?.type === 'category') {
       setOverCategoryId(overData.id);
+      setOverTodoId(null);
     }
     // todo 위에 hover 중 -> 그 todo의 카테고리
     else if (overData?.type === 'todo') {
       setOverCategoryId(overData.categoryId);
+      setOverTodoId(over.id as string);
     }
     else {
       setOverCategoryId(null);
+      setOverTodoId(null);
     }
   };
 
@@ -243,6 +248,7 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
     // 상태 초기화
     setActiveDragId(null);
     setOverCategoryId(null);
+    setOverTodoId(null);
 
     if (!over) return;
 
@@ -445,6 +451,8 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
                   draggedTodoCategoryId !== category.id &&
                   overCategoryId === category.id
                 }
+                activeDragId={activeDragId}
+                overTodoId={overTodoId}
               />
             ))}
           </SortableContext>
