@@ -173,13 +173,13 @@ export function AddRecurringDialog({
           />
         </div>
 
-        {/* 카테고리 */}
+        {/* 카테고리 (반복 카테고리 제외) */}
         <div>
           <label className="block text-sm font-medium text-neutral-text-secondary mb-1">
             카테고리
           </label>
           <CategorySelect
-            categories={categories}
+            categories={categories.filter(cat => cat.id !== 'cat-recurring')}
             value={categoryId}
             onChange={setCategoryId}
           />
