@@ -4,7 +4,7 @@ import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Trash2, Plus, GripVertical } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
 import { TodoItem } from './TodoItem';
 import { TodoInput } from './TodoInput';
 import { useState, useEffect } from 'react';
@@ -118,18 +118,16 @@ const CategorySectionComponent = ({
   return (
     <div ref={setNodeRef} style={style}>
       <div className="mb-4">
-        <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-neutral-gray-100 group relative mb-1">
-          {/* Drag Handle */}
+        <div
+          {...attributes}
+          {...listeners}
+          className="flex items-center gap-2 px-3 py-2 rounded-md bg-neutral-gray-100 group relative mb-1 cursor-grab active:cursor-grabbing"
+        >
           <div
-            {...attributes}
-            {...listeners}
-            className="cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-            suppressHydrationWarning
+            className="relative color-picker-container"
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
           >
-            <GripVertical size={16} className="text-neutral-text-tertiary" />
-          </div>
-
-          <div className="relative color-picker-container">
             <button
               onClick={() => setColorPickerOpen(!colorPickerOpen)}
               className="flex-shrink-0 w-4 h-4 rounded-full hover:ring-2 hover:ring-offset-1 hover:ring-neutral-gray-400 transition-all cursor-pointer"
@@ -171,9 +169,12 @@ const CategorySectionComponent = ({
             type="text"
             defaultValue={category.name}
             disabled={category.id === 'cat-etc'}
-            className={`flex-1 font-semibold text-sm bg-transparent text-neutral-text-primary focus:outline-none border-0 focus:ring-0 ${
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+            className={`font-semibold text-sm bg-transparent text-neutral-text-primary focus:outline-none border-0 focus:ring-0 cursor-text ${
               category.id === 'cat-etc' ? 'cursor-default' : ''
             }`}
+            size={Math.max(category.name.length, 5)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
                 e.currentTarget.blur();
@@ -189,6 +190,8 @@ const CategorySectionComponent = ({
             }}
           />
 
+          <div className="flex-1" />
+
           <span className="text-xs text-neutral-text-secondary">
             {completedCount}/{totalCount}
           </span>
@@ -196,6 +199,8 @@ const CategorySectionComponent = ({
           {/* 할일 추가 버튼 */}
           <button
             onClick={() => setIsAddingTodo(true)}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
             className="flex-shrink-0 p-1 hover:bg-primary-100 rounded transition-colors text-neutral-text-secondary hover:text-primary-500 cursor-pointer"
             title="할일 추가"
           >
@@ -206,6 +211,8 @@ const CategorySectionComponent = ({
           {category.id !== 'cat-etc' && (
             <button
               onClick={() => onDeleteCategory(category.id)}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
               className="flex-shrink-0 p-1 hover:bg-red-100 rounded transition-colors text-neutral-text-secondary hover:text-red-600 opacity-0 group-hover:opacity-100"
               title="Delete category"
             >
