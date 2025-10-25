@@ -75,11 +75,8 @@ const TodoItemComponent = ({
     },
   });
 
-  // 내가 드래그 중이고, 다른 곳으로 hover 중이면 공간 제거
-  // 원래 자리로 돌아오면 (overTodoId === todo.id) 공간 유지
-  const shouldRemoveSpace = isDragging && activeDragId === todo.id && overTodoId !== todo.id;
-
-  const style = getDraggableStyle(transform, transition, isDragging, 0, shouldRemoveSpace);
+  // 카테고리처럼 공간은 유지하되 투명하게 (밀림 효과를 위해)
+  const style = getDraggableStyle(transform, transition, isDragging, 0, false);
 
   const hasTime = todo.startTime && todo.endTime;
 
