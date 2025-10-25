@@ -29,6 +29,12 @@ interface Category {
   items: Todo[];
 }
 
+interface SimplifiedCategory {
+  id: string;
+  name: string;
+  color: string;
+}
+
 interface CategorySectionProps {
   category: Category;
   categoryIndex: number;
@@ -47,6 +53,7 @@ interface CategorySectionProps {
   isDraggingTodoFromOtherCategory?: boolean;
   activeDragId?: string | null;
   overTodoId?: string | null;
+  categories?: SimplifiedCategory[];
 }
 
 const colorPalette = [
@@ -80,6 +87,7 @@ const CategorySectionComponent = ({
   isDraggingTodoFromOtherCategory = false,
   activeDragId = null,
   overTodoId = null,
+  categories = [],
 }: CategorySectionProps) => {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [isAddingTodo, setIsAddingTodo] = useState(false);
@@ -267,6 +275,7 @@ const CategorySectionComponent = ({
                 selectedDate={selectedDate}
                 activeDragId={activeDragId}
                 overTodoId={overTodoId}
+                categories={categories}
               />
             ))}
 

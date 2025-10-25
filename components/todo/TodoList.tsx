@@ -475,6 +475,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
                 }
                 activeDragId={activeDragId}
                 overTodoId={overTodoId}
+                categories={categories}
               />
             ))}
           </SortableContext>

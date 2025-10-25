@@ -5,7 +5,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { Checkbox } from '@/components/ui/forms/Checkbox';
 import { getDraggableStyle } from '@/utils/dragUtils';
 import { TimePicker } from '@/components/ui/calendar/TimePicker';
-import { Clock, Trash2, Calendar } from 'lucide-react';
+import { Clock, Trash2, Calendar, Edit2 } from 'lucide-react';
 import { useState } from 'react';
 
 interface Todo {
@@ -18,6 +18,12 @@ interface Todo {
   parentId?: string;
   startTime?: string;
   endTime?: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  color: string;
 }
 
 interface TodoItemProps {
@@ -36,6 +42,7 @@ interface TodoItemProps {
   selectedDate: Date;
   activeDragId?: string | null;
   overTodoId?: string | null;
+  categories?: Category[];
 }
 
 const TodoItemComponent = ({
@@ -54,8 +61,15 @@ const TodoItemComponent = ({
   selectedDate,
   activeDragId = null,
   overTodoId = null,
+  categories = [],
 }: TodoItemProps) => {
   const [editingTime, setEditingTime] = useState(false);
+
+  // 반복 카테고리일 때 원래 카테고리 정보 찾기
+  const isRecurringCategory = categoryId === 'cat-recurring';
+  const originalCategory = isRecurringCategory
+    ? categories.find(cat => cat.id === todo.categoryId)
+    : null;
 
   const {
     attributes,
@@ -200,7 +214,18 @@ const TodoItemComponent = ({
         />
 
         <div className="ml-auto flex items-center gap-2 flex-shrink-0">
-          {editingTime ? (
+          {/* 반복 카테고리일 때는 카테고리 이름 표시 */}
+          {isRecurringCategory && originalCategory ? (
+            <span
+              className="text-xs px-2 py-0.5 rounded"
+              style={{
+                backgroundColor: `${originalCategory.color}20`,
+                color: originalCategory.color,
+              }}
+            >
+              {originalCategory.name}
+            </span>
+          ) : editingTime ? (
             <div
               className="flex items-center gap-1"
               onMouseDown={(e) => e.stopPropagation()}
@@ -284,6 +309,22 @@ const TodoItemComponent = ({
             </>
           )}
 
+          {/* 반복 카테고리일 때만 편집 버튼 표시 */}
+          {categoryId === 'cat-recurring' && (
+            <button
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                onEdit(todo.id, todo.text);
+              }}
+              className="p-1 hover:bg-primary-100 rounded transition-colors text-neutral-text-secondary hover:text-primary-500 opacity-0 group-hover:opacity-100"
+              title="반복 일정 편집"
+            >
+              <Edit2 size={14} />
+            </button>
+          )}
+
           <button
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
@@ -319,6 +360,7 @@ const TodoItemComponent = ({
               selectedDate={selectedDate}
               activeDragId={activeDragId}
               overTodoId={overTodoId}
+              categories={categories}
             />
           ))}
         </div>
