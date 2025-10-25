@@ -7,14 +7,12 @@ interface ConvertRecurringToRegularModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConvertThisOnly: () => void;
-  onConvertAll: () => void;
 }
 
 export function ConvertRecurringToRegularModal({
   isOpen,
   onClose,
   onConvertThisOnly,
-  onConvertAll,
 }: ConvertRecurringToRegularModalProps) {
   if (!isOpen) return null;
 
@@ -52,9 +50,14 @@ export function ConvertRecurringToRegularModal({
           </div>
 
           {/* Description */}
-          <p className="text-sm text-neutral-text-secondary mb-6">
-            반복 할일을 일반 할일로 변환하시겠습니까?
-          </p>
+          <div className="mb-6">
+            <p className="text-sm text-neutral-text-secondary mb-2">
+              이 반복 할일을 일반 카테고리로 이동하시겠습니까?
+            </p>
+            <p className="text-xs text-neutral-text-tertiary bg-neutral-gray-50 p-3 rounded-md">
+              💡 선택한 날짜의 항목만 일반 할일로 변환되며, 다른 날짜의 반복 일정은 그대로 유지됩니다.
+            </p>
+          </div>
 
           {/* Buttons */}
           <div className="space-y-2">
@@ -63,25 +66,9 @@ export function ConvertRecurringToRegularModal({
                 onConvertThisOnly();
                 onClose();
               }}
-              className="w-full px-4 py-3 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors text-left cursor-pointer"
+              className="w-full px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors cursor-pointer font-medium"
             >
-              <div className="font-medium">이 항목만 변환</div>
-              <div className="text-sm text-white/80 mt-0.5">
-                오늘 날짜만 일반 할일로 분리합니다
-              </div>
-            </button>
-
-            <button
-              onClick={() => {
-                onConvertAll();
-                onClose();
-              }}
-              className="w-full px-4 py-3 bg-neutral-gray-100 hover:bg-neutral-gray-200 text-neutral-text-primary rounded-lg transition-colors text-left cursor-pointer"
-            >
-              <div className="font-medium">모든 반복 항목 변환</div>
-              <div className="text-sm text-neutral-text-secondary mt-0.5">
-                반복 규칙을 제거하고 일반 할일로 변환합니다
-              </div>
+              일반 할일로 변환
             </button>
 
             <button

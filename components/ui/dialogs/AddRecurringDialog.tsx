@@ -144,6 +144,14 @@ export function AddRecurringDialog({
       }
     >
       <div className="space-y-4">
+        {/* 변환 안내 메시지 (새로 추가할 때만) */}
+        {!editingTodo && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-2">
+            <p className="text-xs text-blue-800">
+              💡 <strong>일반 할일에서 변환 시:</strong> 새로운 반복 할일이 생성되며, 기존 일반 할일은 그대로 유지됩니다.
+            </p>
+          </div>
+        )}
         {/* 할일 제목 */}
         <div>
           <label className="block text-sm font-medium text-neutral-text-secondary mb-1">

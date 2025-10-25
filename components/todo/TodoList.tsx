@@ -48,7 +48,6 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
     onToggleRecurringInstance,
     onConvertRecurringToRegular,
     onConvertRegularToRecurring,
-    onConvertRecurringToRegularAll,
   } = useTodoContext();
 
   const {
@@ -524,16 +523,6 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
         onConvertThisOnly={() => {
           if (convertingRecurring && onConvertRecurringToRegular) {
             onConvertRecurringToRegular(
-              convertingRecurring.recurringId,
-              selectedDate,
-              convertingRecurring.categoryId
-            );
-          }
-          setConvertingRecurring(undefined);
-        }}
-        onConvertAll={() => {
-          if (convertingRecurring && onConvertRecurringToRegularAll) {
-            onConvertRecurringToRegularAll(
               convertingRecurring.recurringId,
               selectedDate,
               convertingRecurring.categoryId
