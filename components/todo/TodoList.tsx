@@ -17,7 +17,6 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus } from 'lucide-react';
 import { CategorySection } from './CategorySection';
 import { Checkbox } from '@/components/ui/forms/Checkbox';
-import { RecurringSection } from './RecurringSection';
 import { AddRecurringDialog } from '@/components/ui/dialogs/AddRecurringDialog';
 import { ConvertRecurringToRegularModal } from '@/components/ui/dialogs/ConvertRecurringToRegularModal';
 import { useTodoContext } from '@/contexts/TodoContext';
@@ -33,11 +32,10 @@ interface RecurrenceRuleLocal {
 }
 
 interface TodoListProps {
-  showRecurringSection?: boolean;
   hideTitle?: boolean;
 }
 
-export function TodoList({ showRecurringSection = true, hideTitle = false }: TodoListProps) {
+export function TodoList({ hideTitle = false }: TodoListProps) {
   const {
     todos,
     selectedDate,
@@ -48,8 +46,6 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
     onUpdateTodoTime,
     onMoveTodo,
     onToggleRecurringInstance,
-    onSkipRecurringInstance,
-    onDeleteRecurringAfter,
     onConvertRecurringToRegular,
     onConvertRegularToRecurring,
     onConvertRecurringToRegularAll,
@@ -109,21 +105,60 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
     '#10B981', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16',
   ];
 
-  // 선택된 날짜의 할일만 필터링
+  // 선택된 날짜의 할일 필터링 (반복 TODO 포함)
   const filteredTodos = todos.filter(todo => {
-    if (todo.recurrenceRule) return false;
+    // 반복 TODO는 날짜 범위 및 건너뛴 날짜 체크
+    if (todo.recurrenceRule) {
+      const selected = new Date(selectedDate);
+      selected.setHours(0, 0, 0, 0);
+
+      // 시작일 체크
+      if (todo.recurrenceRule.startDate) {
+        const startDate = new Date(todo.recurrenceRule.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        if (selected < startDate) return false;
+      }
+
+      // 종료일 체크
+      if (todo.recurrenceRule.endDate) {
+        const endDate = new Date(todo.recurrenceRule.endDate);
+        endDate.setHours(0, 0, 0, 0);
+        if (selected > endDate) return false;
+      }
+
+      // 건너뛴 날짜 체크
+      const todayString = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
+      if (todo.skippedDates?.includes(todayString)) {
+        return false;
+      }
+
+      return true;
+    }
+
+    // 일반 TODO는 날짜 일치 체크
     return todo.date.getFullYear() === selectedDate.getFullYear() &&
            todo.date.getMonth() === selectedDate.getMonth() &&
            todo.date.getDate() === selectedDate.getDate();
   });
 
-  // 카테고리별로 그룹화
+  // 카테고리별로 그룹화 (반복 TODO는 cat-recurring에 자동 배치)
   const todosByCategory = categories
     .map(cat => ({
       ...cat,
-      items: filteredTodos.filter(todo => todo.categoryId === cat.id),
+      items: filteredTodos.filter(todo => {
+        // 반복 카테고리: recurrenceRule이 있는 TODO만
+        if (cat.id === 'cat-recurring') {
+          return todo.recurrenceRule !== undefined;
+        }
+        // 일반 카테고리: recurrenceRule이 없고 categoryId가 일치하는 TODO만
+        return !todo.recurrenceRule && todo.categoryId === cat.id;
+      }),
     }))
     .sort((a, b) => {
+      // 반복 카테고리는 맨 위
+      if (a.id === 'cat-recurring') return -1;
+      if (b.id === 'cat-recurring') return 1;
+      // 기타 카테고리는 맨 아래
       if (a.id === 'cat-etc') return 1;
       if (b.id === 'cat-etc') return -1;
       return 0;
@@ -278,18 +313,21 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
       return;
     }
 
-    // Case 2: 반복 할일 → 일반 카테고리
-    if (activeData?.type === 'recurring' && overData?.type === 'todo') {
+    // Case 2: 반복 카테고리에서 일반 카테고리로 드래그
+    if (activeData?.type === 'todo' && activeData?.categoryId === 'cat-recurring' &&
+        overData && overData.categoryId !== 'cat-recurring') {
+      const targetCategoryId = overData.type === 'category' ? overData.id : overData.categoryId;
       setConvertingRecurring({
         recurringId: activeId,
-        categoryId: overData.categoryId,
+        categoryId: targetCategoryId,
       });
       setConvertModalOpen(true);
       return;
     }
 
-    // Case 3: 일반 할일 → 반복 할일
-    if (activeData?.type === 'todo' && overData?.type === 'recurring') {
+    // Case 3: 일반 카테고리에서 반복 카테고리로 드래그
+    if (activeData?.type === 'todo' && activeData?.categoryId !== 'cat-recurring' &&
+        overData && (overData.categoryId === 'cat-recurring' || overData.id === 'cat-recurring')) {
       const regularTodo = todos.find(t => t.id === activeId);
       if (regularTodo && !regularTodo.recurrenceRule) {
         setConvertingToRecurring({
@@ -411,24 +449,7 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto space-y-2">
-          {/* Recurring Section */}
-          {showRecurringSection && (
-            <div className="flex-shrink-0">
-              <RecurringSection
-                todos={todos}
-                selectedDate={selectedDate}
-                categories={categories}
-                onToggleRecurringInstance={handleToggleRecurringInstance}
-                onAddRecurring={handleAddRecurring}
-                onEditRecurring={handleEditRecurringClick}
-                onSkipRecurringInstance={(recurringId: string) => onSkipRecurringInstance(recurringId, selectedDate)}
-                onDeleteRecurringAfter={(recurringId: string) => onDeleteRecurringAfter(recurringId, selectedDate)}
-                onDeleteRecurring={(recurringId: string) => onDeleteTodo(recurringId)}
-              />
-            </div>
-          )}
-
-          {/* Categories */}
+          {/* Categories (반복 카테고리 포함) */}
           <SortableContext items={categoryIds} strategy={verticalListSortingStrategy}>
             {todosByCategory.map((category, index) => (
               <CategorySection
@@ -436,7 +457,7 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
                 category={category}
                 categoryIndex={index}
                 selectedDate={selectedDate}
-                onToggleTodo={onToggleTodo}
+                onToggleTodo={category.id === 'cat-recurring' ? handleToggleRecurringInstance : onToggleTodo}
                 onEditTodo={onEditTodo}
                 onDeleteTodo={onDeleteTodo}
                 onUpdateTodoTime={onUpdateTodoTime}
@@ -445,6 +466,8 @@ export function TodoList({ showRecurringSection = true, hideTitle = false }: Tod
                 onEditCategory={onEditCategory}
                 onChangeColor={onChangeColor}
                 onDeleteCategory={onDeleteCategory}
+                onAddRecurring={category.id === 'cat-recurring' ? handleAddRecurring : undefined}
+                onEditRecurring={category.id === 'cat-recurring' ? handleEditRecurringClick : undefined}
                 isDraggingTodoFromOtherCategory={
                   activeDragId !== null &&
                   draggedTodoCategoryId !== null &&

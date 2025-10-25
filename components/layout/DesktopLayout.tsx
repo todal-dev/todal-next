@@ -4,8 +4,6 @@ import { Plus } from 'lucide-react';
 import { MiniCalendar } from '@/components/calendar/MiniCalendar';
 import { BigCalendar } from '@/components/calendar/WeekCalendar';
 import { TodoList } from '@/components/todo/TodoList';
-import { RecurringSection } from '@/components/todo/RecurringSection';
-import { AddRecurringDialog } from '@/components/ui/dialogs/AddRecurringDialog';
 import { useTodoContext } from '@/contexts/TodoContext';
 import { useCategoryContext } from '@/contexts/CategoryContext';
 
@@ -27,28 +25,10 @@ interface DesktopLayoutProps {
   todosByDate: Record<string, TodoByDate>;
 }
 
-interface RecurrenceRuleLocal {
-  frequency: 'daily' | 'weekly' | 'monthly';
-  interval: number;
-  startDate?: Date;
-  endDate?: Date;
-  daysOfWeek?: number[];
-}
-
 const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
   // Get values from contexts
-  const { onDateSelect, todos, selectedDate, onToggleRecurringInstance, onSkipRecurringInstance, onDeleteRecurringAfter, onDeleteTodo } = useTodoContext();
-  const { categories, onAddCategory, onAddRecurring, onEditRecurring } = useCategoryContext();
-
-  const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
-  const [editingRecurring, setEditingRecurring] = useState<{
-    id: string;
-    text: string;
-    startTime?: string;
-    endTime?: string;
-    recurrenceRule?: RecurrenceRuleLocal;
-    categoryId?: string;
-  } | undefined>(undefined);
+  const { onDateSelect, selectedDate } = useTodoContext();
+  const { onAddCategory } = useCategoryContext();
 
   const [addingNewCategory, setAddingNewCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -59,47 +39,6 @@ const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
     '#3B82F6', '#A855F7', '#2D9F6B', '#EF4444', '#F59E0B',
     '#10B981', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16',
   ];
-
-  // 반복 일정 핸들러
-  const handleAddRecurring = () => {
-    setEditingRecurring(undefined);
-    setRecurringDialogOpen(true);
-  };
-
-  const handleEditRecurringClick = (id: string) => {
-    const todo = todos.find(t => t.id === id);
-    if (todo) {
-      setEditingRecurring({
-        id: todo.id,
-        text: todo.text,
-        startTime: todo.startTime,
-        endTime: todo.endTime,
-        recurrenceRule: todo.recurrenceRule,
-        categoryId: todo.categoryId,
-      });
-      setRecurringDialogOpen(true);
-    }
-  };
-
-  const handleConfirmRecurring = (
-    text: string,
-    startTime: string,
-    endTime: string,
-    recurrenceRule: RecurrenceRuleLocal,
-    categoryId: string
-  ) => {
-    if (editingRecurring) {
-      onEditRecurring?.(editingRecurring.id, text, startTime, endTime, recurrenceRule, categoryId);
-    } else {
-      onAddRecurring?.(text, startTime, endTime, recurrenceRule, categoryId);
-    }
-    setRecurringDialogOpen(false);
-    setEditingRecurring(undefined);
-  };
-
-  const handleToggleRecurringInstance = (recurringId: string) => {
-    onToggleRecurringInstance?.(recurringId, selectedDate);
-  };
 
   return (
     <>
@@ -179,25 +118,9 @@ const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
             )}
           </div>
 
-          {/* Recurring Section + Todo List */}
+          {/* Todo List (반복 카테고리 포함) */}
           <div className="flex-1 overflow-y-auto">
-            {/* Recurring Section */}
-            <div className="px-5 pt-2 pb-3">
-              <RecurringSection
-                todos={todos}
-                selectedDate={selectedDate}
-                categories={categories}
-                onToggleRecurringInstance={handleToggleRecurringInstance}
-                onAddRecurring={handleAddRecurring}
-                onEditRecurring={handleEditRecurringClick}
-                onSkipRecurringInstance={(recurringId: string) => onSkipRecurringInstance(recurringId, selectedDate)}
-                onDeleteRecurringAfter={(recurringId: string) => onDeleteRecurringAfter(recurringId, selectedDate)}
-                onDeleteRecurring={(recurringId: string) => onDeleteTodo(recurringId)}
-              />
-            </div>
-
-            {/* Todo List (당일 할일만) */}
-            <TodoList showRecurringSection={false} hideTitle={true} />
+            <TodoList hideTitle={true} />
           </div>
         </div>
 
@@ -206,19 +129,6 @@ const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
           <BigCalendar />
         </div>
       </div>
-
-      {/* Add Recurring Dialog */}
-      <AddRecurringDialog
-        isOpen={recurringDialogOpen}
-        onClose={() => {
-          setRecurringDialogOpen(false);
-          setEditingRecurring(undefined);
-        }}
-        onConfirm={handleConfirmRecurring}
-        selectedDate={selectedDate}
-        categories={categories}
-        editingTodo={editingRecurring}
-      />
     </>
   );
 };

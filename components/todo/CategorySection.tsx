@@ -3,7 +3,7 @@
 import { memo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Repeat } from 'lucide-react';
 import { getDraggableStyle } from '@/utils/dragUtils';
 import { TodoItem } from './TodoItem';
 import { TodoInput } from './TodoInput';
@@ -42,6 +42,8 @@ interface CategorySectionProps {
   onEditCategory: (id: string, name: string) => void;
   onChangeColor: (id: string, color: string) => void;
   onDeleteCategory: (id: string) => void;
+  onAddRecurring?: () => void;
+  onEditRecurring?: (id: string) => void;
   isDraggingTodoFromOtherCategory?: boolean;
   activeDragId?: string | null;
   overTodoId?: string | null;
@@ -73,6 +75,8 @@ const CategorySectionComponent = ({
   onEditCategory,
   onChangeColor,
   onDeleteCategory,
+  onAddRecurring,
+  onEditRecurring,
   isDraggingTodoFromOtherCategory = false,
   activeDragId = null,
   overTodoId = null,
@@ -80,7 +84,7 @@ const CategorySectionComponent = ({
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [isAddingTodo, setIsAddingTodo] = useState(false);
 
-  // Make category draggable (except "기타")
+  // Make category draggable (except "반복" and "기타")
   const {
     attributes,
     listeners,
@@ -95,7 +99,7 @@ const CategorySectionComponent = ({
       id: category.id,
       index: categoryIndex,
     },
-    disabled: category.id === 'cat-etc',
+    disabled: category.id === 'cat-recurring' || category.id === 'cat-etc',
   });
 
   const style = getDraggableStyle(transform, transition, isDragging);
@@ -125,60 +129,67 @@ const CategorySectionComponent = ({
           {...attributes}
           {...listeners}
           className={`flex items-center gap-2 px-3 py-2 rounded-md bg-neutral-gray-100 group relative mb-1 ${
-            category.id !== 'cat-etc' ? 'cursor-grab active:cursor-grabbing' : ''
+            category.id !== 'cat-recurring' && category.id !== 'cat-etc' ? 'cursor-grab active:cursor-grabbing' : ''
           }`}
           suppressHydrationWarning
         >
-          <div
-            className="relative color-picker-container"
-            onMouseDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setColorPickerOpen(!colorPickerOpen)}
-              className="flex-shrink-0 w-4 h-4 rounded-full hover:ring-2 hover:ring-offset-1 hover:ring-neutral-gray-400 transition-all cursor-pointer"
-              style={{ backgroundColor: category.color }}
-              title="Change color"
-            />
+          {/* 반복 카테고리는 아이콘만 표시, 나머지는 색상 버튼 */}
+          {category.id === 'cat-recurring' ? (
+            <div className="flex-shrink-0">
+              <Repeat size={16} className="text-primary-500" />
+            </div>
+          ) : (
+            <div
+              className="relative color-picker-container"
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setColorPickerOpen(!colorPickerOpen)}
+                className="flex-shrink-0 w-4 h-4 rounded-full hover:ring-2 hover:ring-offset-1 hover:ring-neutral-gray-400 transition-all cursor-pointer"
+                style={{ backgroundColor: category.color }}
+                title="Change color"
+              />
 
-            <AnimatePresence>
-              {colorPickerOpen && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95, y: -5 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute top-full left-0 mt-2 p-4 bg-white border border-neutral-gray-300 rounded-lg shadow-lg z-50 min-w-[240px]"
-                >
-                  <div className="grid grid-cols-5 gap-4">
-                    {colorPalette.map((color) => (
-                      <button
-                        key={color}
-                        onClick={() => {
-                          onChangeColor(category.id, color);
-                          setColorPickerOpen(false);
-                        }}
-                        className={`w-7 h-7 rounded-full hover:scale-110 transition-transform ${
-                          category.color === color ? 'ring-2 ring-offset-2 ring-neutral-gray-500' : ''
-                        }`}
-                        style={{ backgroundColor: color }}
-                        title={color}
-                      />
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+              <AnimatePresence>
+                {colorPickerOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full left-0 mt-2 p-4 bg-white border border-neutral-gray-300 rounded-lg shadow-lg z-50 min-w-[240px]"
+                  >
+                    <div className="grid grid-cols-5 gap-4">
+                      {colorPalette.map((color) => (
+                        <button
+                          key={color}
+                          onClick={() => {
+                            onChangeColor(category.id, color);
+                            setColorPickerOpen(false);
+                          }}
+                          className={`w-7 h-7 rounded-full hover:scale-110 transition-transform ${
+                            category.color === color ? 'ring-2 ring-offset-2 ring-neutral-gray-500' : ''
+                          }`}
+                          style={{ backgroundColor: color }}
+                          title={color}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
 
           <input
             type="text"
             defaultValue={category.name}
-            disabled={category.id === 'cat-etc'}
+            disabled={category.id === 'cat-recurring' || category.id === 'cat-etc'}
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
             className={`font-semibold text-sm bg-transparent text-neutral-text-primary focus:outline-none border-0 focus:ring-0 cursor-text ${
-              category.id === 'cat-etc' ? 'cursor-default' : ''
+              category.id === 'cat-recurring' || category.id === 'cat-etc' ? 'cursor-default' : ''
             }`}
             size={Math.max(category.name.length, 5)}
             onKeyDown={(e) => {
@@ -204,7 +215,13 @@ const CategorySectionComponent = ({
 
           {/* 할일 추가 버튼 */}
           <button
-            onClick={() => setIsAddingTodo(true)}
+            onClick={() => {
+              if (category.id === 'cat-recurring' && onAddRecurring) {
+                onAddRecurring();
+              } else {
+                setIsAddingTodo(true);
+              }
+            }}
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
             className="flex-shrink-0 p-1 hover:bg-primary-100 rounded transition-colors text-neutral-text-secondary hover:text-primary-500 cursor-pointer"
@@ -213,8 +230,8 @@ const CategorySectionComponent = ({
             <Plus size={16} />
           </button>
 
-          {/* "기타" 카테고리는 삭제 불가 */}
-          {category.id !== 'cat-etc' && (
+          {/* "반복"과 "기타" 카테고리는 삭제 불가 */}
+          {category.id !== 'cat-recurring' && category.id !== 'cat-etc' && (
             <button
               onClick={() => onDeleteCategory(category.id)}
               onMouseDown={(e) => e.stopPropagation()}
@@ -239,7 +256,10 @@ const CategorySectionComponent = ({
                 index={idx}
                 siblings={category.items}
                 onToggle={onToggleTodo}
-                onEdit={onEditTodo}
+                onEdit={category.id === 'cat-recurring' && onEditRecurring ?
+                  (id: string) => onEditRecurring(id) :
+                  onEditTodo
+                }
                 onDelete={onDeleteTodo}
                 onUpdateTime={onUpdateTodoTime}
                 onMove={onMoveTodo}
@@ -257,14 +277,17 @@ const CategorySectionComponent = ({
               </div>
             )}
 
-            <TodoInput
-              categoryId={category.id}
-              selectedDate={selectedDate}
-              onAddTodo={onAddTodo}
-              hideButton={true}
-              isAdding={isAddingTodo}
-              onIsAddingChange={setIsAddingTodo}
-            />
+            {/* 반복 카테고리는 TodoInput 사용 안함 (모달 사용) */}
+            {category.id !== 'cat-recurring' && (
+              <TodoInput
+                categoryId={category.id}
+                selectedDate={selectedDate}
+                onAddTodo={onAddTodo}
+                hideButton={true}
+                isAdding={isAddingTodo}
+                onIsAddingChange={setIsAddingTodo}
+              />
+            )}
           </div>
         </SortableContext>
       </div>

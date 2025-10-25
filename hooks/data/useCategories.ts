@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import type { Category, Todo } from '@/types/calendar';
 
 const DEFAULT_CATEGORIES: Category[] = [
+  { id: 'cat-recurring', name: '반복', color: '#FB923C' }, // 반복 카테고리 (고정)
   { id: 'cat1', name: '업무', color: '#3B82F6' },
   { id: 'cat2', name: '개인', color: '#A855F7' },
   { id: 'cat3', name: '학습', color: '#2D9F6B' },
@@ -24,9 +25,9 @@ export function useCategories(
     setCategories(prev => [...prev, newCategory]);
   }, []);
 
-  // Edit category name (cannot edit 'cat-etc')
+  // Edit category name (cannot edit 'cat-recurring' or 'cat-etc')
   const handleEditCategory = useCallback((id: string, name: string) => {
-    if (id === 'cat-etc') {
+    if (id === 'cat-recurring' || id === 'cat-etc') {
       return;
     }
     setCategories(prev => prev.map(cat =>
@@ -41,9 +42,13 @@ export function useCategories(
     ));
   }, []);
 
-  // Delete category (cannot delete 'cat-etc')
+  // Delete category (cannot delete 'cat-recurring' or 'cat-etc')
   const handleDeleteCategory = useCallback((id: string, onDeleteTodos?: () => void) => {
-    // Cannot delete the default 'etc' category
+    // Cannot delete the fixed categories
+    if (id === 'cat-recurring') {
+      alert('반복 카테고리는 삭제할 수 없습니다.');
+      return;
+    }
     if (id === 'cat-etc') {
       alert('기타 카테고리는 삭제할 수 없습니다.');
       return;
@@ -61,11 +66,24 @@ export function useCategories(
     setCategories(prev => prev.filter(cat => cat.id !== id));
   }, [todos]);
 
-  // Move category to new position
+  // Move category to new position (cannot move 'cat-recurring' or 'cat-etc')
   const handleMoveCategory = useCallback((categoryId: string, newIndex: number) => {
+    // Cannot move fixed categories
+    if (categoryId === 'cat-recurring' || categoryId === 'cat-etc') {
+      return;
+    }
+
     setCategories(prev => {
       const oldIndex = prev.findIndex(cat => cat.id === categoryId);
       if (oldIndex === -1) return prev;
+
+      // Ensure 'cat-recurring' stays at index 0 and 'cat-etc' stays at the end
+      const recurringIndex = prev.findIndex(cat => cat.id === 'cat-recurring');
+      const etcIndex = prev.findIndex(cat => cat.id === 'cat-etc');
+
+      // Prevent moving to fixed category positions
+      if (recurringIndex !== -1 && newIndex === recurringIndex) return prev;
+      if (etcIndex !== -1 && newIndex === etcIndex) return prev;
 
       const newCategories = [...prev];
       const [movedCategory] = newCategories.splice(oldIndex, 1);
