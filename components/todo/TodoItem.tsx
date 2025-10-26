@@ -89,8 +89,9 @@ const TodoItemComponent = ({
     },
   });
 
-  // 카테고리처럼 공간은 유지하되 투명하게 (밀림 효과를 위해)
-  const style = getDraggableStyle(transform, transition, isDragging, 0, false);
+  // 드래그 중 공간 제거 (단, 원래 자리로 돌아갈 때는 공간 유지)
+  const shouldRemoveSpace = isDragging && overTodoId !== todo.id;
+  const style = getDraggableStyle(transform, transition, isDragging, 0, shouldRemoveSpace);
 
   const hasTime = todo.startTime && todo.endTime;
 
@@ -118,6 +119,7 @@ const TodoItemComponent = ({
         <input
           type="text"
           defaultValue={todo.text}
+          placeholder="할일 입력..."
           size={Math.max(todo.text.length, 10)}
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
@@ -137,28 +139,21 @@ const TodoItemComponent = ({
                   onEdit(todo.id, currentText);
                 }
 
-                // currentElement를 먼저 저장
-                const currentElement = e.currentTarget as HTMLElement;
-                const currentCategory = currentElement.closest('[class*="space-y"]');
+                // 같은 레벨에 새 할일 추가 (parentId를 그대로 전달)
+                onAddTodo('', categoryId, selectedDate, parentId);
 
-                // blur하여 현재 input 정리
-                e.currentTarget.blur();
-
-                // TodoInput의 "Add todo" 버튼 찾아서 클릭
+                // 새로 생성된 input에 자동 포커스 (blur 하지 않음)
                 setTimeout(() => {
-                  const allButtons = Array.from(document.querySelectorAll('button'));
-                  const addTodoButtons = allButtons.filter(btn =>
-                    btn.textContent?.includes('Add todo')
+                  // 가장 최근에 추가된 input을 찾기 (빈 값인 input)
+                  const allInputs = Array.from(document.querySelectorAll('input[type="text"]'));
+                  const emptyInput = allInputs.find(input =>
+                    (input as HTMLInputElement).value === '' &&
+                    (input as HTMLInputElement).placeholder === '할일 입력...' &&
+                    input !== e.currentTarget
                   );
 
-                  // 현재 카테고리의 Add todo 버튼 찾기 (가장 가까운)
-                  if (addTodoButtons.length > 0 && currentCategory) {
-                    for (const btn of addTodoButtons) {
-                      if (currentCategory.contains(btn)) {
-                        (btn as HTMLButtonElement).click();
-                        break;
-                      }
-                    }
+                  if (emptyInput) {
+                    (emptyInput as HTMLInputElement).focus();
                   }
                 }, 100);
               }
@@ -189,17 +184,26 @@ const TodoItemComponent = ({
               }
             } else if (e.key === 'Backspace' && e.currentTarget.value === '') {
               e.preventDefault();
-              onDelete(todo.id);
-              if (index > 0) {
-                const prevTodo = siblings[index - 1];
-                setTimeout(() => {
-                  const inputs = document.querySelectorAll('input[type="text"]');
-                  inputs.forEach((input) => {
-                    if ((input as HTMLInputElement).defaultValue === prevTodo.text) {
-                      (input as HTMLInputElement).focus();
-                    }
-                  });
-                }, 0);
+
+              if (parentId && onMove) {
+                // 하위 항목 → 상위 레벨로 이동
+                onMove(todo.id, categoryId, undefined, index);
+              } else {
+                // 최상위 항목 → 삭제
+                onDelete(todo.id);
+
+                // 이전 항목으로 포커스 이동
+                if (index > 0) {
+                  const prevTodo = siblings[index - 1];
+                  setTimeout(() => {
+                    const inputs = document.querySelectorAll('input[type="text"]');
+                    inputs.forEach((input) => {
+                      if ((input as HTMLInputElement).defaultValue === prevTodo.text) {
+                        (input as HTMLInputElement).focus();
+                      }
+                    });
+                  }, 0);
+                }
               }
             }
           }}
@@ -225,6 +229,9 @@ const TodoItemComponent = ({
             >
               {originalCategory.name}
             </span>
+          ) : parentId ? (
+            // 하위 항목일 때는 시간 설정 불가
+            null
           ) : editingTime ? (
             <div
               className="flex items-center gap-1"

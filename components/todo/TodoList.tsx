@@ -312,7 +312,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
 
   // 드래그 종료
   const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
+    const { active, over, activatorEvent } = event;
 
     // 상태 초기화
     setActiveDragId(null);
@@ -328,6 +328,9 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
 
     const activeData = active.data.current;
     const overData = over.data.current;
+
+    // Shift 키 눌림 감지
+    const isShiftPressed = activatorEvent && 'shiftKey' in activatorEvent && activatorEvent.shiftKey;
 
     // Case 1: 카테고리 정렬
     if (activeData?.type === 'category' && overData?.type === 'category') {
@@ -390,13 +393,16 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
       const activeCategoryId = activeData.categoryId;
       const overCategoryId = overData.categoryId;
 
+      // Shift 키를 누른 채로 드롭하면 over된 todo의 하위 항목으로
+      const targetParentId = isShiftPressed ? overId : overData.parentId;
+
       // 같은 카테고리 내에서 정렬
       if (activeCategoryId === overCategoryId && onMoveTodo) {
-        onMoveTodo(activeId, overCategoryId, overData.parentId, overData.index);
+        onMoveTodo(activeId, overCategoryId, targetParentId, isShiftPressed ? 0 : overData.index);
       }
       // 다른 카테고리로 이동
       else if (activeCategoryId !== overCategoryId && onMoveTodo) {
-        onMoveTodo(activeId, overCategoryId, overData.parentId, overData.index);
+        onMoveTodo(activeId, overCategoryId, targetParentId, isShiftPressed ? 0 : overData.index);
       }
       return;
     }

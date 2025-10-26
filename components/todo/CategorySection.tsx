@@ -327,14 +327,18 @@ export const CategorySection = memo(CategorySectionComponent, (prevProps, nextPr
     prevProps.category.color === nextProps.category.color &&
     prevProps.categoryIndex === nextProps.categoryIndex &&
     prevProps.category.items.length === nextProps.category.items.length &&
-    prevProps.category.items.every((item, idx) =>
-      item.id === nextProps.category.items[idx]?.id &&
-      item.text === nextProps.category.items[idx]?.text &&
-      item.completed === nextProps.category.items[idx]?.completed &&
-      item.categoryId === nextProps.category.items[idx]?.categoryId &&
-      item.startTime === nextProps.category.items[idx]?.startTime &&
-      item.endTime === nextProps.category.items[idx]?.endTime
-    ) &&
+    prevProps.category.items.every((item, idx) => {
+      const nextItem = nextProps.category.items[idx];
+      return (
+        item.id === nextItem?.id &&
+        item.text === nextItem?.text &&
+        item.completed === nextItem?.completed &&
+        item.categoryId === nextItem?.categoryId &&
+        item.startTime === nextItem?.startTime &&
+        item.endTime === nextItem?.endTime &&
+        item.subtasks?.length === nextItem?.subtasks?.length  // subtasks 변경 감지!
+      );
+    }) &&
     prevProps.selectedDate.getTime() === nextProps.selectedDate.getTime() &&
     prevProps.isDraggingTodoFromOtherCategory === nextProps.isDraggingTodoFromOtherCategory &&
     prevProps.activeDragId === nextProps.activeDragId &&

@@ -323,6 +323,11 @@ export function BigCalendar() {
           return false;
         }
 
+        // 하위 항목은 캘린더에 표시하지 않음 (부모 항목만 표시)
+        if (todo.parentId) {
+          return false;
+        }
+
         // Apply category filter
         if (selectedCategories.length > 0 && !selectedCategories.includes(todo.categoryId)) {
           return false;
@@ -378,7 +383,26 @@ export function BigCalendar() {
       // 일반 할일
       const todo = todos.find(t => t.id === todoId);
       if (!todo) return;
-      onEditTodo?.(todoId, { completed: !todo.completed });
+
+      const newCompletedState = !todo.completed;
+
+      // 부모 할일 완료 처리
+      onEditTodo?.(todoId, { completed: newCompletedState });
+
+      // 하위 항목도 함께 완료 처리
+      const toggleSubtasks = (subtasks?: typeof todos) => {
+        if (!subtasks || subtasks.length === 0) return;
+
+        subtasks.forEach(subtask => {
+          onEditTodo?.(subtask.id, { completed: newCompletedState });
+          // 재귀적으로 하위의 하위 항목도 처리
+          if (subtask.subtasks && subtask.subtasks.length > 0) {
+            toggleSubtasks(subtask.subtasks);
+          }
+        });
+      };
+
+      toggleSubtasks(todo.subtasks);
     }
   }, [todos, onEditTodo, onToggleRecurringInstance]);
 

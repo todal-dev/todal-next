@@ -1,5 +1,5 @@
-import { memo } from 'react';
-import { Repeat, Check } from 'lucide-react';
+import { memo, useState } from 'react';
+import { Repeat, Check, ListTodo } from 'lucide-react';
 import type { Todo, Category } from '@/types/calendar';
 import { getTodoBlockStyle } from '@/utils/calendarUtils';
 
@@ -75,6 +75,11 @@ const TodoBlockComponent = ({
   // 반복 이벤트인지 확인 (ID 패턴: recurring-timestamp-ISODate)
   const isRecurring = todo.id.startsWith('recurring-') && todo.id.split('-').length > 2;
 
+  // 하위 항목 개수 계산
+  const subtaskCount = todo.subtasks?.length || 0;
+  const hasSubtasks = subtaskCount > 0;
+  const [showSubtasks, setShowSubtasks] = useState(false);
+
   return (
     <div
       draggable={false}
@@ -82,6 +87,8 @@ const TodoBlockComponent = ({
         e.preventDefault();
       }}
       onContextMenu={(e) => handleContextMenu(e, todo.id)}
+      onMouseEnter={() => hasSubtasks && setShowSubtasks(true)}
+      onMouseLeave={() => setShowSubtasks(false)}
       onMouseDown={(e) => {
         // Always stop propagation to prevent grid drag from starting
         e.stopPropagation();
@@ -182,6 +189,14 @@ const TodoBlockComponent = ({
         <div className="text-xs opacity-90">
           {displayStartTime} - {displayEndTime}
         </div>
+        {hasSubtasks && (
+          <div className="text-xs opacity-90 mt-0.5">
+            <span className="flex items-center gap-0.5 bg-white/20 px-1.5 py-0.5 rounded inline-flex">
+              <ListTodo size={10} />
+              <span className="font-medium">{subtaskCount}</span>
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Bottom resize handle */}
@@ -192,6 +207,47 @@ const TodoBlockComponent = ({
         }}
         onMouseDown={(e) => handleResizeStart(e, todo.id, 'bottom', todo.startTime!, todo.endTime!)}
       />
+
+      {/* 하위 항목 툴팁 */}
+      {showSubtasks && hasSubtasks && (
+        <div
+          className="absolute left-0 top-full mt-1 z-50 bg-white shadow-lg rounded-lg border border-neutral-gray-300 p-2 min-w-[200px] max-w-[300px]"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <div className="text-xs font-semibold text-neutral-text-secondary mb-1 px-1">
+            하위 항목 ({subtaskCount})
+          </div>
+          <div className="space-y-1">
+            {todo.subtasks?.map((subtask) => (
+              <div
+                key={subtask.id}
+                className="flex items-center gap-2 px-2 py-1 rounded hover:bg-neutral-gray-50"
+              >
+                <div
+                  className="w-3 h-3 rounded border-2 flex items-center justify-center flex-shrink-0"
+                  style={{
+                    borderColor: category?.color || '#3B82F6',
+                    backgroundColor: subtask.completed ? (category?.color || '#3B82F6') : 'transparent',
+                  }}
+                >
+                  {subtask.completed && (
+                    <Check size={8} className="text-white" strokeWidth={3} />
+                  )}
+                </div>
+                <span
+                  className={`text-xs ${
+                    subtask.completed
+                      ? 'line-through text-neutral-text-secondary'
+                      : 'text-neutral-text-primary'
+                  }`}
+                >
+                  {subtask.text}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -92,11 +92,9 @@ export function useTodos(initialTodos: Todo[] = []) {
   ) => {
     setTodos(prevTodos => {
       let movedTodo: Todo | null = null;
-      let originalTodo: Todo | null = null;
 
       // Find and remove the todo
       const newTodos = findAndRemoveTodo(prevTodos, todoId, (todo) => {
-        originalTodo = todo;
         // 반복 할일이 반복 카테고리 내에서 이동하는 경우, categoryId 유지
         const shouldKeepCategoryId = todo.recurrenceRule && newCategoryId === 'cat-recurring';
         movedTodo = {
