@@ -75,7 +75,7 @@ export function TodoInput({
             <input
               ref={inputRef}
               type="text"
-              placeholder="Add todo..."
+              placeholder="할일 입력..."
               value={value}
               onChange={(e) => setValue(e.target.value)}
               onKeyDown={(e) => {

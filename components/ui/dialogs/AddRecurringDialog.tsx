@@ -263,7 +263,7 @@ export function AddRecurringDialog({
                   <button
                     key={dayValue}
                     onClick={() => toggleDayOfWeek(dayValue)}
-                    className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors ${
+                    className={`flex-1 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                       isSelected
                         ? 'bg-primary-500 text-white'
                         : 'bg-neutral-gray-100 text-neutral-text-secondary hover:bg-neutral-gray-200'

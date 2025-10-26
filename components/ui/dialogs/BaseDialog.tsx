@@ -67,7 +67,7 @@ export function BaseDialog({
               {showCloseButton && (
                 <button
                   onClick={onClose}
-                  className="p-1 rounded hover:bg-neutral-gray-100 transition-colors"
+                  className="p-1 rounded hover:bg-neutral-gray-100 transition-colors cursor-pointer"
                 >
                   <X size={20} className="text-neutral-text-secondary" />
                 </button>
@@ -111,14 +111,14 @@ export function DialogFooter({
     <>
       <button
         onClick={onCancel}
-        className="px-4 py-2 text-sm font-medium text-neutral-text-secondary hover:bg-neutral-gray-100 rounded-md transition-colors"
+        className="px-4 py-2 text-sm font-medium text-neutral-text-secondary hover:bg-neutral-gray-100 rounded-md transition-colors cursor-pointer"
       >
         {cancelText}
       </button>
       <button
         onClick={onConfirm}
         disabled={confirmDisabled}
-        className="px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors"
+        className="px-4 py-2 text-sm font-medium text-white bg-primary-500 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors cursor-pointer"
       >
         {confirmText}
       </button>

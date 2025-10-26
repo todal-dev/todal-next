@@ -248,7 +248,7 @@ const TodoItemComponent = ({
               />
               <button
                 onClick={() => setEditingTime(false)}
-                className="text-xs px-2 py-1 bg-primary-500 text-white rounded hover:bg-primary-600"
+                className="text-xs px-2 py-1 bg-primary-500 text-white rounded hover:bg-primary-600 cursor-pointer"
               >
                 Done
               </button>
@@ -260,7 +260,7 @@ const TodoItemComponent = ({
                   onClick={() => setEditingTime(true)}
                   onMouseDown={(e) => e.stopPropagation()}
                   onTouchStart={(e) => e.stopPropagation()}
-                  className="text-xs text-neutral-text-tertiary hover:text-primary-500 flex items-center gap-1"
+                  className="text-xs text-neutral-text-tertiary hover:text-primary-500 flex items-center gap-1 cursor-pointer"
                 >
                   <Clock size={12} />
                   <span>
@@ -276,10 +276,10 @@ const TodoItemComponent = ({
                     }}
                     onMouseDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
-                    className="text-xs text-neutral-text-tertiary hover:text-primary-500 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="text-xs text-neutral-text-tertiary hover:text-primary-500 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
                   >
                     <Clock size={12} />
-                    <span>Add time</span>
+                    <span>시간 설정</span>
                   </button>
 
                   {/* Calendar drag handle - next to time button */}
@@ -318,7 +318,7 @@ const TodoItemComponent = ({
                 e.stopPropagation();
                 onEdit(todo.id, todo.text);
               }}
-              className="p-1 hover:bg-primary-100 rounded transition-colors text-neutral-text-secondary hover:text-primary-500 opacity-0 group-hover:opacity-100"
+              className="p-1 hover:bg-primary-100 rounded transition-colors text-neutral-text-secondary hover:text-primary-500 opacity-0 group-hover:opacity-100 cursor-pointer"
               title="반복 일정 편집"
             >
               <Edit2 size={14} />
@@ -332,7 +332,7 @@ const TodoItemComponent = ({
               e.stopPropagation();
               onDelete(todo.id);
             }}
-            className="p-1 hover:bg-red-100 rounded transition-colors text-neutral-text-secondary hover:text-red-600 opacity-0 group-hover:opacity-100"
+            className="p-1 hover:bg-red-100 rounded transition-colors text-neutral-text-secondary hover:text-red-600 opacity-0 group-hover:opacity-100 cursor-pointer"
             title="Delete"
           >
             <Trash2 size={14} />

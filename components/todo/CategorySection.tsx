@@ -9,6 +9,7 @@ import { TodoItem } from './TodoItem';
 import { TodoInput } from './TodoInput';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { DeleteCategoryDialog } from '@/components/ui/dialogs/DeleteCategoryDialog';
 
 interface Todo {
   id: string;
@@ -50,6 +51,7 @@ interface CategorySectionProps {
   onDeleteCategory: (id: string) => void;
   onAddRecurring?: () => void;
   onEditRecurring?: (id: string) => void;
+  onDeleteRecurring?: (id: string) => void;
   isDraggingTodoFromOtherCategory?: boolean;
   activeDragId?: string | null;
   overTodoId?: string | null;
@@ -84,6 +86,7 @@ const CategorySectionComponent = ({
   onDeleteCategory,
   onAddRecurring,
   onEditRecurring,
+  onDeleteRecurring,
   isDraggingTodoFromOtherCategory = false,
   activeDragId = null,
   overTodoId = null,
@@ -91,6 +94,7 @@ const CategorySectionComponent = ({
 }: CategorySectionProps) => {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const [isAddingTodo, setIsAddingTodo] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Make category draggable (except "반복" and "기타")
   const {
@@ -241,10 +245,10 @@ const CategorySectionComponent = ({
           {/* "반복"과 "기타" 카테고리는 삭제 불가 */}
           {category.id !== 'cat-recurring' && category.id !== 'cat-etc' && (
             <button
-              onClick={() => onDeleteCategory(category.id)}
+              onClick={() => setDeleteDialogOpen(true)}
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
-              className="flex-shrink-0 p-1 hover:bg-red-100 rounded transition-colors text-neutral-text-secondary hover:text-red-600 opacity-0 group-hover:opacity-100"
+              className="flex-shrink-0 p-1 hover:bg-red-100 rounded transition-colors text-neutral-text-secondary hover:text-red-600 opacity-0 group-hover:opacity-100 cursor-pointer"
               title="Delete category"
             >
               <Trash2 size={14} />
@@ -268,7 +272,10 @@ const CategorySectionComponent = ({
                   (id: string) => onEditRecurring(id) :
                   onEditTodo
                 }
-                onDelete={onDeleteTodo}
+                onDelete={category.id === 'cat-recurring' && onDeleteRecurring ?
+                  (id: string) => onDeleteRecurring(id) :
+                  onDeleteTodo
+                }
                 onUpdateTime={onUpdateTodoTime}
                 onMove={onMoveTodo}
                 onAddTodo={onAddTodo}
@@ -300,6 +307,14 @@ const CategorySectionComponent = ({
           </div>
         </SortableContext>
       </div>
+
+      {/* Delete Category Confirmation Dialog */}
+      <DeleteCategoryDialog
+        isOpen={deleteDialogOpen}
+        categoryName={category.name}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={() => onDeleteCategory(category.id)}
+      />
     </div>
   );
 };

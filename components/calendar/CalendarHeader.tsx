@@ -61,7 +61,7 @@ const CalendarHeaderComponent = ({
           {showCategoryFilter && (
             <div className="absolute top-full mt-1 right-0 bg-white border border-neutral-gray-300 rounded-md shadow-lg z-50 min-w-[200px]">
               <div className="py-1">
-                {categories.map((category) => (
+                {categories.filter(cat => cat.id !== 'cat-recurring').map((category) => (
                   <button
                     key={category.id}
                     onClick={() => handleCategoryToggle(category.id)}

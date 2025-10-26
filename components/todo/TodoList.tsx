@@ -19,6 +19,7 @@ import { CategorySection } from './CategorySection';
 import { Checkbox } from '@/components/ui/forms/Checkbox';
 import { AddRecurringDialog } from '@/components/ui/dialogs/AddRecurringDialog';
 import { ConvertRecurringToRegularModal } from '@/components/ui/dialogs/ConvertRecurringToRegularModal';
+import { DeleteRecurringModal } from '@/components/ui/dialogs/DeleteRecurringModal';
 import { useTodoContext } from '@/contexts/TodoContext';
 import { useCategoryContext } from '@/contexts/CategoryContext';
 import type { Todo } from '@/types/calendar';
@@ -48,6 +49,8 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
     onToggleRecurringInstance,
     onConvertRecurringToRegular,
     onConvertRegularToRecurring,
+    onSkipRecurringInstance,
+    onDeleteRecurringAfter,
   } = useTodoContext();
 
   const {
@@ -88,6 +91,8 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
     recurringId: string;
     categoryId: string;
   } | undefined>(undefined);
+  const [deleteRecurringModalOpen, setDeleteRecurringModalOpen] = useState(false);
+  const [deletingRecurringId, setDeletingRecurringId] = useState<string>('');
 
   // DnD sensors
   const sensors = useSensors(
@@ -234,6 +239,36 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
 
   const handleToggleRecurringInstance = (recurringId: string) => {
     onToggleRecurringInstance?.(recurringId, selectedDate);
+  };
+
+  // 반복 일정 삭제 핸들러
+  const handleDeleteRecurringClick = (recurringId: string) => {
+    setDeletingRecurringId(recurringId);
+    setDeleteRecurringModalOpen(true);
+  };
+
+  const handleSkipRecurringInstanceAction = () => {
+    if (deletingRecurringId) {
+      onSkipRecurringInstance?.(deletingRecurringId, selectedDate);
+      setDeleteRecurringModalOpen(false);
+      setDeletingRecurringId('');
+    }
+  };
+
+  const handleDeleteRecurringAfterAction = () => {
+    if (deletingRecurringId) {
+      onDeleteRecurringAfter?.(deletingRecurringId, selectedDate);
+      setDeleteRecurringModalOpen(false);
+      setDeletingRecurringId('');
+    }
+  };
+
+  const handleDeleteAllRecurring = () => {
+    if (deletingRecurringId) {
+      onDeleteTodo(deletingRecurringId);
+      setDeleteRecurringModalOpen(false);
+      setDeletingRecurringId('');
+    }
   };
 
   // 드래그 시작
@@ -467,6 +502,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
                 onDeleteCategory={onDeleteCategory}
                 onAddRecurring={category.id === 'cat-recurring' ? handleAddRecurring : undefined}
                 onEditRecurring={category.id === 'cat-recurring' ? handleEditRecurringClick : undefined}
+                onDeleteRecurring={category.id === 'cat-recurring' ? handleDeleteRecurringClick : undefined}
                 isDraggingTodoFromOtherCategory={
                   activeDragId !== null &&
                   draggedTodoCategoryId !== null &&
@@ -531,6 +567,18 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
           }
           setConvertingRecurring(undefined);
         }}
+      />
+
+      {/* Delete Recurring Modal */}
+      <DeleteRecurringModal
+        isOpen={deleteRecurringModalOpen}
+        onClose={() => {
+          setDeleteRecurringModalOpen(false);
+          setDeletingRecurringId('');
+        }}
+        onSkipInstance={handleSkipRecurringInstanceAction}
+        onDeleteAfter={handleDeleteRecurringAfterAction}
+        onDeleteAll={handleDeleteAllRecurring}
       />
     </DndContext>
   );
