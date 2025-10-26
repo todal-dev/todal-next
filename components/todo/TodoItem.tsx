@@ -375,6 +375,7 @@ export const TodoItem = memo(TodoItemComponent, (prevProps, nextProps) => {
     prevProps.todo.id === nextProps.todo.id &&
     prevProps.todo.text === nextProps.todo.text &&
     prevProps.todo.completed === nextProps.todo.completed &&
+    prevProps.todo.categoryId === nextProps.todo.categoryId &&
     prevProps.todo.startTime === nextProps.todo.startTime &&
     prevProps.todo.endTime === nextProps.todo.endTime &&
     prevProps.todo.subtasks?.length === nextProps.todo.subtasks?.length &&

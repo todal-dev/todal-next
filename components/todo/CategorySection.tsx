@@ -331,6 +331,7 @@ export const CategorySection = memo(CategorySectionComponent, (prevProps, nextPr
       item.id === nextProps.category.items[idx]?.id &&
       item.text === nextProps.category.items[idx]?.text &&
       item.completed === nextProps.category.items[idx]?.completed &&
+      item.categoryId === nextProps.category.items[idx]?.categoryId &&
       item.startTime === nextProps.category.items[idx]?.startTime &&
       item.endTime === nextProps.category.items[idx]?.endTime
     ) &&
