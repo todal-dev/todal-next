@@ -31,10 +31,6 @@ export function convertGoogleEventToTodo(
   event: GoogleCalendarEvent,
   categoryId: string
 ): Omit<Todo, 'id' | 'subtasks'> {
-  // 시간 추출
-  const startDateTime = event.start.dateTime || event.start.date
-  const endDateTime = event.end.dateTime || event.end.date
-
   // 날짜 파싱 (로컬 시간대 고려)
   let date: Date
   if (event.start.dateTime) {
@@ -45,6 +41,7 @@ export function convertGoogleEventToTodo(
     const [year, month, day] = event.start.date.split('-').map(Number)
     date = new Date(year, month - 1, day)
   } else {
+    const startDateTime = event.start.dateTime || event.start.date
     date = new Date(startDateTime!)
   }
 
@@ -77,24 +74,41 @@ export function convertGoogleEventToTodo(
  */
 export function convertTodoToGoogleEvent(todo: Todo) {
   const date = todo.date
-  const dateStr = date.toISOString().split('T')[0] // YYYY-MM-DD
+  
+  // 로컬 시간 기준으로 날짜 문자열 생성 (UTC가 아닌)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  const dateStr = `${year}-${month}-${day}` // YYYY-MM-DD
 
   let start, end
 
   if (todo.startTime && todo.endTime) {
     // 시간이 있는 경우
+    // startTime이 "HH:mm" 형식이면 ":00" 추가, "HH:mm:ss" 형식이면 그대로 사용
+    const startTimeFormatted = todo.startTime.length === 5 ? `${todo.startTime}:00` : todo.startTime
+    const endTimeFormatted = todo.endTime.length === 5 ? `${todo.endTime}:00` : todo.endTime
+    
     start = {
-      dateTime: `${dateStr}T${todo.startTime}:00`,
+      dateTime: `${dateStr}T${startTimeFormatted}`,
       timeZone: 'Asia/Seoul',
     }
     end = {
-      dateTime: `${dateStr}T${todo.endTime}:00`,
+      dateTime: `${dateStr}T${endTimeFormatted}`,
       timeZone: 'Asia/Seoul',
     }
   } else {
     // 종일 이벤트
+    // Google Calendar API는 exclusive end date를 사용하므로 다음 날로 설정
+    const endDate = new Date(date)
+    endDate.setDate(endDate.getDate() + 1)
+    const endYear = endDate.getFullYear()
+    const endMonth = String(endDate.getMonth() + 1).padStart(2, '0')
+    const endDay = String(endDate.getDate()).padStart(2, '0')
+    const endDateStr = `${endYear}-${endMonth}-${endDay}`
+    
     start = { date: dateStr }
-    end = { date: dateStr }
+    end = { date: endDateStr }
   }
 
   return {

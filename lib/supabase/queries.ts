@@ -96,7 +96,7 @@ export async function fetchTodos(): Promise<Todo[]> {
       text: todo.text,
       completed: todo.completed,
       date: parseLocalDate(todo.date),
-      categoryId: todo.category_id,
+      categoryId: todo.category_id || 'cat-etc', // DB에 없으면 기본 "기타" 카테고리
       startTime: todo.start_time || undefined,
       endTime: todo.end_time || undefined,
       googleEventId: todo.google_event_id || undefined,
@@ -114,7 +114,7 @@ export async function fetchTodos(): Promise<Todo[]> {
         text: st.text,
         completed: st.completed,
         date: parseLocalDate(st.date),
-        categoryId: st.category_id,
+        categoryId: st.category_id || 'cat-etc', // DB에 없으면 기본 "기타" 카테고리
         parentId: st.parent_id,
         startTime: st.start_time || undefined,
         endTime: st.end_time || undefined,
@@ -124,5 +124,385 @@ export async function fetchTodos(): Promise<Todo[]> {
   })
 
   return todos
+}
+
+/**
+ * Todo 생성
+ */
+export async function createTodo(
+  text: string,
+  categoryId: string,
+  date: Date,
+  parentId?: string,
+  startTime?: string,
+  endTime?: string
+): Promise<{ success: boolean; todo?: Todo; error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
+    const dateStr = date.toISOString().split('T')[0] // YYYY-MM-DD
+
+    // 기본 카테고리 ID는 UUID가 아니므로 null로 저장
+    const isDefaultCategory = categoryId.startsWith('cat');
+    const dbCategoryId = isDefaultCategory ? null : categoryId;
+
+    const { data, error } = await supabase
+      .from('todos')
+      .insert({
+        user_id: user.id,
+        text,
+        category_id: dbCategoryId,
+        date: dateStr,
+        parent_id: parentId || null,
+        start_time: startTime || null,
+        end_time: endTime || null,
+        completed: false,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('❌ Failed to create todo:', error)
+      return { success: false, error: error.message }
+    }
+
+    console.log('✅ Todo created:', data.id)
+
+    // DB 데이터를 Todo 타입으로 변환
+    const parseLocalDate = (dateString: string): Date => {
+      const [year, month, day] = dateString.split('-').map(Number)
+      return new Date(year, month - 1, day)
+    }
+
+    const todo: Todo = {
+      id: data.id,
+      text: data.text,
+      completed: data.completed,
+      date: parseLocalDate(data.date),
+      categoryId: data.category_id || categoryId, // DB에 없으면 원래 categoryId 사용
+      startTime: data.start_time || undefined,
+      endTime: data.end_time || undefined,
+      parentId: data.parent_id || undefined,
+      subtasks: [],
+    }
+
+    return { success: true, todo }
+  } catch (error: any) {
+    console.error('❌ Create todo error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * Todo 수정
+ */
+export async function updateTodo(
+  id: string,
+  updates: {
+    text?: string
+    completed?: boolean
+    categoryId?: string
+    date?: Date
+    startTime?: string
+    endTime?: string
+    parentId?: string
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
+    const dbUpdates: any = {}
+    
+    if (updates.text !== undefined) dbUpdates.text = updates.text
+    if (updates.completed !== undefined) dbUpdates.completed = updates.completed
+    if (updates.categoryId !== undefined) {
+      // 기본 카테고리 ID는 UUID가 아니므로 null로 저장
+      const isDefaultCategory = updates.categoryId.startsWith('cat');
+      dbUpdates.category_id = isDefaultCategory ? null : updates.categoryId;
+    }
+    if (updates.date !== undefined) dbUpdates.date = updates.date.toISOString().split('T')[0]
+    if (updates.startTime !== undefined) dbUpdates.start_time = updates.startTime || null
+    if (updates.endTime !== undefined) dbUpdates.end_time = updates.endTime || null
+    if (updates.parentId !== undefined) dbUpdates.parent_id = updates.parentId || null
+
+    const { error } = await supabase
+      .from('todos')
+      .update(dbUpdates)
+      .eq('id', id)
+      .eq('user_id', user.id)
+
+    if (error) {
+      console.error('❌ Failed to update todo:', error)
+      return { success: false, error: error.message }
+    }
+
+    console.log('✅ Todo updated:', id)
+    return { success: true }
+  } catch (error: any) {
+    console.error('❌ Update todo error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * Todo 삭제
+ */
+export async function deleteTodo(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
+    // 하위 작업도 함께 삭제
+    const { error } = await supabase
+      .from('todos')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id)
+
+    if (error) {
+      console.error('❌ Failed to delete todo:', error)
+      return { success: false, error: error.message }
+    }
+
+    console.log('✅ Todo deleted:', id)
+    return { success: true }
+  } catch (error: any) {
+    console.error('❌ Delete todo error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * 반복 일정 생성
+ */
+export async function createRecurringTodo(
+  text: string,
+  categoryId: string,
+  date: Date,
+  startTime: string,
+  endTime: string,
+  recurrenceRule: {
+    frequency: 'daily' | 'weekly' | 'monthly'
+    interval: number
+    startDate?: Date
+    endDate?: Date
+    daysOfWeek?: number[]
+  }
+): Promise<{ success: boolean; todo?: Todo; error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
+    const dateStr = date.toISOString().split('T')[0]
+
+    // 기본 카테고리 ID는 UUID가 아니므로 null로 저장
+    const isDefaultCategory = categoryId.startsWith('cat');
+    const dbCategoryId = isDefaultCategory ? null : categoryId;
+
+    const { data, error } = await supabase
+      .from('todos')
+      .insert({
+        user_id: user.id,
+        text,
+        category_id: dbCategoryId,
+        date: dateStr,
+        start_time: startTime,
+        end_time: endTime,
+        completed: false,
+        recurrence_rule: {
+          frequency: recurrenceRule.frequency,
+          interval: recurrenceRule.interval,
+          startDate: recurrenceRule.startDate?.toISOString().split('T')[0],
+          endDate: recurrenceRule.endDate?.toISOString().split('T')[0],
+          daysOfWeek: recurrenceRule.daysOfWeek,
+        },
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('❌ Failed to create recurring todo:', error)
+      return { success: false, error: error.message }
+    }
+
+    console.log('✅ Recurring todo created:', data.id)
+
+    const parseLocalDate = (dateString: string): Date => {
+      const [year, month, day] = dateString.split('-').map(Number)
+      return new Date(year, month - 1, day)
+    }
+
+    const todo: Todo = {
+      id: data.id,
+      text: data.text,
+      completed: data.completed,
+      date: parseLocalDate(data.date),
+      categoryId: data.category_id || categoryId, // DB에 없으면 원래 categoryId 사용
+      startTime: data.start_time || undefined,
+      endTime: data.end_time || undefined,
+      recurrenceRule: data.recurrence_rule ? {
+        frequency: data.recurrence_rule.frequency,
+        interval: data.recurrence_rule.interval,
+        startDate: data.recurrence_rule.startDate ? parseLocalDate(data.recurrence_rule.startDate) : undefined,
+        endDate: data.recurrence_rule.endDate ? parseLocalDate(data.recurrence_rule.endDate) : undefined,
+        daysOfWeek: data.recurrence_rule.daysOfWeek,
+      } : undefined,
+      subtasks: [],
+    }
+
+    return { success: true, todo }
+  } catch (error: any) {
+    console.error('❌ Create recurring todo error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * 카테고리 생성
+ */
+export async function createCategory(
+  name: string,
+  color: string
+): Promise<{ success: boolean; category?: Category; error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
+    // 현재 카테고리 개수를 가져와서 order 설정
+    const { data: existingCategories } = await supabase
+      .from('categories')
+      .select('order')
+      .eq('user_id', user.id)
+      .order('order', { ascending: false })
+      .limit(1)
+
+    const nextOrder = existingCategories && existingCategories.length > 0 
+      ? existingCategories[0].order + 1 
+      : 0
+
+    const { data, error } = await supabase
+      .from('categories')
+      .insert({
+        user_id: user.id,
+        name,
+        color,
+        order: nextOrder,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('❌ Failed to create category:', error)
+      return { success: false, error: error.message }
+    }
+
+    console.log('✅ Category created:', data.id)
+
+    const category: Category = {
+      id: data.id,
+      name: data.name,
+      color: data.color,
+    }
+
+    return { success: true, category }
+  } catch (error: any) {
+    console.error('❌ Create category error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * 카테고리 수정
+ */
+export async function updateCategory(
+  id: string,
+  updates: {
+    name?: string
+    color?: string
+  }
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
+    const dbUpdates: any = {}
+    
+    if (updates.name !== undefined) dbUpdates.name = updates.name
+    if (updates.color !== undefined) dbUpdates.color = updates.color
+
+    const { error } = await supabase
+      .from('categories')
+      .update(dbUpdates)
+      .eq('id', id)
+      .eq('user_id', user.id)
+
+    if (error) {
+      console.error('❌ Failed to update category:', error)
+      return { success: false, error: error.message }
+    }
+
+    console.log('✅ Category updated:', id)
+    return { success: true }
+  } catch (error: any) {
+    console.error('❌ Update category error:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * 카테고리 삭제
+ */
+export async function deleteCategory(id: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return { success: false, error: '로그인이 필요합니다.' }
+    }
+
+    const { error } = await supabase
+      .from('categories')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id)
+
+    if (error) {
+      console.error('❌ Failed to delete category:', error)
+      return { success: false, error: error.message }
+    }
+
+    console.log('✅ Category deleted:', id)
+    return { success: true }
+  } catch (error: any) {
+    console.error('❌ Delete category error:', error)
+    return { success: false, error: error.message }
+  }
 }
 

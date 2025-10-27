@@ -206,6 +206,8 @@ export async function createGoogleCalendarEvent(todo: Todo): Promise<{ success: 
     }
 
     const eventData = convertTodoToGoogleEvent(todo)
+    
+    console.log('🔍 Creating event with data:', JSON.stringify(eventData, null, 2))
 
     const response = await fetch(
       'https://www.googleapis.com/calendar/v3/calendars/primary/events',
@@ -221,6 +223,7 @@ export async function createGoogleCalendarEvent(todo: Todo): Promise<{ success: 
 
     if (!response.ok) {
       const error = await response.json()
+      console.error('❌ Google Calendar API Error:', JSON.stringify(error, null, 2))
       throw new Error(error.error?.message || '이벤트 생성 실패')
     }
 
@@ -330,24 +333,59 @@ export async function exportTodosToGoogleCalendar(): Promise<{ success: number; 
       throw new Error('로그인이 필요합니다.')
     }
 
-    // Google Event ID가 없는 Todo들만 가져오기
+    // 먼저 모든 todo를 확인 (디버깅용)
+    const { data: allTodos } = await supabase
+      .from('todos')
+      .select('*')
+      .eq('user_id', user.id)
+
+    console.log('📊 Total todos in DB:', allTodos?.length || 0)
+    if (allTodos && allTodos.length > 0) {
+      console.log('📊 All todos:', allTodos.map(t => ({
+        text: t.text,
+        google_event_id: t.google_event_id,
+        parent_id: t.parent_id,
+        completed: t.completed,
+        has_recurrence: !!t.recurrence_rule,
+        has_time: !!(t.start_time && t.end_time),
+        start_time: t.start_time,
+        end_time: t.end_time
+      })))
+    }
+
+    // Google Event ID가 없고, 시간이 있는 Todo들만 가져오기 (완료 여부 상관없음)
     const { data: todos, error: todosError } = await supabase
       .from('todos')
       .select('*')
       .eq('user_id', user.id)
       .is('google_event_id', null)
       .is('parent_id', null) // 최상위 Todo만 (하위 작업 제외)
+      .is('recurrence_rule', null) // 반복 일정 제외
+      .not('start_time', 'is', null) // 시작 시간이 있어야 함
+      .not('end_time', 'is', null) // 종료 시간이 있어야 함
 
-    if (todosError || !todos) {
+    console.log('📤 Export: Found exportable todos:', todos?.length || 0)
+    if (todos && todos.length > 0) {
+      console.log('📤 Export: First few todos:', todos.slice(0, 3).map(t => ({ 
+        text: t.text, 
+        date: t.date,
+        start_time: t.start_time,
+        end_time: t.end_time
+      })))
+    }
+
+    if (todosError) {
+      console.error('❌ Export: Query error:', todosError)
       throw new Error('Todo 조회 실패: ' + todosError?.message)
     }
 
-    if (todos.length === 0) {
-      return { success: 0, failed: 0, error: '내보낼 할일이 없습니다.' }
+    if (!todos || todos.length === 0) {
+      return { success: 0, failed: 0, error: '내보낼 할일이 없습니다. (시간이 설정된 할일만 내보낼 수 있습니다.)' }
     }
 
     let success = 0
     let failed = 0
+    const errors: string[] = []
 
     // 각 Todo를 Google Calendar에 생성
     for (const todoRow of todos) {
@@ -362,9 +400,12 @@ export async function exportTodosToGoogleCalendar(): Promise<{ success: number; 
         subtasks: [],
       }
 
+      console.log('📤 Exporting todo:', todo.text, 'Date:', todo.date)
+
       const result = await createGoogleCalendarEvent(todo)
 
       if (result.success && result.eventId) {
+        console.log('✅ Successfully created event:', result.eventId)
         // Google Event ID를 DB에 저장
         await supabase
           .from('todos')
@@ -373,7 +414,19 @@ export async function exportTodosToGoogleCalendar(): Promise<{ success: number; 
 
         success++
       } else {
+        console.error('❌ Failed to create event:', result.error)
+        errors.push(`"${todo.text}": ${result.error || '알 수 없는 오류'}`)
         failed++
+      }
+    }
+
+    console.log(`📤 Export complete: ${success} success, ${failed} failed`)
+
+    if (failed > 0) {
+      return { 
+        success, 
+        failed, 
+        error: `${success}개 성공, ${failed}개 실패. 오류: ${errors.slice(0, 3).join('; ')}` 
       }
     }
 

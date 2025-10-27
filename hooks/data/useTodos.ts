@@ -12,6 +12,12 @@ import {
   findAndRemoveTodo,
   addToParent,
 } from './useTodoRecursive';
+import {
+  createTodo as createTodoDB,
+  updateTodo as updateTodoDB,
+  deleteTodo as deleteTodoDB,
+  createRecurringTodo as createRecurringTodoDB,
+} from '@/lib/supabase/queries';
 
 export function useTodos(initialTodos: Todo[] = []) {
   const [todos, setTodos] = useState<Todo[]>(initialTodos);
@@ -24,7 +30,7 @@ export function useTodos(initialTodos: Todo[] = []) {
   }, [initialTodos]);
 
   // Add a new todo
-  const handleAddTodo = useCallback((
+  const handleAddTodo = useCallback(async (
     text: string,
     categoryId: string,
     date: Date,
@@ -32,81 +38,144 @@ export function useTodos(initialTodos: Todo[] = []) {
     startTime?: string,
     endTime?: string
   ) => {
-    const newTodo: Todo = {
-      id: Date.now().toString(),
-      text,
-      completed: false,
-      date,
-      categoryId,
-      parentId,
-      subtasks: [],
-      startTime,
-      endTime,
-    };
-
-    setTodos(prevTodos => {
-      if (parentId) {
-        // Add as subtask
-        return addSubtaskRecursively(prevTodos, parentId, newTodo);
-      } else {
-        // Add as top-level todo
-        return [...prevTodos, newTodo];
-      }
-    });
+    // DB에 저장
+    const result = await createTodoDB(text, categoryId, date, parentId, startTime, endTime);
+    
+    if (result.success && result.todo) {
+      setTodos(prevTodos => {
+        if (parentId) {
+          // Add as subtask
+          return addSubtaskRecursively(prevTodos, parentId, result.todo!);
+        } else {
+          // Add as top-level todo
+          return [...prevTodos, result.todo!];
+        }
+      });
+    } else {
+      console.error('Failed to create todo:', result.error);
+    }
   }, []);
 
   // Delete a todo (recursively deletes subtasks)
-  const handleDeleteTodo = useCallback((id: string) => {
-    setTodos(prevTodos => deleteRecursively(prevTodos, id));
+  const handleDeleteTodo = useCallback(async (id: string) => {
+    // DB에서 삭제
+    const result = await deleteTodoDB(id);
+    
+    if (result.success) {
+      setTodos(prevTodos => deleteRecursively(prevTodos, id));
+    } else {
+      console.error('Failed to delete todo:', result.error);
+    }
   }, []);
 
   // Toggle todo completion (toggles all subtasks, updates parent)
-  const handleToggleTodo = useCallback((id: string) => {
-    setTodos(prevTodos => toggleRecursively(prevTodos, id));
+  const handleToggleTodo = useCallback(async (id: string) => {
+    // 먼저 로컬 상태 업데이트해서 현재 값 확인
+    setTodos(prevTodos => {
+      const updatedTodos = toggleRecursively(prevTodos, id);
+      const todo = findTodoById(updatedTodos, id);
+      
+      if (todo) {
+        // DB 업데이트
+        updateTodoDB(id, { completed: todo.completed });
+      }
+      
+      return updatedTodos;
+    });
   }, []);
 
+  // Helper function to find todo by id
+  const findTodoById = (todos: Todo[], id: string): Todo | null => {
+    for (const todo of todos) {
+      if (todo.id === id) return todo;
+      if (todo.subtasks) {
+        const found = findTodoById(todo.subtasks, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
   // Edit todo text
-  const handleEditTodo = useCallback((id: string, text: string) => {
+  const handleEditTodo = useCallback(async (id: string, text: string) => {
+    // DB 업데이트
+    await updateTodoDB(id, { text });
+    
     setTodos(prevTodos => editRecursively(prevTodos, id, text));
   }, []);
 
   // Update todo time
-  const handleUpdateTodoTime = useCallback((id: string, startTime?: string, endTime?: string) => {
+  const handleUpdateTodoTime = useCallback(async (id: string, startTime?: string, endTime?: string) => {
+    // DB 업데이트
+    await updateTodoDB(id, { startTime, endTime });
+    
     setTodos(prevTodos => updateTimeRecursively(prevTodos, id, startTime, endTime));
   }, []);
 
   // Update todo date and time
-  const handleUpdateTodoDateTime = useCallback((
+  const handleUpdateTodoDateTime = useCallback(async (
     id: string,
     date: Date,
     startTime?: string,
     endTime?: string
   ) => {
+    // DB 업데이트
+    await updateTodoDB(id, { date, startTime, endTime });
+    
     setTodos(prevTodos => updateDateRecursively(prevTodos, id, date, startTime, endTime));
   }, []);
 
   // Update todo with partial updates
-  const handleUpdateTodo = useCallback((id: string, updates: Partial<Todo>) => {
+  const handleUpdateTodo = useCallback(async (id: string, updates: Partial<Todo>) => {
+    // DB 업데이트
+    const dbUpdates: any = {};
+    if (updates.text !== undefined) dbUpdates.text = updates.text;
+    if (updates.completed !== undefined) dbUpdates.completed = updates.completed;
+    if (updates.categoryId !== undefined) dbUpdates.categoryId = updates.categoryId;
+    if (updates.date !== undefined) dbUpdates.date = updates.date;
+    if (updates.startTime !== undefined) dbUpdates.startTime = updates.startTime;
+    if (updates.endTime !== undefined) dbUpdates.endTime = updates.endTime;
+    if (updates.parentId !== undefined) dbUpdates.parentId = updates.parentId;
+    
+    await updateTodoDB(id, dbUpdates);
+    
     setTodos(prevTodos => updateTodoRecursively(prevTodos, id, updates));
   }, []);
 
   // Move todo to different category/parent
-  const handleMoveTodo = useCallback((
+  const handleMoveTodo = useCallback(async (
     todoId: string,
     newCategoryId: string,
     newParentId?: string,
     newIndex?: number
   ) => {
+    // Find the todo first to get its recurrenceRule
+    const findTodo = (todos: Todo[], id: string): Todo | null => {
+      for (const todo of todos) {
+        if (todo.id === id) return todo;
+        if (todo.subtasks) {
+          const found = findTodo(todo.subtasks, id);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const currentTodo = findTodo(todos, todoId);
+    if (!currentTodo) return;
+
+    // Determine final categoryId
+    const shouldKeepCategoryId = currentTodo.recurrenceRule && newCategoryId === 'cat-recurring';
+    const finalCategoryId = shouldKeepCategoryId ? currentTodo.categoryId : newCategoryId;
+    
     setTodos(prevTodos => {
       let movedTodo: Todo | null = null;
-
+      
       // Find and remove the todo
       const newTodos = findAndRemoveTodo(prevTodos, todoId, (todo) => {
-        // 반복 할일이 반복 카테고리 내에서 이동하는 경우, categoryId 유지
-        const shouldKeepCategoryId = todo.recurrenceRule && newCategoryId === 'cat-recurring';
         movedTodo = {
           ...todo,
-          categoryId: shouldKeepCategoryId ? todo.categoryId : newCategoryId,
+          categoryId: finalCategoryId,
           parentId: newParentId
         };
       });
@@ -127,15 +196,24 @@ export function useTodos(initialTodos: Todo[] = []) {
         ];
       }
     });
-  }, []);
+
+    // DB 업데이트 (비동기, setTodos 이후)
+    await updateTodoDB(todoId, {
+      categoryId: finalCategoryId,
+      parentId: newParentId
+    });
+  }, [todos]);
 
   // Move todo to a different date
-  const handleMoveTodoToDate = useCallback((id: string, newDate: Date) => {
+  const handleMoveTodoToDate = useCallback(async (id: string, newDate: Date) => {
+    // DB 업데이트
+    await updateTodoDB(id, { date: newDate });
+    
     setTodos(prevTodos => updateTodoRecursively(prevTodos, id, { date: newDate }));
   }, []);
 
   // Add recurring todo
-  const handleAddRecurring = useCallback((
+  const handleAddRecurring = useCallback(async (
     text: string,
     startTime: string,
     endTime: string,
@@ -143,22 +221,25 @@ export function useTodos(initialTodos: Todo[] = []) {
     selectedDate: Date,
     categoryId: string = 'cat-etc'
   ) => {
-    const newRecurring: Todo = {
-      id: `recurring-${Date.now()}`,
+    // DB에 저장
+    const result = await createRecurringTodoDB(
       text,
-      completed: false,
-      date: selectedDate,
       categoryId,
+      selectedDate,
       startTime,
       endTime,
-      recurrenceRule,
-      subtasks: [],
-    };
-    setTodos(prevTodos => [...prevTodos, newRecurring]);
+      recurrenceRule
+    );
+    
+    if (result.success && result.todo) {
+      setTodos(prevTodos => [...prevTodos, result.todo!]);
+    } else {
+      console.error('Failed to create recurring todo:', result.error);
+    }
   }, []);
 
   // Edit recurring todo
-  const handleEditRecurring = useCallback((
+  const handleEditRecurring = useCallback(async (
     id: string,
     text: string,
     startTime: string,
@@ -166,6 +247,9 @@ export function useTodos(initialTodos: Todo[] = []) {
     recurrenceRule: RecurrenceRule,
     categoryId: string
   ) => {
+    // DB 업데이트 (recurrenceRule은 현재 updateTodoDB에서 지원하지 않으므로 로컬만 업데이트)
+    await updateTodoDB(id, { text, startTime, endTime, categoryId });
+    
     setTodos(prevTodos => prevTodos.map(todo => {
       if (todo.id === id) {
         return {
@@ -182,22 +266,34 @@ export function useTodos(initialTodos: Todo[] = []) {
   }, []);
 
   // Delete recurring todo
-  const handleDeleteRecurring = useCallback((id: string) => {
+  const handleDeleteRecurring = useCallback(async (id: string) => {
+    // DB에서 삭제
+    await deleteTodoDB(id);
+    
     setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id));
   }, []);
 
   // Add todo from calendar (with callback)
-  const handleAddTodoFromCalendar = useCallback((
+  const handleAddTodoFromCalendar = useCallback(async (
     todo: Omit<Todo, 'id'>,
     callback?: (id: string) => void
   ) => {
-    const newTodo: Todo = {
-      ...todo,
-      id: Date.now().toString(),
-      subtasks: todo.subtasks || [],
-    };
-    setTodos(prevTodos => [...prevTodos, newTodo]);
-    callback?.(newTodo.id);
+    // DB에 저장
+    const result = await createTodoDB(
+      todo.text,
+      todo.categoryId,
+      todo.date,
+      todo.parentId,
+      todo.startTime,
+      todo.endTime
+    );
+    
+    if (result.success && result.todo) {
+      setTodos(prevTodos => [...prevTodos, result.todo!]);
+      callback?.(result.todo!.id);
+    } else {
+      console.error('Failed to create todo from calendar:', result.error);
+    }
   }, []);
 
   // Toggle recurring instance (completedDates 토글)
@@ -259,41 +355,46 @@ export function useTodos(initialTodos: Todo[] = []) {
   }, []);
 
   // Convert recurring to regular (특정 날짜만 일반 할일로 분리)
-  const handleConvertRecurringToRegular = useCallback((
+  const handleConvertRecurringToRegular = useCallback(async (
     recurringId: string,
     date: Date,
     categoryId: string
   ) => {
-    setTodos(prevTodos => {
-      const recurringTodo = prevTodos.find(t => t.id === recurringId);
-      if (!recurringTodo || !recurringTodo.recurrenceRule) return prevTodos;
+    const recurringTodo = todos.find(t => t.id === recurringId);
+    if (!recurringTodo || !recurringTodo.recurrenceRule) return;
 
-      const dateString = formatDateKey(date);
+    const dateString = formatDateKey(date);
 
-      // 1. skippedDates에 해당 날짜 추가
-      const skippedDates = recurringTodo.skippedDates || [];
-      const updatedRecurring = updateTodoRecursively(prevTodos, recurringId, {
-        skippedDates: [...skippedDates, dateString]
-      });
-
-      // 2. 새로운 일반 할일 생성
-      const newRegularTodo: Todo = {
-        id: `regular-${Date.now()}`,
-        text: recurringTodo.text,
-        completed: false,
-        date: new Date(date),
-        categoryId,
-        startTime: recurringTodo.startTime,
-        endTime: recurringTodo.endTime,
-        subtasks: [],
-      };
-
-      return [...updatedRecurring, newRegularTodo];
+    // 1. skippedDates에 해당 날짜 추가 (DB 업데이트)
+    const skippedDates = recurringTodo.skippedDates || [];
+    await updateTodoDB(recurringId, {
+      // Note: skippedDates는 현재 updateTodoDB에서 지원하지 않으므로 로컬만 업데이트
     });
-  }, []);
+
+    // 2. 새로운 일반 할일 생성 (DB에 저장)
+    const result = await createTodoDB(
+      recurringTodo.text,
+      categoryId,
+      date,
+      undefined,
+      recurringTodo.startTime,
+      recurringTodo.endTime
+    );
+
+    if (result.success && result.todo) {
+      setTodos(prevTodos => {
+        // skippedDates 업데이트
+        const updatedRecurring = updateTodoRecursively(prevTodos, recurringId, {
+          skippedDates: [...skippedDates, dateString]
+        });
+        // 새 할일 추가
+        return [...updatedRecurring, result.todo!];
+      });
+    }
+  }, [todos]);
 
   // Convert regular to recurring (일반 할일을 반복으로 변환)
-  const handleConvertRegularToRecurring = useCallback((
+  const handleConvertRegularToRecurring = useCallback(async (
     todoId: string,
     text: string,
     startTime: string,
@@ -301,59 +402,59 @@ export function useTodos(initialTodos: Todo[] = []) {
     recurrenceRule: RecurrenceRule,
     categoryId: string
   ) => {
-    setTodos(prevTodos => {
-      const todo = prevTodos.find(t => t.id === todoId);
-      if (!todo || todo.recurrenceRule) return prevTodos;
+    const todo = todos.find(t => t.id === todoId);
+    if (!todo || todo.recurrenceRule) return;
 
-      // 기존 일반 할일 삭제
-      const filteredTodos = prevTodos.filter(t => t.id !== todoId);
+    // 기존 일반 할일 삭제 (DB에서)
+    await deleteTodoDB(todoId);
 
-      // 새로운 반복 할일 생성
-      const newRecurring: Todo = {
-        id: `recurring-${Date.now()}`,
-        text,
-        completed: false,
-        date: todo.date,
-        categoryId,
-        startTime,
-        endTime,
-        recurrenceRule,
-        subtasks: [],
-      };
+    // 새로운 반복 할일 생성 (DB에 저장)
+    const result = await createRecurringTodoDB(
+      text,
+      categoryId,
+      todo.date,
+      startTime,
+      endTime,
+      recurrenceRule
+    );
 
-      return [...filteredTodos, newRecurring];
-    });
-  }, []);
+    if (result.success && result.todo) {
+      setTodos(prevTodos => {
+        const filteredTodos = prevTodos.filter(t => t.id !== todoId);
+        return [...filteredTodos, result.todo!];
+      });
+    }
+  }, [todos]);
 
   // Convert recurring to regular (모든 반복 항목을 일반으로 변환)
-  const handleConvertRecurringToRegularAll = useCallback((
+  const handleConvertRecurringToRegularAll = useCallback(async (
     recurringId: string,
     date: Date,
     categoryId: string
   ) => {
-    setTodos(prevTodos => {
-      const recurringTodo = prevTodos.find(t => t.id === recurringId);
-      if (!recurringTodo || !recurringTodo.recurrenceRule) return prevTodos;
+    const recurringTodo = todos.find(t => t.id === recurringId);
+    if (!recurringTodo || !recurringTodo.recurrenceRule) return;
 
-      // 기존 반복 할일 삭제
-      const filteredTodos = prevTodos.filter(t => t.id !== recurringId);
+    // 기존 반복 할일 삭제 (DB에서)
+    await deleteTodoDB(recurringId);
 
-      // 새로운 일반 할일 생성 (반복 규칙 제거)
-      const newRegularTodo: Todo = {
-        id: `regular-${Date.now()}`,
-        text: recurringTodo.text,
-        completed: false,
-        date: new Date(date),
-        categoryId,
-        startTime: recurringTodo.startTime,
-        endTime: recurringTodo.endTime,
-        subtasks: [],
-        // recurrenceRule 제거됨
-      };
+    // 새로운 일반 할일 생성 (DB에 저장)
+    const result = await createTodoDB(
+      recurringTodo.text,
+      categoryId,
+      date,
+      undefined,
+      recurringTodo.startTime,
+      recurringTodo.endTime
+    );
 
-      return [...filteredTodos, newRegularTodo];
-    });
-  }, []);
+    if (result.success && result.todo) {
+      setTodos(prevTodos => {
+        const filteredTodos = prevTodos.filter(t => t.id !== recurringId);
+        return [...filteredTodos, result.todo!];
+      });
+    }
+  }, [todos]);
 
   return {
     todos,
