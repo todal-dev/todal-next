@@ -24,6 +24,7 @@ import { useTodoDrag } from '@/hooks/drag/useTodoDrag';
 import { useContextMenu } from '@/hooks/state/useContextMenu';
 import { useTodoContext } from '@/contexts/TodoContext';
 import { useCategoryContext } from '@/contexts/CategoryContext';
+import { useHolidays } from '@/hooks/data/useHolidays';
 
 export function BigCalendar() {
   // Get values from contexts
@@ -41,6 +42,8 @@ export function BigCalendar() {
   } = useTodoContext();
 
   const { categories, onEditRecurring } = useCategoryContext();
+  const { isHoliday } = useHolidays();
+  
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const date = new Date(selectedDate);
     const day = date.getDay();
@@ -467,6 +470,7 @@ export function BigCalendar() {
         handleContextMenu={handleContextMenu}
         handleTodoDragStart={handleTodoDragStart}
         handleResizeStart={handleResizeStart}
+        isHoliday={isHoliday}
       />
 
       {/* Context Menu */}

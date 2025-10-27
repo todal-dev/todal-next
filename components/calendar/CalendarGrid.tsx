@@ -36,6 +36,7 @@ interface CalendarGridProps {
   handleContextMenu: (e: React.MouseEvent, todoId: string) => void;
   handleTodoDragStart: (e: React.MouseEvent, todoId: string, date: Date, startTime: string, endTime: string) => void;
   handleResizeStart: (e: React.MouseEvent, todoId: string, direction: 'top' | 'bottom', startTime: string, endTime: string) => void;
+  isHoliday: (date: Date) => boolean;
 }
 
 const CalendarGridComponent = ({
@@ -70,6 +71,7 @@ const CalendarGridComponent = ({
   handleContextMenu,
   handleTodoDragStart,
   handleResizeStart,
+  isHoliday,
 }: CalendarGridProps) => {
   // Pre-calculate event layouts for all days to avoid recalculation on every render
   const allEventLayouts = useMemo(() => {
@@ -94,6 +96,10 @@ const CalendarGridComponent = ({
                 date.getDate() === new Date().getDate() &&
                 date.getMonth() === new Date().getMonth() &&
                 date.getFullYear() === new Date().getFullYear();
+              
+              const isSunday = date.getDay() === 0;
+              const isSaturday = date.getDay() === 6;
+              const holiday = isHoliday(date);
 
               return (
                 <div
@@ -102,12 +108,26 @@ const CalendarGridComponent = ({
                     isToday ? 'bg-primary-50' : ''
                   }`}
                 >
-                  <div className="text-xs text-neutral-text-secondary font-medium">
+                  <div 
+                    className={`text-xs font-medium ${
+                      isSunday || holiday 
+                        ? 'text-red-500' 
+                        : isSaturday 
+                        ? 'text-blue-500' 
+                        : 'text-neutral-text-secondary'
+                    }`}
+                  >
                     {dayNames[date.getDay()]}
                   </div>
                   <div
                     className={`text-lg font-semibold ${
-                      isToday ? 'text-primary-500' : 'text-neutral-text-primary'
+                      isToday 
+                        ? 'text-primary-500' 
+                        : isSunday || holiday
+                        ? 'text-red-500'
+                        : isSaturday
+                        ? 'text-blue-500'
+                        : 'text-neutral-text-primary'
                     }`}
                   >
                     {date.getDate()}

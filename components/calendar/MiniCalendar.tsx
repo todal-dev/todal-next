@@ -1,5 +1,6 @@
 'use client';
 
+import { useHolidays } from '@/hooks/data/useHolidays';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 
@@ -20,54 +21,15 @@ interface MiniCalendarProps {
   todosByDate?: Record<string, TodoIndicator>;
 }
 
-// 기본 한국 공휴일 (수동 데이터 - API 로드 전 사용)
-const DEFAULT_HOLIDAYS = {
-  2025: [
-    '01-01', // 신정
-    '02-10', // 설 연휴
-    '02-11', // 설
-    '02-12', // 설 연휴
-    '03-01', // 삼일절
-    '04-05', // 어린이날
-    '05-05', // 어린이날
-    '05-15', // 부처님 오신 날
-    '06-06', // 현충일
-    '08-15', // 광복절
-    '09-16', // 추석 연휴
-    '09-17', // 추석
-    '09-18', // 추석 연휴
-    '10-03', // 개천절
-    '10-09', // 한글날
-    '12-25', // 크리스마스
-  ],
-  2026: [
-    '01-01',
-    '01-29', '01-30', '01-31',
-    '03-01',
-    '04-05',
-    '05-05',
-    '05-25',
-    '06-06',
-    '08-15',
-    '09-04', '09-05', '09-06',
-    '10-03',
-    '10-09',
-    '12-25',
-  ],
-};
-
 export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [holidays, setHolidays] = useState<Set<string>>(new Set());
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [dropdownYear, setDropdownYear] = useState(new Date().getFullYear());
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    // 공휴일 데이터 로드
-    loadHolidays();
-  }, []);
+  // 공휴일 데이터 로드
+  const { isHoliday } = useHolidays();
 
   // 드롭다운 외부 클릭 시 닫기
   useEffect(() => {
@@ -80,67 +42,6 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const loadHolidays = async () => {
-    try {
-      const year = new Date().getFullYear();
-      const holidaySet = new Set<string>();
-
-      // 기본 공휴일 추가
-      if (DEFAULT_HOLIDAYS[year as keyof typeof DEFAULT_HOLIDAYS]) {
-        DEFAULT_HOLIDAYS[year as keyof typeof DEFAULT_HOLIDAYS].forEach((date) => {
-          holidaySet.add(`${year}-${date}`);
-        });
-      }
-
-      // 다음 연도도 추가
-      const nextYear = year + 1;
-      if (DEFAULT_HOLIDAYS[nextYear as keyof typeof DEFAULT_HOLIDAYS]) {
-        DEFAULT_HOLIDAYS[nextYear as keyof typeof DEFAULT_HOLIDAYS].forEach((date) => {
-          holidaySet.add(`${nextYear}-${date}`);
-        });
-      }
-
-      setHolidays(holidaySet);
-
-      // 공공 API 비활성화 (DEMO_KEY는 401 오류 발생)
-      // 실제 API 키가 필요한 경우 환경변수로 설정 후 활성화
-      // TODO: .env.local에 NEXT_PUBLIC_HOLIDAY_API_KEY 추가
-      
-      /* 공공 API 사용 시 주석 해제
-      try {
-        const apiKey = process.env.NEXT_PUBLIC_HOLIDAY_API_KEY;
-        if (apiKey && apiKey !== 'DEMO_KEY') {
-          const response = await fetch(
-            `https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo?solYear=${year}&_type=json&serviceKey=${apiKey}`
-          );
-          if (response.ok) {
-            const data = await response.json();
-            if (data.response?.body?.items?.item) {
-              const items = Array.isArray(data.response.body.items.item) 
-                ? data.response.body.items.item 
-                : [data.response.body.items.item];
-              
-              items.forEach((item: any) => {
-                if (item.locdate) {
-                  const dateStr = item.locdate.toString();
-                  const formatted = `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;
-                  holidaySet.add(formatted);
-                }
-              });
-              setHolidays(new Set(holidaySet));
-            }
-          }
-        }
-      } catch (error) {
-        // API 실패 시 기본 데이터만 사용
-        console.log('공휴일 API 로드 실패, 기본 데이터 사용');
-      }
-      */
-    } catch (error) {
-      console.error('공휴일 로드 중 오류:', error);
-    }
-  };
 
   const getDaysInMonth = (date: Date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -187,8 +88,9 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
     return todos;
   };
 
-  const isHoliday = (day: number) => {
-    return holidays.has(getDateKey(day));
+  const checkIsHoliday = (day: number) => {
+    const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    return isHoliday(date);
   };
 
   const daysInMonth = getDaysInMonth(currentDate);
@@ -233,7 +135,7 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
     if (!day) return 'text-neutral-gray-300';
     
     const dayOfWeek = getDayOfWeek(day);
-    const holiday = isHoliday(day);
+    const holiday = checkIsHoliday(day);
 
     // 일요일 또는 공휴일: 빨간색
     if (dayOfWeek === 0 || holiday) {
