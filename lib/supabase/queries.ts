@@ -145,7 +145,8 @@ export async function createTodo(
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    const dateStr = date.toISOString().split('T')[0] // YYYY-MM-DD
+    // 로컬 시간대를 유지하면서 YYYY-MM-DD 형식으로 변환
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 
     // 기본 카테고리 ID는 UUID가 아니므로 null로 저장
     const isDefaultCategory = categoryId.startsWith('cat');
@@ -233,18 +234,26 @@ export async function updateTodo(
       const isDefaultCategory = updates.categoryId.startsWith('cat');
       dbUpdates.category_id = isDefaultCategory ? null : updates.categoryId;
     }
-    if (updates.date !== undefined) dbUpdates.date = updates.date.toISOString().split('T')[0]
+    if (updates.date !== undefined) {
+      // 로컬 시간대를 유지하면서 YYYY-MM-DD 형식으로 변환
+      const date = updates.date;
+      dbUpdates.date = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
     if (updates.startTime !== undefined) dbUpdates.start_time = updates.startTime || null
     if (updates.endTime !== undefined) dbUpdates.end_time = updates.endTime || null
     if (updates.parentId !== undefined) dbUpdates.parent_id = updates.parentId || null
     if (updates.completedDates !== undefined) dbUpdates.completed_dates = updates.completedDates
     if (updates.skippedDates !== undefined) dbUpdates.skipped_dates = updates.skippedDates
     if (updates.recurrenceRule !== undefined) {
+      // 로컬 시간대를 유지하면서 YYYY-MM-DD 형식으로 변환하는 헬퍼 함수
+      const formatLocalDate = (d: Date) => 
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
       dbUpdates.recurrence_rule = {
         frequency: updates.recurrenceRule.frequency,
         interval: updates.recurrenceRule.interval,
-        startDate: updates.recurrenceRule.startDate?.toISOString().split('T')[0],
-        endDate: updates.recurrenceRule.endDate?.toISOString().split('T')[0],
+        startDate: updates.recurrenceRule.startDate ? formatLocalDate(updates.recurrenceRule.startDate) : undefined,
+        endDate: updates.recurrenceRule.endDate ? formatLocalDate(updates.recurrenceRule.endDate) : undefined,
         daysOfWeek: updates.recurrenceRule.daysOfWeek,
       }
     }
@@ -325,11 +334,16 @@ export async function createRecurringTodo(
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    const dateStr = date.toISOString().split('T')[0]
+    // 로컬 시간대를 유지하면서 YYYY-MM-DD 형식으로 변환
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 
     // 기본 카테고리 ID는 UUID가 아니므로 null로 저장
     const isDefaultCategory = categoryId.startsWith('cat');
     const dbCategoryId = isDefaultCategory ? null : categoryId;
+
+    // 로컬 시간대를 유지하면서 YYYY-MM-DD 형식으로 변환하는 헬퍼 함수
+    const formatLocalDate = (d: Date) => 
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
     const { data, error } = await supabase
       .from('todos')
@@ -344,8 +358,8 @@ export async function createRecurringTodo(
         recurrence_rule: {
           frequency: recurrenceRule.frequency,
           interval: recurrenceRule.interval,
-          startDate: recurrenceRule.startDate?.toISOString().split('T')[0],
-          endDate: recurrenceRule.endDate?.toISOString().split('T')[0],
+          startDate: recurrenceRule.startDate ? formatLocalDate(recurrenceRule.startDate) : undefined,
+          endDate: recurrenceRule.endDate ? formatLocalDate(recurrenceRule.endDate) : undefined,
           daysOfWeek: recurrenceRule.daysOfWeek,
         },
       })
