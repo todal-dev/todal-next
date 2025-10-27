@@ -8,6 +8,7 @@ import { useTodos } from '@/hooks/data/useTodos';
 import { useCategories } from '@/hooks/data/useCategories';
 import { TodoProvider } from '@/contexts/TodoContext';
 import { CategoryProvider } from '@/contexts/CategoryContext';
+import { LogoutButton } from '@/components/auth/LogoutButton';
 import type { Todo } from '@/types/calendar';
 
 interface TodoByDateCategory {
@@ -273,7 +274,7 @@ export default function Home() {
               <Image src="/logo.png" alt="Todal Logo" width={90} height={90} />
             </div>
             <div className="flex gap-2">
-              {/* Settings/profile buttons can be added later */}
+              <LogoutButton />
             </div>
           </header>
 

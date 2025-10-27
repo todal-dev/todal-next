@@ -16,7 +16,11 @@
       "Bash(find:*)",
       "Bash(cat:*)",
       "Bash(mkdir:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm dev)",
+      "Bash(curl:*)",
+      "Bash(node scripts/migrate.js:*)"
     ],
     "deny": [],
     "ask": []
