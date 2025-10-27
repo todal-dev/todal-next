@@ -29,7 +29,7 @@ export function useTodos(initialTodos: Todo[] = []) {
     }
   }, [initialTodos]);
 
-  // Add a new todo
+  // Add a new todo (Optimistic Update)
   const handleAddTodo = useCallback(async (
     text: string,
     categoryId: string,
@@ -38,33 +38,78 @@ export function useTodos(initialTodos: Todo[] = []) {
     startTime?: string,
     endTime?: string
   ) => {
-    // DB에 저장
+    // 임시 ID 생성 (타임스탬프 기반)
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // 임시 Todo 객체 생성
+    const tempTodo: Todo = {
+      id: tempId,
+      text,
+      categoryId,
+      date,
+      completed: false,
+      parentId,
+      startTime,
+      endTime,
+      subtasks: [],
+    };
+
+    // 1. 즉시 로컬 상태 업데이트 (UI 즉시 반영)
+    setTodos(prevTodos => {
+      if (parentId) {
+        return addSubtaskRecursively(prevTodos, parentId, tempTodo);
+      } else {
+        return [...prevTodos, tempTodo];
+      }
+    });
+
+    // 2. 백그라운드에서 DB에 저장
     const result = await createTodoDB(text, categoryId, date, parentId, startTime, endTime);
     
+    // 3. 서버 응답 받으면 임시 ID를 실제 ID로 교체
     if (result.success && result.todo) {
       setTodos(prevTodos => {
-        if (parentId) {
-          // Add as subtask
-          return addSubtaskRecursively(prevTodos, parentId, result.todo!);
-        } else {
-          // Add as top-level todo
-          return [...prevTodos, result.todo!];
-        }
+        const replaceTempId = (todos: Todo[]): Todo[] => {
+          return todos.map(todo => {
+            if (todo.id === tempId) {
+              return result.todo!;
+            }
+            if (todo.subtasks && todo.subtasks.length > 0) {
+              return {
+                ...todo,
+                subtasks: replaceTempId(todo.subtasks),
+              };
+            }
+            return todo;
+          });
+        };
+        return replaceTempId(prevTodos);
       });
     } else {
+      // 실패시 롤백 (임시 Todo 제거)
       console.error('Failed to create todo:', result.error);
+      setTodos(prevTodos => deleteRecursively(prevTodos, tempId));
     }
   }, []);
 
-  // Delete a todo (recursively deletes subtasks)
+  // Delete a todo (Optimistic Update)
   const handleDeleteTodo = useCallback(async (id: string) => {
-    // DB에서 삭제
+    // 삭제 전 백업 (롤백용)
+    let backupTodos: Todo[] = [];
+    
+    // 1. 즉시 로컬 상태에서 삭제 (UI 즉시 반영)
+    setTodos(prevTodos => {
+      backupTodos = prevTodos;
+      return deleteRecursively(prevTodos, id);
+    });
+
+    // 2. 백그라운드에서 DB에서 삭제
     const result = await deleteTodoDB(id);
     
-    if (result.success) {
-      setTodos(prevTodos => deleteRecursively(prevTodos, id));
-    } else {
+    // 3. 실패시 롤백
+    if (!result.success) {
       console.error('Failed to delete todo:', result.error);
+      setTodos(backupTodos);
     }
   }, []);
 
@@ -96,38 +141,59 @@ export function useTodos(initialTodos: Todo[] = []) {
     return null;
   };
 
-  // Edit todo text
+  // Edit todo text (Optimistic Update)
   const handleEditTodo = useCallback(async (id: string, text: string) => {
-    // DB 업데이트
-    await updateTodoDB(id, { text });
-    
+    // 1. 즉시 로컬 상태 업데이트 (UI 즉시 반영)
     setTodos(prevTodos => editRecursively(prevTodos, id, text));
-  }, []);
-
-  // Update todo time
-  const handleUpdateTodoTime = useCallback(async (id: string, startTime?: string, endTime?: string) => {
-    // DB 업데이트
-    await updateTodoDB(id, { startTime, endTime });
     
-    setTodos(prevTodos => updateTimeRecursively(prevTodos, id, startTime, endTime));
+    // 2. 백그라운드에서 DB 업데이트
+    const result = await updateTodoDB(id, { text });
+    
+    // 3. 실패시 로그 (롤백은 복잡하므로 생략)
+    if (!result.success) {
+      console.error('Failed to update todo text:', result.error);
+    }
   }, []);
 
-  // Update todo date and time
+  // Update todo time (Optimistic Update)
+  const handleUpdateTodoTime = useCallback(async (id: string, startTime?: string, endTime?: string) => {
+    // 1. 즉시 로컬 상태 업데이트 (UI 즉시 반영)
+    setTodos(prevTodos => updateTimeRecursively(prevTodos, id, startTime, endTime));
+    
+    // 2. 백그라운드에서 DB 업데이트
+    const result = await updateTodoDB(id, { startTime, endTime });
+    
+    // 3. 실패시 로그
+    if (!result.success) {
+      console.error('Failed to update todo time:', result.error);
+    }
+  }, []);
+
+  // Update todo date and time (Optimistic Update)
   const handleUpdateTodoDateTime = useCallback(async (
     id: string,
     date: Date,
     startTime?: string,
     endTime?: string
   ) => {
-    // DB 업데이트
-    await updateTodoDB(id, { date, startTime, endTime });
-    
+    // 1. 즉시 로컬 상태 업데이트 (UI 즉시 반영)
     setTodos(prevTodos => updateDateRecursively(prevTodos, id, date, startTime, endTime));
+    
+    // 2. 백그라운드에서 DB 업데이트
+    const result = await updateTodoDB(id, { date, startTime, endTime });
+    
+    // 3. 실패시 로그
+    if (!result.success) {
+      console.error('Failed to update todo date/time:', result.error);
+    }
   }, []);
 
-  // Update todo with partial updates
+  // Update todo with partial updates (Optimistic Update)
   const handleUpdateTodo = useCallback(async (id: string, updates: Partial<Todo>) => {
-    // DB 업데이트
+    // 1. 즉시 로컬 상태 업데이트 (UI 즉시 반영)
+    setTodos(prevTodos => updateTodoRecursively(prevTodos, id, updates));
+    
+    // 2. 백그라운드에서 DB 업데이트
     const dbUpdates: any = {};
     if (updates.text !== undefined) dbUpdates.text = updates.text;
     if (updates.completed !== undefined) dbUpdates.completed = updates.completed;
@@ -137,9 +203,12 @@ export function useTodos(initialTodos: Todo[] = []) {
     if (updates.endTime !== undefined) dbUpdates.endTime = updates.endTime;
     if (updates.parentId !== undefined) dbUpdates.parentId = updates.parentId;
     
-    await updateTodoDB(id, dbUpdates);
+    const result = await updateTodoDB(id, dbUpdates);
     
-    setTodos(prevTodos => updateTodoRecursively(prevTodos, id, updates));
+    // 3. 실패시 로그
+    if (!result.success) {
+      console.error('Failed to update todo:', result.error);
+    }
   }, []);
 
   // Move todo to different category/parent
@@ -204,15 +273,21 @@ export function useTodos(initialTodos: Todo[] = []) {
     });
   }, [todos]);
 
-  // Move todo to a different date
+  // Move todo to a different date (Optimistic Update)
   const handleMoveTodoToDate = useCallback(async (id: string, newDate: Date) => {
-    // DB 업데이트
-    await updateTodoDB(id, { date: newDate });
-    
+    // 1. 즉시 로컬 상태 업데이트 (UI 즉시 반영)
     setTodos(prevTodos => updateTodoRecursively(prevTodos, id, { date: newDate }));
+    
+    // 2. 백그라운드에서 DB 업데이트
+    const result = await updateTodoDB(id, { date: newDate });
+    
+    // 3. 실패시 로그
+    if (!result.success) {
+      console.error('Failed to move todo to date:', result.error);
+    }
   }, []);
 
-  // Add recurring todo
+  // Add recurring todo (Optimistic Update)
   const handleAddRecurring = useCallback(async (
     text: string,
     startTime: string,
@@ -221,7 +296,28 @@ export function useTodos(initialTodos: Todo[] = []) {
     selectedDate: Date,
     categoryId: string = 'cat-etc'
   ) => {
-    // DB에 저장
+    // 임시 ID 생성
+    const tempId = `temp-recurring-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // 임시 Todo 객체 생성
+    const tempTodo: Todo = {
+      id: tempId,
+      text,
+      categoryId,
+      date: selectedDate,
+      completed: false,
+      startTime,
+      endTime,
+      recurrenceRule,
+      subtasks: [],
+      completedDates: [],
+      skippedDates: [],
+    };
+
+    // 1. 즉시 로컬 상태 업데이트
+    setTodos(prevTodos => [...prevTodos, tempTodo]);
+
+    // 2. 백그라운드에서 DB에 저장
     const result = await createRecurringTodoDB(
       text,
       categoryId,
@@ -231,14 +327,19 @@ export function useTodos(initialTodos: Todo[] = []) {
       recurrenceRule
     );
     
+    // 3. 서버 응답 받으면 임시 ID를 실제 ID로 교체
     if (result.success && result.todo) {
-      setTodos(prevTodos => [...prevTodos, result.todo!]);
+      setTodos(prevTodos => prevTodos.map(todo => 
+        todo.id === tempId ? result.todo! : todo
+      ));
     } else {
+      // 실패시 롤백
       console.error('Failed to create recurring todo:', result.error);
+      setTodos(prevTodos => prevTodos.filter(todo => todo.id !== tempId));
     }
   }, []);
 
-  // Edit recurring todo
+  // Edit recurring todo (Optimistic Update)
   const handleEditRecurring = useCallback(async (
     id: string,
     text: string,
@@ -247,9 +348,7 @@ export function useTodos(initialTodos: Todo[] = []) {
     recurrenceRule: RecurrenceRule,
     categoryId: string
   ) => {
-    // DB 업데이트 (recurrenceRule은 현재 updateTodoDB에서 지원하지 않으므로 로컬만 업데이트)
-    await updateTodoDB(id, { text, startTime, endTime, categoryId });
-    
+    // 1. 즉시 로컬 상태 업데이트
     setTodos(prevTodos => prevTodos.map(todo => {
       if (todo.id === id) {
         return {
@@ -263,22 +362,59 @@ export function useTodos(initialTodos: Todo[] = []) {
       }
       return todo;
     }));
-  }, []);
-
-  // Delete recurring todo
-  const handleDeleteRecurring = useCallback(async (id: string) => {
-    // DB에서 삭제
-    await deleteTodoDB(id);
     
-    setTodos(prevTodos => prevTodos.filter(todo => todo.id !== id));
+    // 2. 백그라운드에서 DB 업데이트
+    const result = await updateTodoDB(id, { text, startTime, endTime, categoryId });
+    
+    // 3. 실패시 로그
+    if (!result.success) {
+      console.error('Failed to update recurring todo:', result.error);
+    }
   }, []);
 
-  // Add todo from calendar (with callback)
+  // Delete recurring todo (Optimistic Update)
+  const handleDeleteRecurring = useCallback(async (id: string) => {
+    // 백업 (롤백용)
+    let backupTodos: Todo[] = [];
+    
+    // 1. 즉시 로컬 상태에서 삭제
+    setTodos(prevTodos => {
+      backupTodos = prevTodos;
+      return prevTodos.filter(todo => todo.id !== id);
+    });
+    
+    // 2. 백그라운드에서 DB에서 삭제
+    const result = await deleteTodoDB(id);
+    
+    // 3. 실패시 롤백
+    if (!result.success) {
+      console.error('Failed to delete recurring todo:', result.error);
+      setTodos(backupTodos);
+    }
+  }, []);
+
+  // Add todo from calendar (Optimistic Update with callback)
   const handleAddTodoFromCalendar = useCallback(async (
     todo: Omit<Todo, 'id'>,
     callback?: (id: string) => void
   ) => {
-    // DB에 저장
+    // 임시 ID 생성
+    const tempId = `temp-calendar-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // 임시 Todo 객체 생성
+    const tempTodo: Todo = {
+      ...todo,
+      id: tempId,
+      subtasks: todo.subtasks || [],
+    };
+
+    // 1. 즉시 로컬 상태 업데이트
+    setTodos(prevTodos => [...prevTodos, tempTodo]);
+    
+    // 콜백 즉시 호출 (임시 ID로)
+    callback?.(tempId);
+
+    // 2. 백그라운드에서 DB에 저장
     const result = await createTodoDB(
       todo.text,
       todo.categoryId,
@@ -288,16 +424,23 @@ export function useTodos(initialTodos: Todo[] = []) {
       todo.endTime
     );
     
+    // 3. 서버 응답 받으면 임시 ID를 실제 ID로 교체
     if (result.success && result.todo) {
-      setTodos(prevTodos => [...prevTodos, result.todo!]);
-      callback?.(result.todo!.id);
+      setTodos(prevTodos => prevTodos.map(t => 
+        t.id === tempId ? result.todo! : t
+      ));
     } else {
+      // 실패시 롤백
       console.error('Failed to create todo from calendar:', result.error);
+      setTodos(prevTodos => prevTodos.filter(t => t.id !== tempId));
     }
   }, []);
 
-  // Toggle recurring instance (completedDates 토글)
-  const handleToggleRecurringInstance = useCallback((recurringId: string, date: Date) => {
+  // Toggle recurring instance (Optimistic Update)
+  const handleToggleRecurringInstance = useCallback(async (recurringId: string, date: Date) => {
+    let newCompletedDates: string[] = [];
+    
+    // 1. 즉시 로컬 상태 업데이트
     setTodos(prevTodos => {
       const recurringTodo = prevTodos.find(t => t.id === recurringId);
       if (!recurringTodo) return prevTodos;
@@ -307,7 +450,7 @@ export function useTodos(initialTodos: Todo[] = []) {
       const isCompleted = completedDates.includes(dateString);
 
       // 토글: 있으면 제거, 없으면 추가
-      const newCompletedDates = isCompleted
+      newCompletedDates = isCompleted
         ? completedDates.filter(d => d !== dateString)
         : [...completedDates, dateString];
 
@@ -315,10 +458,22 @@ export function useTodos(initialTodos: Todo[] = []) {
         completedDates: newCompletedDates
       });
     });
+    
+    // 2. 백그라운드에서 DB 업데이트
+    const result = await updateTodoDB(recurringId, { completedDates: newCompletedDates });
+    
+    // 3. 실패시 로그
+    if (!result.success) {
+      console.error('Failed to update completed dates:', result.error);
+    }
   }, []);
 
-  // Skip recurring instance (skippedDates에 날짜 추가)
-  const handleSkipRecurringInstance = useCallback((recurringId: string, date: Date) => {
+  // Skip recurring instance (Optimistic Update)
+  const handleSkipRecurringInstance = useCallback(async (recurringId: string, date: Date) => {
+    let newSkippedDates: string[] = [];
+    let shouldUpdate = false;
+    
+    // 1. 즉시 로컬 상태 업데이트
     setTodos(prevTodos => {
       const recurringTodo = prevTodos.find(t => t.id === recurringId);
       if (!recurringTodo) return prevTodos;
@@ -329,14 +484,30 @@ export function useTodos(initialTodos: Todo[] = []) {
       // 이미 건너뛴 날짜면 추가하지 않음
       if (skippedDates.includes(dateString)) return prevTodos;
 
+      newSkippedDates = [...skippedDates, dateString];
+      shouldUpdate = true;
+
       return updateTodoRecursively(prevTodos, recurringId, {
-        skippedDates: [...skippedDates, dateString]
+        skippedDates: newSkippedDates
       });
     });
+    
+    // 2. 백그라운드에서 DB 업데이트
+    if (shouldUpdate) {
+      const result = await updateTodoDB(recurringId, { skippedDates: newSkippedDates });
+      
+      // 3. 실패시 로그
+      if (!result.success) {
+        console.error('Failed to update skipped dates:', result.error);
+      }
+    }
   }, []);
 
-  // Delete recurring after (endDate를 오늘로 설정)
-  const handleDeleteRecurringAfter = useCallback((recurringId: string, date: Date) => {
+  // Delete recurring after (Optimistic Update)
+  const handleDeleteRecurringAfter = useCallback(async (recurringId: string, date: Date) => {
+    let newRecurrenceRule: RecurrenceRule | undefined;
+    
+    // 1. 즉시 로컬 상태 업데이트
     setTodos(prevTodos => {
       const recurringTodo = prevTodos.find(t => t.id === recurringId);
       if (!recurringTodo || !recurringTodo.recurrenceRule) return prevTodos;
@@ -345,16 +516,28 @@ export function useTodos(initialTodos: Todo[] = []) {
       const endDate = new Date(date);
       endDate.setDate(endDate.getDate() - 1); // 오늘은 제외하고 어제까지만
 
+      newRecurrenceRule = {
+        ...recurringTodo.recurrenceRule,
+        endDate
+      };
+
       return updateTodoRecursively(prevTodos, recurringId, {
-        recurrenceRule: {
-          ...recurringTodo.recurrenceRule,
-          endDate
-        }
+        recurrenceRule: newRecurrenceRule
       });
     });
+    
+    // 2. 백그라운드에서 DB 업데이트
+    if (newRecurrenceRule) {
+      const result = await updateTodoDB(recurringId, { recurrenceRule: newRecurrenceRule });
+      
+      // 3. 실패시 로그
+      if (!result.success) {
+        console.error('Failed to update recurrence rule:', result.error);
+      }
+    }
   }, []);
 
-  // Convert recurring to regular (특정 날짜만 일반 할일로 분리)
+  // Convert recurring to regular (Optimistic Update)
   const handleConvertRecurringToRegular = useCallback(async (
     recurringId: string,
     date: Date,
@@ -364,14 +547,38 @@ export function useTodos(initialTodos: Todo[] = []) {
     if (!recurringTodo || !recurringTodo.recurrenceRule) return;
 
     const dateString = formatDateKey(date);
-
-    // 1. skippedDates에 해당 날짜 추가 (DB 업데이트)
     const skippedDates = recurringTodo.skippedDates || [];
-    await updateTodoDB(recurringId, {
-      // Note: skippedDates는 현재 updateTodoDB에서 지원하지 않으므로 로컬만 업데이트
+    const newSkippedDates = [...skippedDates, dateString];
+
+    // 임시 ID 생성
+    const tempId = `temp-convert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // 임시 Todo 객체 생성
+    const tempTodo: Todo = {
+      id: tempId,
+      text: recurringTodo.text,
+      categoryId,
+      date,
+      completed: false,
+      startTime: recurringTodo.startTime,
+      endTime: recurringTodo.endTime,
+      subtasks: [],
+    };
+
+    // 1. 즉시 로컬 상태 업데이트
+    setTodos(prevTodos => {
+      // skippedDates 업데이트
+      const updatedRecurring = updateTodoRecursively(prevTodos, recurringId, {
+        skippedDates: newSkippedDates
+      });
+      // 새 할일 추가
+      return [...updatedRecurring, tempTodo];
     });
 
-    // 2. 새로운 일반 할일 생성 (DB에 저장)
+    // 2. 백그라운드에서 DB 업데이트
+    await updateTodoDB(recurringId, { skippedDates: newSkippedDates });
+
+    // 3. 새로운 일반 할일 생성 (DB에 저장)
     const result = await createTodoDB(
       recurringTodo.text,
       categoryId,
@@ -381,19 +588,19 @@ export function useTodos(initialTodos: Todo[] = []) {
       recurringTodo.endTime
     );
 
+    // 4. 서버 응답 받으면 임시 ID를 실제 ID로 교체
     if (result.success && result.todo) {
-      setTodos(prevTodos => {
-        // skippedDates 업데이트
-        const updatedRecurring = updateTodoRecursively(prevTodos, recurringId, {
-          skippedDates: [...skippedDates, dateString]
-        });
-        // 새 할일 추가
-        return [...updatedRecurring, result.todo!];
-      });
+      setTodos(prevTodos => prevTodos.map(t => 
+        t.id === tempId ? result.todo! : t
+      ));
+    } else {
+      // 실패시 롤백
+      console.error('Failed to create regular todo:', result.error);
+      setTodos(prevTodos => prevTodos.filter(t => t.id !== tempId));
     }
   }, [todos]);
 
-  // Convert regular to recurring (일반 할일을 반복으로 변환)
+  // Convert regular to recurring (Optimistic Update)
   const handleConvertRegularToRecurring = useCallback(async (
     todoId: string,
     text: string,
@@ -405,10 +612,44 @@ export function useTodos(initialTodos: Todo[] = []) {
     const todo = todos.find(t => t.id === todoId);
     if (!todo || todo.recurrenceRule) return;
 
-    // 기존 일반 할일 삭제 (DB에서)
-    await deleteTodoDB(todoId);
+    // 임시 ID 생성
+    const tempId = `temp-recurring-convert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // 임시 반복 Todo 객체 생성
+    const tempTodo: Todo = {
+      id: tempId,
+      text,
+      categoryId,
+      date: todo.date,
+      completed: false,
+      startTime,
+      endTime,
+      recurrenceRule,
+      subtasks: [],
+      completedDates: [],
+      skippedDates: [],
+    };
 
-    // 새로운 반복 할일 생성 (DB에 저장)
+    // 백업 (롤백용)
+    const backupTodos = todos;
+
+    // 1. 즉시 로컬 상태 업데이트
+    setTodos(prevTodos => {
+      const filteredTodos = prevTodos.filter(t => t.id !== todoId);
+      return [...filteredTodos, tempTodo];
+    });
+
+    // 2. 백그라운드에서 DB 작업
+    // 기존 일반 할일 삭제
+    const deleteResult = await deleteTodoDB(todoId);
+    
+    if (!deleteResult.success) {
+      console.error('Failed to delete regular todo:', deleteResult.error);
+      setTodos(backupTodos);
+      return;
+    }
+
+    // 새로운 반복 할일 생성
     const result = await createRecurringTodoDB(
       text,
       categoryId,
@@ -418,15 +659,19 @@ export function useTodos(initialTodos: Todo[] = []) {
       recurrenceRule
     );
 
+    // 3. 서버 응답 받으면 임시 ID를 실제 ID로 교체
     if (result.success && result.todo) {
-      setTodos(prevTodos => {
-        const filteredTodos = prevTodos.filter(t => t.id !== todoId);
-        return [...filteredTodos, result.todo!];
-      });
+      setTodos(prevTodos => prevTodos.map(t => 
+        t.id === tempId ? result.todo! : t
+      ));
+    } else {
+      // 실패시 롤백
+      console.error('Failed to create recurring todo:', result.error);
+      setTodos(backupTodos);
     }
   }, [todos]);
 
-  // Convert recurring to regular (모든 반복 항목을 일반으로 변환)
+  // Convert recurring to regular all (Optimistic Update)
   const handleConvertRecurringToRegularAll = useCallback(async (
     recurringId: string,
     date: Date,
@@ -435,10 +680,41 @@ export function useTodos(initialTodos: Todo[] = []) {
     const recurringTodo = todos.find(t => t.id === recurringId);
     if (!recurringTodo || !recurringTodo.recurrenceRule) return;
 
-    // 기존 반복 할일 삭제 (DB에서)
-    await deleteTodoDB(recurringId);
+    // 임시 ID 생성
+    const tempId = `temp-regular-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // 임시 Todo 객체 생성
+    const tempTodo: Todo = {
+      id: tempId,
+      text: recurringTodo.text,
+      categoryId,
+      date,
+      completed: false,
+      startTime: recurringTodo.startTime,
+      endTime: recurringTodo.endTime,
+      subtasks: [],
+    };
 
-    // 새로운 일반 할일 생성 (DB에 저장)
+    // 백업 (롤백용)
+    const backupTodos = todos;
+
+    // 1. 즉시 로컬 상태 업데이트
+    setTodos(prevTodos => {
+      const filteredTodos = prevTodos.filter(t => t.id !== recurringId);
+      return [...filteredTodos, tempTodo];
+    });
+
+    // 2. 백그라운드에서 DB 작업
+    // 기존 반복 할일 삭제
+    const deleteResult = await deleteTodoDB(recurringId);
+    
+    if (!deleteResult.success) {
+      console.error('Failed to delete recurring todo:', deleteResult.error);
+      setTodos(backupTodos);
+      return;
+    }
+
+    // 새로운 일반 할일 생성
     const result = await createTodoDB(
       recurringTodo.text,
       categoryId,
@@ -448,11 +724,15 @@ export function useTodos(initialTodos: Todo[] = []) {
       recurringTodo.endTime
     );
 
+    // 3. 서버 응답 받으면 임시 ID를 실제 ID로 교체
     if (result.success && result.todo) {
-      setTodos(prevTodos => {
-        const filteredTodos = prevTodos.filter(t => t.id !== recurringId);
-        return [...filteredTodos, result.todo!];
-      });
+      setTodos(prevTodos => prevTodos.map(t => 
+        t.id === tempId ? result.todo! : t
+      ));
+    } else {
+      // 실패시 롤백
+      console.error('Failed to create regular todo:', result.error);
+      setTodos(backupTodos);
     }
   }, [todos]);
 

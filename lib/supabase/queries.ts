@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import type { Todo, Category } from '@/types/calendar'
+import type { Todo, Category, RecurrenceRule } from '@/types/calendar'
 
 /**
  * 사용자의 모든 카테고리 가져오기
@@ -211,6 +211,9 @@ export async function updateTodo(
     startTime?: string
     endTime?: string
     parentId?: string
+    completedDates?: string[]
+    skippedDates?: string[]
+    recurrenceRule?: RecurrenceRule
   }
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -234,6 +237,17 @@ export async function updateTodo(
     if (updates.startTime !== undefined) dbUpdates.start_time = updates.startTime || null
     if (updates.endTime !== undefined) dbUpdates.end_time = updates.endTime || null
     if (updates.parentId !== undefined) dbUpdates.parent_id = updates.parentId || null
+    if (updates.completedDates !== undefined) dbUpdates.completed_dates = updates.completedDates
+    if (updates.skippedDates !== undefined) dbUpdates.skipped_dates = updates.skippedDates
+    if (updates.recurrenceRule !== undefined) {
+      dbUpdates.recurrence_rule = {
+        frequency: updates.recurrenceRule.frequency,
+        interval: updates.recurrenceRule.interval,
+        startDate: updates.recurrenceRule.startDate?.toISOString().split('T')[0],
+        endDate: updates.recurrenceRule.endDate?.toISOString().split('T')[0],
+        daysOfWeek: updates.recurrenceRule.daysOfWeek,
+      }
+    }
 
     const { error } = await supabase
       .from('todos')

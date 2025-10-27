@@ -39,43 +39,73 @@ export function useCategories(
     }
   }, [initialCategories]);
 
-  // Add a new category
+  // Add a new category (Optimistic Update)
   const handleAddCategory = useCallback(async (name: string, color: string) => {
-    // DB에 저장
+    // 임시 ID 생성
+    const tempId = `temp-cat-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // 임시 카테고리 객체 생성
+    const tempCategory: Category = {
+      id: tempId,
+      name,
+      color,
+    };
+
+    // 1. 즉시 로컬 상태 업데이트 (UI 즉시 반영)
+    setCategories(prev => [...prev, tempCategory]);
+
+    // 2. 백그라운드에서 DB에 저장
     const result = await createCategoryDB(name, color);
     
+    // 3. 서버 응답 받으면 임시 ID를 실제 ID로 교체
     if (result.success && result.category) {
-      setCategories(prev => [...prev, result.category!]);
+      setCategories(prev => prev.map(cat => 
+        cat.id === tempId ? result.category! : cat
+      ));
     } else {
+      // 실패시 롤백
       console.error('Failed to create category:', result.error);
+      setCategories(prev => prev.filter(cat => cat.id !== tempId));
     }
   }, []);
 
-  // Edit category name (cannot edit 'cat-recurring' or 'cat-etc')
+  // Edit category name (Optimistic Update)
   const handleEditCategory = useCallback(async (id: string, name: string) => {
     if (id === 'cat-recurring' || id === 'cat-etc') {
       return;
     }
     
-    // DB 업데이트
-    await updateCategoryDB(id, { name });
-    
+    // 1. 즉시 로컬 상태 업데이트 (UI 즉시 반영)
     setCategories(prev => prev.map(cat =>
       cat.id === id ? { ...cat, name } : cat
     ));
+    
+    // 2. 백그라운드에서 DB 업데이트
+    const result = await updateCategoryDB(id, { name });
+    
+    // 3. 실패시 로그
+    if (!result.success) {
+      console.error('Failed to update category:', result.error);
+    }
   }, []);
 
-  // Change category color
+  // Change category color (Optimistic Update)
   const handleChangeColor = useCallback(async (id: string, color: string) => {
-    // DB 업데이트
-    await updateCategoryDB(id, { color });
-    
+    // 1. 즉시 로컬 상태 업데이트 (UI 즉시 반영)
     setCategories(prev => prev.map(cat =>
       cat.id === id ? { ...cat, color } : cat
     ));
+    
+    // 2. 백그라운드에서 DB 업데이트
+    const result = await updateCategoryDB(id, { color });
+    
+    // 3. 실패시 로그
+    if (!result.success) {
+      console.error('Failed to update category color:', result.error);
+    }
   }, []);
 
-  // Delete category (cannot delete 'cat-recurring' or 'cat-etc')
+  // Delete category (Optimistic Update)
   const handleDeleteCategory = useCallback(async (id: string, onDeleteTodos?: () => void) => {
     // Cannot delete the fixed categories
     if (id === 'cat-recurring') {
@@ -97,13 +127,22 @@ export function useCategories(
       onDeleteTodos?.();
     }
     
-    // DB에서 삭제
+    // 백업 (롤백용)
+    let backupCategories: Category[] = [];
+    
+    // 1. 즉시 로컬 상태에서 삭제 (UI 즉시 반영)
+    setCategories(prev => {
+      backupCategories = prev;
+      return prev.filter(cat => cat.id !== id);
+    });
+    
+    // 2. 백그라운드에서 DB에서 삭제
     const result = await deleteCategoryDB(id);
     
-    if (result.success) {
-      setCategories(prev => prev.filter(cat => cat.id !== id));
-    } else {
+    // 3. 실패시 롤백
+    if (!result.success) {
       console.error('Failed to delete category:', result.error);
+      setCategories(backupCategories);
     }
   }, [todos]);
 
