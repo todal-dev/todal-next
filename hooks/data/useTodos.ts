@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { Todo, RecurrenceRule } from '@/types/calendar';
 import { formatDateKey } from '@/utils/calendarUtils';
 import {
@@ -15,6 +15,13 @@ import {
 
 export function useTodos(initialTodos: Todo[] = []) {
   const [todos, setTodos] = useState<Todo[]>(initialTodos);
+
+  // initialTodos가 변경되면 todos 상태 업데이트
+  useEffect(() => {
+    if (initialTodos.length > 0) {
+      setTodos(initialTodos);
+    }
+  }, [initialTodos]);
 
   // Add a new todo
   const handleAddTodo = useCallback((

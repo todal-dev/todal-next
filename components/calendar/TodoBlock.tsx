@@ -44,6 +44,16 @@ const TodoBlockComponent = ({
   resizingTodo,
   draggingTodo,
 }: TodoBlockProps) => {
+  // 시간에서 초를 제거하는 헬퍼 함수 (HH:mm:ss -> HH:mm)
+  const formatTimeWithoutSeconds = (time: string): string => {
+    // HH:mm:ss 또는 HH:mm 형식을 HH:mm으로 변환
+    const parts = time.split(':');
+    if (parts.length >= 2) {
+      return `${parts[0]}:${parts[1]}`;
+    }
+    return time;
+  };
+
   const isResizing = resizingTodo?.id === todo.id;
   const isDraggingThis = draggingTodo?.id === todo.id;
 
@@ -117,7 +127,7 @@ const TodoBlockComponent = ({
         zIndex: isResizing ? 20 : 10,
         opacity: isDraggingThis ? 0.3 : (isPastEvent && !todo.completed) ? 0.5 : 1,
       }}
-      title={`${todo.text} (${displayStartTime} - ${displayEndTime})`}
+      title={`${todo.text} (${formatTimeWithoutSeconds(displayStartTime)} - ${formatTimeWithoutSeconds(displayEndTime)})`}
     >
       {/* Top resize handle */}
       <div
@@ -187,7 +197,7 @@ const TodoBlockComponent = ({
           )}
         </div>
         <div className="text-xs opacity-90">
-          {displayStartTime} - {displayEndTime}
+          {formatTimeWithoutSeconds(displayStartTime)} - {formatTimeWithoutSeconds(displayEndTime)}
         </div>
         {hasSubtasks && (
           <div className="text-xs opacity-90 mt-0.5">

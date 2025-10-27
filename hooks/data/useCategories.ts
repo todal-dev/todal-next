@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { Category, Todo } from '@/types/calendar';
 
 const DEFAULT_CATEGORIES: Category[] = [
@@ -10,10 +10,29 @@ const DEFAULT_CATEGORIES: Category[] = [
 ];
 
 export function useCategories(
-  initialCategories: Category[] = DEFAULT_CATEGORIES,
+  initialCategories: Category[] | undefined = undefined,
   todos: Todo[] = []
 ) {
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
+
+  // DB에서 가져온 카테고리가 있으면 기본 카테고리와 병합
+  useEffect(() => {
+    if (initialCategories && initialCategories.length > 0) {
+      const mergedCategories = [
+        ...DEFAULT_CATEGORIES, 
+        ...initialCategories.filter(cat => 
+          !DEFAULT_CATEGORIES.some(defaultCat => defaultCat.id === cat.id)
+        )
+      ];
+      console.log('🔄 Merging categories:', {
+        default: DEFAULT_CATEGORIES.length,
+        fromDB: initialCategories.length,
+        merged: mergedCategories.length,
+        categories: mergedCategories.map(c => c.name)
+      });
+      setCategories(mergedCategories);
+    }
+  }, [initialCategories]);
 
   // Add a new category
   const handleAddCategory = useCallback((name: string, color: string) => {

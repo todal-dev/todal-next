@@ -65,6 +65,17 @@ const TodoItemComponent = ({
 }: TodoItemProps) => {
   const [editingTime, setEditingTime] = useState(false);
 
+  // 시간에서 초를 제거하는 헬퍼 함수 (HH:mm:ss -> HH:mm)
+  const formatTimeWithoutSeconds = (time?: string): string => {
+    if (!time) return '';
+    // HH:mm:ss 또는 HH:mm 형식을 HH:mm으로 변환
+    const parts = time.split(':');
+    if (parts.length >= 2) {
+      return `${parts[0]}:${parts[1]}`;
+    }
+    return time;
+  };
+
   // 반복 카테고리일 때 원래 카테고리 정보 찾기
   const isRecurringCategory = categoryId === 'cat-recurring';
   const originalCategory = isRecurringCategory
@@ -120,10 +131,9 @@ const TodoItemComponent = ({
           type="text"
           defaultValue={todo.text}
           placeholder="할일 입력..."
-          size={Math.max(todo.text.length, 10)}
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
-          className={`text-sm bg-transparent focus:outline-none border-0 focus:ring-0 cursor-text min-w-[100px] max-w-[400px] ${
+          className={`text-sm bg-transparent focus:outline-none border-0 focus:ring-0 cursor-text w-full min-w-[100px] max-w-[400px] overflow-hidden text-ellipsis ${
             todo.completed
               ? 'line-through text-neutral-text-secondary'
               : 'text-neutral-text-primary'
@@ -271,7 +281,7 @@ const TodoItemComponent = ({
                 >
                   <Clock size={12} />
                   <span>
-                    {todo.startTime}-{todo.endTime}
+                    {formatTimeWithoutSeconds(todo.startTime)}-{formatTimeWithoutSeconds(todo.endTime)}
                   </span>
                 </button>
               ) : (

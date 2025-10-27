@@ -19,6 +19,7 @@ export interface Todo {
   recurrenceRule?: RecurrenceRule;
   completedDates?: string[]; // 반복 일정에서 완료한 날짜들 (YYYY-MM-DD 형식)
   skippedDates?: string[]; // 반복 일정에서 건너뛴 날짜들 (YYYY-MM-DD 형식)
+  googleEventId?: string; // Google Calendar Event ID (양방향 동기화용)
 }
 
 export interface Category {

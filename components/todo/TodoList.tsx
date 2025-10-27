@@ -139,10 +139,13 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
       return true;
     }
 
-    // 일반 TODO는 날짜 일치 체크
-    return todo.date.getFullYear() === selectedDate.getFullYear() &&
-           todo.date.getMonth() === selectedDate.getMonth() &&
-           todo.date.getDate() === selectedDate.getDate();
+    // 일반 TODO는 날짜 일치 체크 (시간 무시)
+    const todoDate = new Date(todo.date);
+    todoDate.setHours(0, 0, 0, 0);
+    const selected = new Date(selectedDate);
+    selected.setHours(0, 0, 0, 0);
+    
+    return todoDate.getTime() === selected.getTime();
   });
 
   // 카테고리별로 그룹화 (반복 TODO는 cat-recurring에 자동 배치)

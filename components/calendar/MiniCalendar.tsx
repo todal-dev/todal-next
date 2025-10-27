@@ -103,32 +103,40 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
 
       setHolidays(holidaySet);
 
-      // 공공 API 시도 (선택사항 - 성공하면 덮어씀)
+      // 공공 API 비활성화 (DEMO_KEY는 401 오류 발생)
+      // 실제 API 키가 필요한 경우 환경변수로 설정 후 활성화
+      // TODO: .env.local에 NEXT_PUBLIC_HOLIDAY_API_KEY 추가
+      
+      /* 공공 API 사용 시 주석 해제
       try {
-        const response = await fetch(
-          `https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo?solYear=${year}&_type=json&serviceKey=DEMO_KEY`
-        );
-        if (response.ok) {
-          const data = await response.json();
-          if (data.response?.body?.items?.item) {
-            const items = Array.isArray(data.response.body.items.item) 
-              ? data.response.body.items.item 
-              : [data.response.body.items.item];
-            
-            items.forEach((item: any) => {
-              if (item.locdate) {
-                const dateStr = item.locdate.toString();
-                const formatted = `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;
-                holidaySet.add(formatted);
-              }
-            });
-            setHolidays(new Set(holidaySet));
+        const apiKey = process.env.NEXT_PUBLIC_HOLIDAY_API_KEY;
+        if (apiKey && apiKey !== 'DEMO_KEY') {
+          const response = await fetch(
+            `https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo?solYear=${year}&_type=json&serviceKey=${apiKey}`
+          );
+          if (response.ok) {
+            const data = await response.json();
+            if (data.response?.body?.items?.item) {
+              const items = Array.isArray(data.response.body.items.item) 
+                ? data.response.body.items.item 
+                : [data.response.body.items.item];
+              
+              items.forEach((item: any) => {
+                if (item.locdate) {
+                  const dateStr = item.locdate.toString();
+                  const formatted = `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;
+                  holidaySet.add(formatted);
+                }
+              });
+              setHolidays(new Set(holidaySet));
+            }
           }
         }
       } catch (error) {
         // API 실패 시 기본 데이터만 사용
         console.log('공휴일 API 로드 실패, 기본 데이터 사용');
       }
+      */
     } catch (error) {
       console.error('공휴일 로드 중 오류:', error);
     }

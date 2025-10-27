@@ -52,6 +52,7 @@ export interface Database {
           recurrence_rule: Json | null
           completed_dates: string[] | null
           skipped_dates: string[] | null
+          google_event_id: string | null
           created_at: string
           updated_at: string
         }
@@ -68,6 +69,7 @@ export interface Database {
           recurrence_rule?: Json | null
           completed_dates?: string[] | null
           skipped_dates?: string[] | null
+          google_event_id?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -84,6 +86,7 @@ export interface Database {
           recurrence_rule?: Json | null
           completed_dates?: string[] | null
           skipped_dates?: string[] | null
+          google_event_id?: string | null
           created_at?: string
           updated_at?: string
         }

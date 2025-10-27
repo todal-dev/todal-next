@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import Image from 'next/image';
 import { DesktopLayout } from '@/components/layout/DesktopLayout';
 import { MobileLayout } from '@/components/layout/MobileLayout';
@@ -9,7 +9,9 @@ import { useCategories } from '@/hooks/data/useCategories';
 import { TodoProvider } from '@/contexts/TodoContext';
 import { CategoryProvider } from '@/contexts/CategoryContext';
 import { LogoutButton } from '@/components/auth/LogoutButton';
-import type { Todo } from '@/types/calendar';
+import { GoogleCalendarSyncButton } from '@/components/calendar/GoogleCalendarSyncButton';
+import { fetchTodos, fetchCategories } from '@/lib/supabase/queries';
+import type { Todo, Category } from '@/types/calendar';
 
 interface TodoByDateCategory {
   categoryId: string;
@@ -63,6 +65,47 @@ const INITIAL_TODOS: Todo[] = [
 
 export default function Home() {
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [initialTodos, setInitialTodos] = useState<Todo[]>(INITIAL_TODOS);
+  const [initialCategories, setInitialCategories] = useState<Category[] | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+
+  // Supabase에서 데이터 로드
+  useEffect(() => {
+    async function loadData() {
+      console.log('🔄 Loading data from Supabase...');
+      try {
+        const [todosData, categoriesData] = await Promise.all([
+          fetchTodos(),
+          fetchCategories(),
+        ]);
+
+        console.log('📊 Loaded data:', {
+          todos: todosData.length,
+          categories: categoriesData.length,
+        });
+
+        if (todosData.length > 0) {
+          console.log('✅ Setting todos:', todosData);
+          setInitialTodos(todosData);
+        } else {
+          console.log('⚠️ No todos found, using sample data');
+        }
+        
+        if (categoriesData.length > 0) {
+          console.log('✅ Setting categories:', categoriesData);
+          setInitialCategories(categoriesData);
+        } else {
+          console.log('⚠️ No categories found, using default');
+        }
+      } catch (error) {
+        console.error('❌ Failed to load data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, []);
 
   // Todo state and handlers
   const {
@@ -87,7 +130,7 @@ export default function Home() {
     handleConvertRecurringToRegular,
     handleConvertRegularToRecurring,
     handleConvertRecurringToRegularAll,
-  } = useTodos(INITIAL_TODOS);
+  } = useTodos(initialTodos);
 
   // Category state and handlers
   const {
@@ -97,7 +140,7 @@ export default function Home() {
     handleChangeColor,
     handleDeleteCategory,
     handleMoveCategory,
-  } = useCategories(undefined, todos);
+  } = useCategories(initialCategories, todos);
 
   // Group todos by date (for mini calendar)
   const todosByDate = useMemo(() => {
@@ -264,6 +307,18 @@ export default function Home() {
     ]
   );
 
+  // 로딩 중 표시
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-white">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">데이터 로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <TodoProvider value={todoContextValue}>
       <CategoryProvider value={categoryContextValue}>
@@ -273,7 +328,8 @@ export default function Home() {
             <div className="flex items-center gap-2">
               <Image src="/logo.png" alt="Todal Logo" width={90} height={90} />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
+              <GoogleCalendarSyncButton />
               <LogoutButton />
             </div>
           </header>
