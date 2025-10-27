@@ -103,6 +103,11 @@ export function useTodos(initialTodos: Todo[] = []) {
       return deleteRecursively(prevTodos, id);
     });
 
+    // 임시 ID인 경우 DB 호출 건너뛰기
+    if (id.startsWith('temp-')) {
+      return;
+    }
+
     // 2. 백그라운드에서 DB에서 삭제
     const result = await deleteTodoDB(id);
     

@@ -212,7 +212,16 @@ export function BigCalendar() {
   }, [selectedRecurringTodoId, onDeleteTodo]);
 
   // Calendar drag hook (event creation)
-  const { creatingEvent, handleDragStart: handleCalendarDragStart, handleDragMove: handleCalendarDragMove, handleDragEnd: handleCalendarDragEnd } = useCalendarDrag({
+  const { 
+    creatingEvent, 
+    editingEventText,
+    setEditingEventText,
+    handleDragStart: handleCalendarDragStart, 
+    handleDragMove: handleCalendarDragMove, 
+    handleDragEnd: handleCalendarDragEnd,
+    handleConfirmCreate,
+    handleCancelCreate,
+  } = useCalendarDrag({
     hourHeight,
     onAddTodo,
     onFinishEdit: () => {
@@ -437,9 +446,13 @@ export function BigCalendar() {
         currentTime={currentTime}
         gridScrollRef={gridScrollRef}
         creatingEvent={creatingEvent}
+        editingEventText={editingEventText}
+        setEditingEventText={setEditingEventText}
         handleCalendarDragStart={handleCalendarDragStart}
         handleCalendarDragMove={handleCalendarDragMove}
         handleCalendarDragEnd={handleCalendarDragEnd}
+        handleConfirmCreate={handleConfirmCreate}
+        handleCancelCreate={handleCancelCreate}
         onUpdateTodoDateTime={onUpdateTodoDateTime}
         draggingTodo={draggingTodo}
         resizingTodo={resizingTodo}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { roundToQuarterHour } from '@/utils/calendarUtils';
 
 interface CreatingEvent {
@@ -7,6 +7,7 @@ interface CreatingEvent {
   tempId: string;
   startTime: string;
   endTime: string;
+  isEditing?: boolean;
 }
 
 interface UseCalendarDragProps {
@@ -19,6 +20,7 @@ export function useCalendarDrag({ hourHeight, onAddTodo, onFinishEdit }: UseCale
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ date: Date; hour: number; minute: number } | null>(null);
   const [creatingEvent, setCreatingEvent] = useState<CreatingEvent | null>(null);
+  const [editingEventText, setEditingEventText] = useState('');
 
   const handleDragStart = (date: Date, hour: number, e: React.MouseEvent) => {
     e.preventDefault();
@@ -109,7 +111,7 @@ export function useCalendarDrag({ hourHeight, onAddTodo, onFinishEdit }: UseCale
     });
   };
 
-  const handleDragEnd = (setPendingEditId: (id: string) => void) => {
+  const handleDragEnd = () => {
     if (!isDragging || !creatingEvent) return;
 
     let { startTime, endTime } = creatingEvent;
@@ -127,29 +129,83 @@ export function useCalendarDrag({ hourHeight, onAddTodo, onFinishEdit }: UseCale
     startTime = `${String(normalizedStartHour).padStart(2, '0')}:${String(normalizedStartMinute).padStart(2, '0')}`;
     endTime = `${String(normalizedEndHour).padStart(2, '0')}:${String(normalizedEndMinute).padStart(2, '0')}`;
 
-    // Add the new todo with empty text and automatically enter edit mode
+    // 편집 모드로 전환 (실제 생성하지 않음)
+    setCreatingEvent({
+      ...creatingEvent,
+      startTime,
+      endTime,
+      isEditing: true,
+    });
+    setEditingEventText('');
+    setIsDragging(false);
+    setDragStart(null);
+  };
+
+  const handleConfirmCreate = () => {
+    if (!creatingEvent || !creatingEvent.isEditing) return;
+
+    const text = editingEventText.trim();
+    
+    // 제목이 비어있으면 생성하지 않고 취소
+    if (!text) {
+      handleCancelCreate();
+      return;
+    }
+
+    // 실제로 todo 생성
     onAddTodo?.({
-      text: '',
+      text,
       completed: false,
       date: creatingEvent.date,
       categoryId: 'cat-etc',
-      startTime,
-      endTime,
-    }, (newId) => {
-      // Set pending edit to trigger edit mode after todo is added
-      setPendingEditId(newId);
+      startTime: creatingEvent.startTime,
+      endTime: creatingEvent.endTime,
     });
 
-    setIsDragging(false);
-    setDragStart(null);
+    // 상태 초기화
     setCreatingEvent(null);
+    setEditingEventText('');
   };
+
+  const handleCancelCreate = () => {
+    setCreatingEvent(null);
+    setEditingEventText('');
+  };
+
+  // 외부 클릭 시 편집 중인 이벤트 취소
+  useEffect(() => {
+    if (!creatingEvent?.isEditing) return;
+
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      
+      // input 클릭은 무시
+      if (target.tagName === 'INPUT' || target.closest('input')) {
+        return;
+      }
+
+      // 편집 중인 이벤트 블록 클릭은 무시
+      if (target.closest('.calendar-creating-event')) {
+        return;
+      }
+
+      // 외부 클릭 시 취소
+      handleCancelCreate();
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [creatingEvent?.isEditing]);
 
   return {
     isDragging,
     creatingEvent,
+    editingEventText,
+    setEditingEventText,
     handleDragStart,
     handleDragMove,
     handleDragEnd,
+    handleConfirmCreate,
+    handleCancelCreate,
   };
 }

@@ -14,10 +14,14 @@ interface CalendarGridProps {
   dayNames: string[];
   currentTime: Date;
   gridScrollRef: React.RefObject<HTMLDivElement | null>;
-  creatingEvent: { date: Date; startTime: string; endTime: string } | null;
+  creatingEvent: { date: Date; startTime: string; endTime: string; isEditing?: boolean } | null;
+  editingEventText: string;
+  setEditingEventText: (text: string) => void;
   handleCalendarDragStart: (date: Date, hour: number, e: React.MouseEvent) => void;
   handleCalendarDragMove: (date: Date, hour: number, e: React.MouseEvent) => void;
-  handleCalendarDragEnd: (setPendingEditId: (id: string) => void) => void;
+  handleCalendarDragEnd: () => void;
+  handleConfirmCreate: () => void;
+  handleCancelCreate: () => void;
   onUpdateTodoDateTime?: (id: string, date: Date, startTime?: string, endTime?: string) => void;
   draggingTodo: { id: string; currentDate: Date; currentStartTime: string; currentEndTime: string } | null;
   resizingTodo: { id: string; currentStartTime: string; currentEndTime: string } | null;
@@ -45,9 +49,13 @@ const CalendarGridComponent = ({
   currentTime,
   gridScrollRef,
   creatingEvent,
+  editingEventText,
+  setEditingEventText,
   handleCalendarDragStart,
   handleCalendarDragMove,
   handleCalendarDragEnd,
+  handleConfirmCreate,
+  handleCancelCreate,
   onUpdateTodoDateTime,
   draggingTodo,
   resizingTodo,
@@ -159,7 +167,7 @@ const CalendarGridComponent = ({
                     style={{ height: `${hourHeight}px` }}
                     onMouseDown={(e) => handleCalendarDragStart(date, hour, e)}
                     onMouseMove={(e) => handleCalendarDragMove(date, hour, e)}
-                    onMouseUp={() => handleCalendarDragEnd(setPendingEditId)}
+                    onMouseUp={() => handleCalendarDragEnd()}
                     onDragOver={(e) => {
                       e.preventDefault();
                       e.currentTarget.classList.add('bg-primary-100');
@@ -236,6 +244,52 @@ const CalendarGridComponent = ({
                     const defaultCategory = categories.find((c) => c.id === 'cat-etc');
                     const previewColor = defaultCategory?.color || '#9CA3AF';
 
+                    // 편집 모드일 때
+                    if (creatingEvent.isEditing) {
+                      return (
+                        <div
+                          className="calendar-creating-event absolute py-1 pr-2 pl-1.5 rounded text-xs overflow-visible"
+                          style={{
+                            ...style,
+                            zIndex: 25,
+                            backgroundColor: previewColor,
+                            borderLeft: '4px solid rgba(255, 255, 255, 0.6)',
+                            color: 'white',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                          }}
+                          onClick={(e) => e.stopPropagation()}
+                          onMouseDown={(e) => e.stopPropagation()}
+                        >
+                          <input
+                            type="text"
+                            value={editingEventText}
+                            onChange={(e) => setEditingEventText(e.target.value)}
+                            onKeyDown={(e) => {
+                              e.stopPropagation();
+                              if (e.key === 'Enter') {
+                                handleConfirmCreate();
+                              } else if (e.key === 'Escape') {
+                                handleCancelCreate();
+                              }
+                            }}
+                            onBlur={handleConfirmCreate}
+                            placeholder="제목 입력"
+                            style={{
+                              color: 'white',
+                              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                              borderColor: 'rgba(255, 255, 255, 0.5)',
+                            }}
+                            className="w-full rounded px-2 py-0.5 font-semibold outline-none border-2 placeholder-white/70"
+                            autoFocus
+                          />
+                          <div className="text-xs opacity-80 mt-1">
+                            {creatingEvent.startTime} - {creatingEvent.endTime}
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // 드래그 중일 때 (미리보기)
                     return (
                       <div
                         className="absolute py-1 pr-2 pl-1.5 rounded text-xs overflow-hidden pointer-events-none"
