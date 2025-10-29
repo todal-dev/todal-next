@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { searchTodos } from '@/lib/supabase/queries';
 import type { Todo, Category } from '@/types/calendar';

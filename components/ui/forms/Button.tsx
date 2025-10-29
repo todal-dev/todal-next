@@ -16,7 +16,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-md transition-all duration-normal active:scale-95';
+    'inline-flex items-center justify-center font-medium rounded-md transition-all duration-normal active:scale-95 touch-manipulation';
 
   const variantStyles = {
     primary:
@@ -28,9 +28,9 @@ export function Button({
   };
 
   const sizeStyles = {
-    sm: 'px-3 py-2 text-caption h-8',
-    md: 'px-5 py-3 text-body h-10',
-    lg: 'px-6 py-4 text-body h-12',
+    sm: 'px-3 py-2 text-caption min-h-[36px] sm:h-8',
+    md: 'px-5 py-3 text-body min-h-[44px] sm:h-10',
+    lg: 'px-6 py-4 text-body min-h-[48px] sm:h-12',
   };
 
   return (
