@@ -1,17 +1,35 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { signIn } from '@/lib/auth/actions'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
 
+const ERROR_MESSAGES: Record<string, string> = {
+  no_code: '인증 코드가 제공되지 않았습니다. 다시 시도해주세요.',
+  auth_failed: '인증에 실패했습니다. 다시 시도해주세요.',
+  no_session: '세션을 생성할 수 없습니다. 다시 시도해주세요.',
+  unexpected: '예기치 않은 오류가 발생했습니다. 잠시 후 다시 시도해주세요.',
+  invalid_credentials: '이메일 또는 비밀번호가 올바르지 않습니다.',
+}
+
 export default function LoginPage() {
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showEmailLogin, setShowEmailLogin] = useState(false)
+
+  // URL 쿼리 파라미터에서 에러 확인
+  useEffect(() => {
+    const errorParam = searchParams.get('error')
+    if (errorParam) {
+      setError(ERROR_MESSAGES[errorParam] || '로그인 중 오류가 발생했습니다.')
+    }
+  }, [searchParams])
 
   const handleGoogleLogin = async () => {
     const supabase = createClient()
@@ -37,15 +55,36 @@ export default function LoginPage() {
     setError('')
     setLoading(true)
 
+    // 입력 검증
+    if (!email || !email.includes('@')) {
+      setError('올바른 이메일 주소를 입력해주세요.')
+      setLoading(false)
+      return
+    }
+
+    if (!password || password.length < 6) {
+      setError('비밀번호는 최소 6자 이상이어야 합니다.')
+      setLoading(false)
+      return
+    }
+
     try {
       const result = await signIn(email, password)
       if (result?.error) {
-        setError(result.error)
+        // Supabase 에러 메시지를 사용자 친화적으로 변환
+        if (result.error.includes('Invalid login credentials')) {
+          setError(ERROR_MESSAGES.invalid_credentials)
+        } else {
+          setError(result.error)
+        }
         setLoading(false)
       }
       // 성공하면 자동으로 리다이렉트됨
     } catch (err) {
-      setError('로그인 중 오류가 발생했습니다.')
+      const message = err instanceof Error 
+        ? err.message 
+        : '로그인 중 오류가 발생했습니다.'
+      setError(message)
       setLoading(false)
     }
   }

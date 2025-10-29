@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import type { Todo, Category, RecurrenceRule } from '@/types/calendar'
+import { parseLocalDate, formatLocalDate } from '@/lib/date-utils'
+import { logger } from '@/lib/logger'
 
 /**
  * 사용자의 모든 카테고리 가져오기
@@ -11,11 +13,11 @@ export async function fetchCategories(): Promise<Category[]> {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    console.log('❌ fetchCategories: No user logged in')
+    logger.warn('No user logged in for fetchCategories')
     return []
   }
 
-  console.log('✅ fetchCategories: User ID:', user.id)
+  logger.debug('Fetching categories', { userId: user.id })
 
   const { data, error } = await supabase
     .from('categories')
@@ -24,11 +26,11 @@ export async function fetchCategories(): Promise<Category[]> {
     .order('order', { ascending: true })
 
   if (error) {
-    console.error('❌ Failed to fetch categories:', error)
+    logger.error('Failed to fetch categories', error)
     return []
   }
 
-  console.log(`✅ fetchCategories: Found ${data?.length || 0} categories:`, data?.map(c => c.name))
+  logger.debug('Categories fetched successfully', { count: data?.length || 0 })
 
   return (data || []).map(cat => ({
     id: cat.id,
@@ -45,11 +47,11 @@ export async function fetchTodos(): Promise<Todo[]> {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    console.log('❌ fetchTodos: No user logged in')
+    logger.warn('No user logged in for fetchTodos')
     return []
   }
 
-  console.log('✅ fetchTodos: User ID:', user.id)
+  logger.debug('Fetching todos', { userId: user.id })
 
   const { data, error } = await supabase
     .from('todos')
@@ -59,11 +61,11 @@ export async function fetchTodos(): Promise<Todo[]> {
     .order('date', { ascending: true })
 
   if (error) {
-    console.error('❌ Failed to fetch todos:', error)
+    logger.error('Failed to fetch todos', error)
     return []
   }
 
-  console.log(`✅ fetchTodos: Found ${data?.length || 0} todos`)
+  logger.debug('Todos fetched successfully', { count: data?.length || 0 })
 
   // 하위 작업도 가져오기
   const { data: subtasksData } = await supabase
@@ -72,20 +74,34 @@ export async function fetchTodos(): Promise<Todo[]> {
     .eq('user_id', user.id)
     .not('parent_id', 'is', null)
 
-  const subtasksMap = new Map<string, any[]>()
+  interface DbTodo {
+    id: string;
+    text: string;
+    completed: boolean;
+    date: string;
+    category_id: string | null;
+    parent_id: string | null;
+    start_time: string | null;
+    end_time: string | null;
+    google_event_id: string | null;
+    recurrence_rule: {
+      frequency: 'daily' | 'weekly' | 'monthly';
+      interval: number;
+      startDate?: string;
+      endDate?: string;
+      daysOfWeek?: number[];
+    } | null;
+    completed_dates: string[] | null;
+    skipped_dates: string[] | null;
+  }
+
+  const subtasksMap = new Map<string, DbTodo[]>()
   subtasksData?.forEach(subtask => {
     if (!subtasksMap.has(subtask.parent_id)) {
       subtasksMap.set(subtask.parent_id, [])
     }
     subtasksMap.get(subtask.parent_id)!.push(subtask)
   })
-
-  // 날짜 문자열을 로컬 시간대의 Date 객체로 변환하는 헬퍼 함수
-  const parseLocalDate = (dateString: string): Date => {
-    // YYYY-MM-DD 형식을 파싱하여 로컬 시간대로 변환
-    const [year, month, day] = dateString.split('-').map(Number)
-    return new Date(year, month - 1, day)
-  }
 
   // DB 데이터를 Todo 타입으로 변환
   const todos = (data || []).map(todo => {
@@ -115,7 +131,7 @@ export async function fetchTodos(): Promise<Todo[]> {
         completed: st.completed,
         date: parseLocalDate(st.date),
         categoryId: st.category_id || 'cat-etc', // DB에 없으면 기본 "기타" 카테고리
-        parentId: st.parent_id,
+        parentId: st.parent_id || undefined,
         startTime: st.start_time || undefined,
         endTime: st.end_time || undefined,
         subtasks: [],
@@ -146,7 +162,7 @@ export async function createTodo(
     }
 
     // 로컬 시간대를 유지하면서 YYYY-MM-DD 형식으로 변환
-    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    const dateStr = formatLocalDate(date)
 
     // 기본 카테고리 ID는 UUID가 아니므로 null로 저장
     const isDefaultCategory = categoryId.startsWith('cat');
@@ -168,18 +184,13 @@ export async function createTodo(
       .single()
 
     if (error) {
-      console.error('❌ Failed to create todo:', error)
+      logger.error('Failed to create todo', error)
       return { success: false, error: error.message }
     }
 
-    console.log('✅ Todo created:', data.id)
+    logger.info('Todo created successfully', { todoId: data.id })
 
     // DB 데이터를 Todo 타입으로 변환
-    const parseLocalDate = (dateString: string): Date => {
-      const [year, month, day] = dateString.split('-').map(Number)
-      return new Date(year, month - 1, day)
-    }
-
     const todo: Todo = {
       id: data.id,
       text: data.text,
@@ -193,15 +204,37 @@ export async function createTodo(
     }
 
     return { success: true, todo }
-  } catch (error: any) {
-    console.error('❌ Create todo error:', error)
-    return { success: false, error: error.message }
+  } catch (error) {
+    logger.error('Create todo error', error)
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.' 
+    }
   }
 }
 
 /**
  * Todo 수정
  */
+interface DbUpdatePayload {
+  text?: string;
+  completed?: boolean;
+  category_id?: string | null;
+  date?: string;
+  start_time?: string | null;
+  end_time?: string | null;
+  parent_id?: string | null;
+  completed_dates?: string[];
+  skipped_dates?: string[];
+  recurrence_rule?: {
+    frequency: 'daily' | 'weekly' | 'monthly';
+    interval: number;
+    startDate?: string;
+    endDate?: string;
+    daysOfWeek?: number[];
+  };
+}
+
 export async function updateTodo(
   id: string,
   updates: {
@@ -225,7 +258,7 @@ export async function updateTodo(
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    const dbUpdates: any = {}
+    const dbUpdates: DbUpdatePayload = {}
     
     if (updates.text !== undefined) dbUpdates.text = updates.text
     if (updates.completed !== undefined) dbUpdates.completed = updates.completed
@@ -236,8 +269,7 @@ export async function updateTodo(
     }
     if (updates.date !== undefined) {
       // 로컬 시간대를 유지하면서 YYYY-MM-DD 형식으로 변환
-      const date = updates.date;
-      dbUpdates.date = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      dbUpdates.date = formatLocalDate(updates.date);
     }
     if (updates.startTime !== undefined) dbUpdates.start_time = updates.startTime || null
     if (updates.endTime !== undefined) dbUpdates.end_time = updates.endTime || null
@@ -245,10 +277,6 @@ export async function updateTodo(
     if (updates.completedDates !== undefined) dbUpdates.completed_dates = updates.completedDates
     if (updates.skippedDates !== undefined) dbUpdates.skipped_dates = updates.skippedDates
     if (updates.recurrenceRule !== undefined) {
-      // 로컬 시간대를 유지하면서 YYYY-MM-DD 형식으로 변환하는 헬퍼 함수
-      const formatLocalDate = (d: Date) => 
-        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-
       dbUpdates.recurrence_rule = {
         frequency: updates.recurrenceRule.frequency,
         interval: updates.recurrenceRule.interval,
@@ -265,15 +293,18 @@ export async function updateTodo(
       .eq('user_id', user.id)
 
     if (error) {
-      console.error('❌ Failed to update todo:', error)
+      logger.error('Failed to update todo', error)
       return { success: false, error: error.message }
     }
 
-    console.log('✅ Todo updated:', id)
+    logger.debug('Todo updated successfully', { todoId: id })
     return { success: true }
-  } catch (error: any) {
-    console.error('❌ Update todo error:', error)
-    return { success: false, error: error.message }
+  } catch (error) {
+    logger.error('Update todo error', error)
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.' 
+    }
   }
 }
 
@@ -297,15 +328,18 @@ export async function deleteTodo(id: string): Promise<{ success: boolean; error?
       .eq('user_id', user.id)
 
     if (error) {
-      console.error('❌ Failed to delete todo:', error)
+      logger.error('Failed to delete todo', error)
       return { success: false, error: error.message }
     }
 
-    console.log('✅ Todo deleted:', id)
+    logger.debug('Todo deleted successfully', { todoId: id })
     return { success: true }
-  } catch (error: any) {
-    console.error('❌ Delete todo error:', error)
-    return { success: false, error: error.message }
+  } catch (error) {
+    logger.error('Delete todo error', error)
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.' 
+    }
   }
 }
 
@@ -335,15 +369,11 @@ export async function createRecurringTodo(
     }
 
     // 로컬 시간대를 유지하면서 YYYY-MM-DD 형식으로 변환
-    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+    const dateStr = formatLocalDate(date)
 
     // 기본 카테고리 ID는 UUID가 아니므로 null로 저장
     const isDefaultCategory = categoryId.startsWith('cat');
     const dbCategoryId = isDefaultCategory ? null : categoryId;
-
-    // 로컬 시간대를 유지하면서 YYYY-MM-DD 형식으로 변환하는 헬퍼 함수
-    const formatLocalDate = (d: Date) => 
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
     const { data, error } = await supabase
       .from('todos')
@@ -367,16 +397,11 @@ export async function createRecurringTodo(
       .single()
 
     if (error) {
-      console.error('❌ Failed to create recurring todo:', error)
+      logger.error('Failed to create recurring todo', error)
       return { success: false, error: error.message }
     }
 
-    console.log('✅ Recurring todo created:', data.id)
-
-    const parseLocalDate = (dateString: string): Date => {
-      const [year, month, day] = dateString.split('-').map(Number)
-      return new Date(year, month - 1, day)
-    }
+    logger.info('Recurring todo created successfully', { todoId: data.id })
 
     const todo: Todo = {
       id: data.id,
@@ -397,9 +422,12 @@ export async function createRecurringTodo(
     }
 
     return { success: true, todo }
-  } catch (error: any) {
-    console.error('❌ Create recurring todo error:', error)
-    return { success: false, error: error.message }
+  } catch (error) {
+    logger.error('Create recurring todo error', error)
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.' 
+    }
   }
 }
 
@@ -442,11 +470,11 @@ export async function createCategory(
       .single()
 
     if (error) {
-      console.error('❌ Failed to create category:', error)
+      logger.error('Failed to create category', error)
       return { success: false, error: error.message }
     }
 
-    console.log('✅ Category created:', data.id)
+    logger.info('Category created successfully', { categoryId: data.id })
 
     const category: Category = {
       id: data.id,
@@ -455,15 +483,23 @@ export async function createCategory(
     }
 
     return { success: true, category }
-  } catch (error: any) {
-    console.error('❌ Create category error:', error)
-    return { success: false, error: error.message }
+  } catch (error) {
+    logger.error('Create category error', error)
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.' 
+    }
   }
 }
 
 /**
  * 카테고리 수정
  */
+interface DbCategoryUpdatePayload {
+  name?: string;
+  color?: string;
+}
+
 export async function updateCategory(
   id: string,
   updates: {
@@ -479,7 +515,7 @@ export async function updateCategory(
       return { success: false, error: '로그인이 필요합니다.' }
     }
 
-    const dbUpdates: any = {}
+    const dbUpdates: DbCategoryUpdatePayload = {}
     
     if (updates.name !== undefined) dbUpdates.name = updates.name
     if (updates.color !== undefined) dbUpdates.color = updates.color
@@ -491,15 +527,18 @@ export async function updateCategory(
       .eq('user_id', user.id)
 
     if (error) {
-      console.error('❌ Failed to update category:', error)
+      logger.error('Failed to update category', error)
       return { success: false, error: error.message }
     }
 
-    console.log('✅ Category updated:', id)
+    logger.debug('Category updated successfully', { categoryId: id })
     return { success: true }
-  } catch (error: any) {
-    console.error('❌ Update category error:', error)
-    return { success: false, error: error.message }
+  } catch (error) {
+    logger.error('Update category error', error)
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.' 
+    }
   }
 }
 
@@ -522,15 +561,18 @@ export async function deleteCategory(id: string): Promise<{ success: boolean; er
       .eq('user_id', user.id)
 
     if (error) {
-      console.error('❌ Failed to delete category:', error)
+      logger.error('Failed to delete category', error)
       return { success: false, error: error.message }
     }
 
-    console.log('✅ Category deleted:', id)
+    logger.debug('Category deleted successfully', { categoryId: id })
     return { success: true }
-  } catch (error: any) {
-    console.error('❌ Delete category error:', error)
-    return { success: false, error: error.message }
+  } catch (error) {
+    logger.error('Delete category error', error)
+    return { 
+      success: false, 
+      error: error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다.' 
+    }
   }
 }
 
