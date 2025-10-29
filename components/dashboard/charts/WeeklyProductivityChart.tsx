@@ -17,7 +17,7 @@ export function WeeklyProductivityChart({ data }: WeeklyProductivityChartProps) 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.1 }}
-      className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 transition-colors p-5"
+      className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 transition-colors p-5"
     >
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-1">📊 주간 생산성</h3>

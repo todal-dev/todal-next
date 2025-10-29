@@ -34,7 +34,7 @@ const CalendarHeaderComponent = ({
   handleNextWeek,
 }: CalendarHeaderProps) => {
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 transition-colors">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-600 bg-warm-white dark:bg-dark-ocean-panel transition-colors">
       <div className="flex items-center justify-between w-full sm:w-auto gap-2">
         <h2 className="text-h3 text-gray-900 dark:text-gray-50 whitespace-nowrap">
           {year}년 {monthName}
@@ -67,7 +67,7 @@ const CalendarHeaderComponent = ({
               setShowCategoryFilter(!showCategoryFilter);
               setShowCompletionFilter(false);
             }}
-            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 text-body-small border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 transition-colors min-h-[36px] bg-white dark:bg-gray-800"
+            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 text-body-small border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 transition-colors min-h-[36px] bg-warm-white dark:bg-dark-ocean-card"
           >
             <Filter size={14} className="text-gray-600 dark:text-gray-400 sm:w-4 sm:h-4" />
             <span className="text-gray-900 dark:text-gray-50 hidden xs:inline">카테고리</span>
@@ -114,7 +114,7 @@ const CalendarHeaderComponent = ({
               setShowCompletionFilter(!showCompletionFilter);
               setShowCategoryFilter(false);
             }}
-            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 text-body-small border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 transition-colors min-h-[36px] bg-white dark:bg-gray-800"
+            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 text-body-small border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 transition-colors min-h-[36px] bg-warm-white dark:bg-dark-ocean-card"
           >
             <span className="text-gray-900 dark:text-gray-50">
               {completionFilter === 'all' ? '전체' : completionFilter === 'completed' ? '완료' : '미완료'}

@@ -57,12 +57,12 @@ export function DatePickerInput({ value, onChange, minDate, maxDate, placeholder
           value={formatDate(value)}
           readOnly
           placeholder={placeholder}
-          className="flex-1 h-10 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 text-body-small cursor-default focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600"
+          className="flex-1 h-10 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md bg-warm-white dark:bg-dark-ocean-panel text-gray-900 dark:text-gray-50 text-body-small cursor-default focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600"
         />
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className="h-10 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 bg-white dark:bg-gray-800"
+          className="h-10 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 bg-warm-white dark:bg-dark-ocean-panel"
         >
           <Calendar size={16} className="text-gray-600 dark:text-gray-400" />
         </button>
@@ -76,7 +76,7 @@ export function DatePickerInput({ value, onChange, minDate, maxDate, placeholder
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full left-0 mt-2 z-50 bg-white dark:bg-gray-700 rounded-md shadow-xl border border-gray-200 dark:border-gray-600 p-4"
+            className="absolute top-full left-0 mt-2 z-50 bg-warm-white dark:bg-dark-ocean-card rounded-md shadow-xl border border-gray-200 dark:border-gray-600 p-4"
           >
             <DatePicker
               value={value}

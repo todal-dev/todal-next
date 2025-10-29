@@ -156,7 +156,7 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
   const months = Array.from({ length: 12 }, (_, i) => i);
 
   return (
-    <div className="p-1.5 border-b border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
+    <div className="p-1.5 border-b border-gray-200 dark:border-gray-600 bg-warm-white dark:bg-dark-ocean-panel">
       {/* Month/Year Header with Dropdown */}
       <div className="flex items-center justify-between mb-1.5 relative">
         <div className="relative" ref={dropdownRef}>
@@ -171,7 +171,7 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
 
           {/* Dropdown Menu */}
           {isDropdownOpen && (
-            <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-50 min-w-max animate-slide-up">
+            <div className="absolute top-full left-0 mt-1 bg-warm-white dark:bg-dark-ocean-card border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-50 min-w-max animate-slide-up">
               {/* Year Selector */}
               <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-600">
                 <div className="text-caption font-semibold text-gray-400 dark:text-gray-500 mb-2">연도</div>
@@ -185,7 +185,7 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
                         ${
                           dropdownYear === y
                             ? 'bg-primary text-white dark:bg-primary-600'
-                            : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer'
+                            : 'bg-warm-white dark:bg-dark-ocean-panel text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer'
                         }
                       `}
                     >
@@ -210,7 +210,7 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
                           ${
                             dropdownYear === currentDate.getFullYear() && m === currentDate.getMonth()
                               ? 'bg-primary text-white dark:bg-primary-600'
-                              : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer'
+                              : 'bg-warm-white dark:bg-dark-ocean-panel text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer'
                           }
                         `}
                       >

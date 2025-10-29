@@ -73,7 +73,7 @@ export function TimeInput({ value, onChange, placeholder = '00:00' }: TimeInputP
           onBlur={handleInputBlur}
           onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
-          className="w-full h-10 pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md text-body bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 transition-all"
+          className="w-full h-10 pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md text-body bg-warm-white dark:bg-dark-ocean-panel text-gray-900 dark:text-gray-50 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 transition-all"
         />
         <Clock 
           className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" 
@@ -81,7 +81,7 @@ export function TimeInput({ value, onChange, placeholder = '00:00' }: TimeInputP
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 overflow-hidden animate-slide-up">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-warm-white dark:bg-dark-ocean-card border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 overflow-hidden animate-slide-up">
           <div className="grid grid-cols-2">
             {/* Hours */}
             <div className="border-r border-gray-200 dark:border-gray-600">

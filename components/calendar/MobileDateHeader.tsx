@@ -59,7 +59,7 @@ export function MobileDateHeader({
   };
 
   return (
-    <div className="md:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 px-3 py-2 flex items-center justify-between sticky top-0 z-20 transition-colors">
+    <div className="md:hidden bg-warm-white dark:bg-dark-ocean-panel border-b border-gray-200 dark:border-gray-600 px-3 py-2 flex items-center justify-between sticky top-0 z-20 transition-colors">
       {/* Month/Year Selector */}
       <div className="relative" ref={pickerRef}>
         <button
@@ -75,7 +75,7 @@ export function MobileDateHeader({
 
         {/* Month Picker Dropdown */}
         {showMonthPicker && (
-          <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 min-w-[280px] max-w-[90vw] animate-slide-up">
+          <div className="absolute top-full left-0 mt-1 bg-warm-white dark:bg-dark-ocean-card border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 min-w-[280px] max-w-[90vw] animate-slide-up">
             {/* Year Selector */}
             <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-600">
               <div className="text-caption font-semibold text-gray-400 dark:text-gray-500 mb-2">연도</div>
@@ -90,7 +90,7 @@ export function MobileDateHeader({
                       ${
                         selectedYear === y
                           ? 'bg-primary dark:bg-primary-600 text-white'
-                          : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-600 active:bg-gray-200 dark:active:bg-gray-500'
+                          : 'bg-warm-white dark:bg-dark-ocean-panel text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-600 active:bg-gray-200 dark:active:bg-gray-500'
                       }
                     `}
                   >
@@ -118,7 +118,7 @@ export function MobileDateHeader({
                         ${
                           isCurrentMonth
                             ? 'bg-primary dark:bg-primary-600 text-white'
-                            : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-600 active:bg-gray-200 dark:active:bg-gray-500'
+                            : 'bg-warm-white dark:bg-dark-ocean-panel text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-600 active:bg-gray-200 dark:active:bg-gray-500'
                         }
                       `}
                     >

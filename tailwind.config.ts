@@ -10,6 +10,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Background Colors - 수달의 따뜻한 느낌
+        cream: '#FFFEF9',
+        'warm-white': '#FFFFFF',
+        'warm-gray': {
+          50: '#FAFAF7',
+          100: '#F5F5F2',
+        },
+        'dark-ocean': {
+          DEFAULT: '#1A1F2E',
+          panel: '#2D3748',
+          card: '#374151',
+        },
         // Primary Colors
         primary: {
           DEFAULT: '#2D9F6B',

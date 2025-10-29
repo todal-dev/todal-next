@@ -26,7 +26,7 @@ export function CategorySidebar({
   );
 
   return (
-    <div className="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-600 flex flex-col h-full transition-colors">
+    <div className="w-80 bg-warm-white dark:bg-dark-ocean-panel border-r border-gray-200 dark:border-gray-600 flex flex-col h-full transition-colors">
       {/* Header */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-600">
         <h2 className="text-h2 text-gray-900 dark:text-gray-50">카테고리</h2>
@@ -84,7 +84,7 @@ export function CategorySidebar({
               className={`w-full text-left p-4 rounded-md transition-all ${
                 isSelected
                   ? 'bg-primary-light dark:bg-primary-900/30 border-2 border-primary dark:border-primary-600'
-                  : 'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                  : 'bg-warm-white dark:bg-dark-ocean-card border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
               }`}
             >
               <div className="flex items-center justify-between mb-2">

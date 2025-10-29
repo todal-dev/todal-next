@@ -306,7 +306,7 @@ export default function Home() {
   // 로딩 중 표시
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-white dark:bg-gray-800 transition-colors">
+      <div className="flex items-center justify-center h-screen bg-cream dark:bg-dark-ocean transition-colors">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-primary-600 mx-auto mb-4"></div>
           <p className="text-body text-gray-600 dark:text-gray-400">데이터 로딩 중...</p>
@@ -318,7 +318,7 @@ export default function Home() {
   return (
     <TodoProvider value={todoContextValue}>
       <CategoryProvider value={categoryContextValue}>
-        <div className="flex flex-col h-screen bg-white dark:bg-gray-800 overflow-hidden transition-colors">
+        <div className="flex flex-col h-screen bg-cream dark:bg-dark-ocean overflow-hidden transition-colors">
           {/* Header */}
           <div className="flex-shrink-0">
             <Header categories={categories} onSelectTodo={handleSelectSearchResult} />

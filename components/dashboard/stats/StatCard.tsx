@@ -20,7 +20,7 @@ export function StatCard({ title, value, subtitle, icon: Icon, iconColor, iconBg
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 p-4 sm:p-5 hover:shadow-md dark:hover:shadow-gray-900/30 transition-all touch-manipulation"
+      className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 p-4 sm:p-5 hover:shadow-md dark:hover:shadow-gray-900/30 transition-all touch-manipulation"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">

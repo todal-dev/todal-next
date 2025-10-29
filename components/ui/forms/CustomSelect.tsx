@@ -55,7 +55,7 @@ export function CustomSelect<T = string>({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full h-10 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 bg-white dark:bg-gray-700 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+        className="w-full h-10 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 bg-warm-white dark:bg-dark-ocean-card flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
       >
         <div className="flex items-center gap-2">
           {selectedOption?.icon}
@@ -69,7 +69,7 @@ export function CustomSelect<T = string>({
       </button>
 
       {isOpen && (
-        <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto animate-slide-up">
+        <div className="absolute z-10 w-full mt-1 bg-warm-white dark:bg-dark-ocean-card border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto animate-slide-up">
           {options.map((option, index) => (
             <button
               key={index}

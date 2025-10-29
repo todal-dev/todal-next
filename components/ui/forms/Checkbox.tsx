@@ -24,7 +24,7 @@ export function Checkbox({ label, className = '', disabled = false, ...props }: 
             ${
               props.checked
                 ? 'bg-primary border-primary text-white animate-bounce-in dark:bg-primary-600 dark:border-primary-600'
-                : 'border-gray-300 bg-white hover:border-primary dark:bg-gray-700 dark:border-gray-600 dark:hover:border-primary-600'
+                : 'border-gray-300 bg-warm-white hover:border-primary dark:bg-dark-ocean-card dark:border-gray-600 dark:hover:border-primary-600'
             }
             ${disabled ? 'bg-gray-50 border-gray-300 dark:bg-gray-800 dark:border-gray-700' : ''}
             peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-primary

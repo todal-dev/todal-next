@@ -30,7 +30,7 @@ const MobileLayoutComponent = ({ todosByDate }: MobileLayoutProps) => {
   return (
     <div className="md:hidden w-full flex flex-col h-full">
       {/* Tab Navigation */}
-      <div className="flex border-b border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 sticky top-0 z-20 shrink-0 transition-colors">
+      <div className="flex border-b border-gray-200 dark:border-gray-600 bg-warm-white dark:bg-dark-ocean-panel sticky top-0 z-20 shrink-0 transition-colors">
         <button
           onClick={() => setActiveTab('todo')}
           className={`
@@ -64,7 +64,7 @@ const MobileLayoutComponent = ({ todosByDate }: MobileLayoutProps) => {
       </div>
 
       {/* Tab Content */}
-      <div className="flex-1 overflow-hidden bg-white dark:bg-gray-800 transition-colors">
+      <div className="flex-1 overflow-hidden bg-warm-white dark:bg-dark-ocean-panel transition-colors">
         {activeTab === 'todo' ? (
           <div className="flex flex-col h-full">
             <div className="shrink-0 border-b border-gray-200 dark:border-gray-600">

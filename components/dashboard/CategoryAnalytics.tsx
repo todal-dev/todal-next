@@ -67,7 +67,7 @@ export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsPro
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 p-6 transition-colors"
+          className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 p-6 transition-colors"
         >
           <div className="flex items-center gap-3 mb-3">
             <div 
@@ -91,7 +91,7 @@ export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsPro
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 p-6 transition-colors"
+          className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 p-6 transition-colors"
         >
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-md bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
@@ -112,7 +112,7 @@ export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsPro
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 p-6 transition-colors"
+          className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 p-6 transition-colors"
         >
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-md bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
@@ -137,7 +137,7 @@ export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsPro
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 p-6 transition-colors"
+          className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 p-6 transition-colors"
         >
           <div className="mb-4">
             <h3 className="text-h3 text-gray-900 dark:text-gray-50">시간대별 생산성</h3>

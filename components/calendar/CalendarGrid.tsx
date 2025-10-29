@@ -85,7 +85,7 @@ const CalendarGridComponent = ({
   return (
     <div ref={gridScrollRef} className="flex-1 overflow-auto calendar-grid touch-pan-x touch-pan-y">
       {/* Week Days Header - Fixed at top */}
-      <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 transition-colors">
+      <div className="sticky top-0 z-20 bg-warm-white dark:bg-dark-ocean-panel border-b border-gray-200 dark:border-gray-600 transition-colors">
         <div className="flex min-w-full">
           <div className="w-12 sm:w-16 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-600 shrink-0 sticky left-0 z-30" />
           <div className="flex flex-1">

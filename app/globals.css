@@ -32,13 +32,23 @@
   --color-status-error: #EF4444;
   --color-status-info: #3B82F6;
   
-  /* Dark Mode Colors - will be applied via CSS variables */
-  --color-dark-bg: #1F2937;
+  /* Dark Mode Colors - 밤바다 수달의 편안한 느낌 */
+  --color-dark-bg: #1A1F2E;
+  --color-dark-panel: #2D3748;
   --color-dark-card: #374151;
   --color-dark-text: #F9FAFB;
   --color-dark-border: #4B5563;
   --color-dark-primary: #34D399;
 }
+
+@theme reference {
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+}
+
+@variant dark (.dark &);
 
 @layer base {
   * {
@@ -51,17 +61,17 @@
   body {
     width: 100%;
     height: 100%;
-    background-color: #ffffff;
+    background-color: #FFFEF9;
     color: #111827;
     font-family: var(--font-pretendard), system-ui, sans-serif;
     font-size: 15px;
     line-height: 1.5;
   }
 
-  /* Dark Mode */
+  /* Dark Mode - 밤바다 수달의 편안한 느낌 */
   html.dark,
   html.dark body {
-    background-color: #1F2937;
+    background-color: #1A1F2E;
     color: #F9FAFB;
   }
 

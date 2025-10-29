@@ -95,7 +95,7 @@ export function GoogleCalendarSyncButton() {
 
       {/* Dropdown Menu */}
       {showMenu && !syncing && (
-        <div className="absolute top-full right-0 mt-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg overflow-hidden min-w-[180px] z-[100] animate-slide-up">
+        <div className="absolute top-full right-0 mt-2 bg-warm-white dark:bg-dark-ocean-card border border-gray-200 dark:border-gray-600 rounded-md shadow-lg overflow-hidden min-w-[180px] z-[100] animate-slide-up">
           <button
             onClick={handleImport}
             className="w-full px-4 py-3 text-left text-body-small hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center gap-3 transition-colors cursor-pointer text-gray-900 dark:text-gray-50"

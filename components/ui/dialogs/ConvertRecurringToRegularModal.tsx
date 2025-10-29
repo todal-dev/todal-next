@@ -34,7 +34,7 @@ export function ConvertRecurringToRegularModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ duration: 0.15 }}
-          className="relative bg-white dark:bg-gray-700 rounded-md shadow-xl p-6 w-full max-w-md mx-4"
+          className="relative bg-warm-white dark:bg-dark-ocean-card rounded-md shadow-xl p-6 w-full max-w-md mx-4"
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-4">

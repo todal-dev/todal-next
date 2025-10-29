@@ -22,7 +22,7 @@ export function Header({ categories, onSelectTodo }: HeaderProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
-    <header className="border-b border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-14 sm:h-16 px-3 sm:px-5 flex items-center justify-between relative z-30 transition-colors">
+    <header className="border-b border-gray-200 dark:border-gray-600 bg-warm-white dark:bg-dark-ocean-panel h-14 sm:h-16 px-3 sm:px-5 flex items-center justify-between relative z-30 transition-colors">
       <div className="flex items-center gap-2 sm:gap-6 flex-1 min-w-0">
         {/* Logo */}
         <Link href="/" className="flex-shrink-0">
@@ -101,14 +101,14 @@ export function Header({ categories, onSelectTodo }: HeaderProps) {
 
       {/* Mobile Search Overlay */}
       {isSearchOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 p-3 shadow-lg z-40 animate-slide-up">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-warm-white dark:bg-dark-ocean-panel border-b border-gray-200 dark:border-gray-600 p-3 shadow-lg z-40 animate-slide-up">
           <SearchBar categories={categories} onSelectTodo={onSelectTodo || (() => {})} />
         </div>
       )}
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 shadow-lg z-40 animate-slide-up">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-warm-white dark:bg-dark-ocean-panel border-b border-gray-200 dark:border-gray-600 shadow-lg z-40 animate-slide-up">
           <nav className="flex flex-col p-3 gap-2">
             <Link
               href="/"

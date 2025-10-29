@@ -77,7 +77,7 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-800 transition-colors">
+      <div className="min-h-screen flex items-center justify-center bg-cream dark:bg-dark-ocean transition-colors">
         <div className="w-full max-w-md px-8 text-center animate-fade-in">
           <div className="mb-6">
             <div className="text-6xl animate-bounce-in">🦦</div>
@@ -95,7 +95,7 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-800 transition-colors">
+    <div className="min-h-screen flex items-center justify-center bg-cream dark:bg-dark-ocean transition-colors">
       <div className="w-full max-w-md px-8">
         {/* Logo */}
         <div className="flex justify-center mb-12 animate-fade-in">
@@ -115,7 +115,7 @@ export default function SignupPage() {
         {/* Google Signup - Main */}
         <button
           onClick={handleGoogleSignup}
-          className="w-full flex items-center justify-center gap-3 px-6 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] active:scale-[0.98] mb-6 bg-white dark:bg-gray-800"
+          className="w-full flex items-center justify-center gap-3 px-6 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] active:scale-[0.98] mb-6 bg-warm-white dark:bg-dark-ocean-card"
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M19.6 10.227c0-.709-.064-1.39-.182-2.045H10v3.868h5.382a4.6 4.6 0 01-1.996 3.018v2.51h3.232c1.891-1.742 2.982-4.305 2.982-7.35z" fill="#4285F4"/>
@@ -135,7 +135,7 @@ export default function SignupPage() {
             <div className="relative flex justify-center text-body-small">
               <button
                 onClick={() => setShowEmailSignup(true)}
-                className="px-4 bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
+                className="px-4 bg-cream dark:bg-dark-ocean text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
               >
                 이메일로 가입
               </button>
@@ -151,7 +151,7 @@ export default function SignupPage() {
                 <div className="w-full border-t border-gray-200 dark:border-gray-600"></div>
               </div>
               <div className="relative flex justify-center text-caption">
-                <span className="px-4 bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-500">또는</span>
+                <span className="px-4 bg-cream dark:bg-dark-ocean text-gray-400 dark:text-gray-500">또는</span>
               </div>
             </div>
 

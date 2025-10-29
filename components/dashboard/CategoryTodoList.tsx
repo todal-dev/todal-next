@@ -28,7 +28,7 @@ export function CategoryTodoList({ todos, categoryName, categoryColor }: Categor
 
   if (todos.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 p-8 transition-colors">
+      <div className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 p-8 transition-colors">
         <div className="text-center text-gray-400 dark:text-gray-500">
           <p className="text-body-small">할일이 없습니다</p>
         </div>
@@ -37,7 +37,7 @@ export function CategoryTodoList({ todos, categoryName, categoryColor }: Categor
   }
 
   return (
-    <div className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 transition-colors">
+    <div className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 transition-colors">
       {/* Header */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-600">
         <div className="flex items-center gap-3">

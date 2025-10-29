@@ -534,7 +534,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
       {/* DragOverlay - follows cursor */}
       <DragOverlay>
         {activeTodo ? (
-          <div className="flex items-center gap-2 px-4 py-2 rounded-md bg-white dark:bg-gray-700 shadow-lg border border-gray-200 dark:border-gray-600">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-md bg-warm-white dark:bg-dark-ocean-card shadow-lg border border-gray-200 dark:border-gray-600">
             <Checkbox checked={activeTodo.completed} onChange={() => {}} className="flex-shrink-0" />
             <span className={`text-body ${activeTodo.completed ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-50'}`}>
               {activeTodo.text}

@@ -84,7 +84,7 @@ export default function DashboardPage() {
   // 로딩 중 표시
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+      <div className="flex items-center justify-center h-screen bg-warm-gray-50 dark:bg-dark-ocean transition-colors">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-gray-200 dark:border-gray-600 border-t-primary dark:border-t-primary-600 rounded-full animate-spin"></div>
           <p className="text-body-small text-gray-400 dark:text-gray-500">로딩 중...</p>
@@ -94,7 +94,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div className="flex flex-col h-screen bg-warm-gray-50 dark:bg-dark-ocean transition-colors">
       {/* Header */}
       <Header categories={categories} />
 

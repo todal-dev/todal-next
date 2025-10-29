@@ -16,7 +16,7 @@ export function Input({ error = false, variant = 'default', className = '', ...p
   const variantStyles = {
     default: `
       h-10 px-4 py-3 rounded-md
-      bg-white dark:bg-gray-700
+      bg-warm-white dark:bg-dark-ocean-panel
       text-gray-900 dark:text-gray-50
       border ${error ? 'border-status-error' : 'border-gray-200 dark:border-gray-600'}
       focus:outline-none focus:ring-2 focus:ring-offset-0

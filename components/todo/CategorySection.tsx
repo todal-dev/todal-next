@@ -170,7 +170,7 @@ const CategorySectionComponent = ({
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -5 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 mt-2 p-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 min-w-[240px]"
+                    className="absolute top-full left-0 mt-2 p-4 bg-warm-white dark:bg-dark-ocean-card border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 min-w-[240px]"
                   >
                     <div className="grid grid-cols-5 gap-4">
                       {colorPalette.map((color) => (

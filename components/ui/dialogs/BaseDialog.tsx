@@ -57,7 +57,7 @@ export function BaseDialog({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-700 rounded-lg sm:rounded-xl shadow-xl w-full mx-4 max-h-[90vh] overflow-y-auto ${sizeClasses[size]} ${className}`}
+            className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-warm-white dark:bg-dark-ocean-card rounded-lg sm:rounded-xl shadow-xl w-full mx-4 max-h-[90vh] overflow-y-auto ${sizeClasses[size]} ${className}`}
             style={{ zIndex: zIndex + 10 }}
           >
             {/* Header */}

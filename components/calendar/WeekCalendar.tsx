@@ -441,7 +441,7 @@ export function BigCalendar() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-white relative">
+    <div className="flex flex-col h-full bg-warm-white dark:bg-dark-ocean-panel relative transition-colors">
       {/* Mobile Date Header - Mobile only */}
       <MobileDateHeader
         currentWeekStart={currentWeekStart}

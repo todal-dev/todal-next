@@ -58,7 +58,7 @@ export function DashboardLayout({ categories, todos }: DashboardLayoutProps) {
   }, [categories, selectedCategoryId]);
 
   return (
-    <div className="flex h-full bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div className="flex h-full bg-warm-gray-50 dark:bg-dark-ocean transition-colors">
       {/* Left Sidebar - Categories */}
       <CategorySidebar
         categories={categories}

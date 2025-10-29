@@ -44,7 +44,7 @@ const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
     <>
       <div className="hidden md:flex w-full">
         {/* Left Panel - Mini Calendar + Recurring Section + Todo List (35%) */}
-        <div className="flex-[35] border-r border-gray-200 dark:border-gray-600 flex flex-col bg-white dark:bg-gray-800 transition-colors">
+        <div className="flex-[35] border-r border-gray-200 dark:border-gray-600 flex flex-col bg-warm-white dark:bg-dark-ocean-panel transition-colors">
           {/* Mini Calendar */}
           <div className="shrink-0 border-b border-gray-200 dark:border-gray-600">
             <MiniCalendar onDateSelect={onDateSelect} todosByDate={todosByDate} />

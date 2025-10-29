@@ -211,7 +211,7 @@ export function AddRecurringDialog({
               }
             }}
             placeholder="예: 아침 운동"
-            className="w-full h-10 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md text-body focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+            className="w-full h-10 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md text-body focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 bg-warm-white dark:bg-dark-ocean-panel text-gray-900 dark:text-gray-50 placeholder:text-gray-400 dark:placeholder:text-gray-500"
             autoFocus
           />
         </div>
@@ -281,7 +281,7 @@ export function AddRecurringDialog({
               max="30"
               value={interval}
               onChange={(e) => setInterval(parseInt(e.target.value) || 1)}
-              className="w-20 h-10 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md text-body-small focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50"
+              className="w-20 h-10 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md text-body-small focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 bg-warm-white dark:bg-dark-ocean-panel text-gray-900 dark:text-gray-50"
             />
             <span className="text-body-small text-gray-400 dark:text-gray-500">
               {frequency === 'daily' && '일마다'}
@@ -323,7 +323,7 @@ export function AddRecurringDialog({
         {/* 월간 반복 고급 옵션 */}
         {frequency === 'monthly' && (
           <div className="space-y-3">
-            <label className="block text-sm font-medium text-[#9CA3AF]">
+            <label className="block text-sm font-medium text-gray-400 dark:text-gray-500">
               반복 방식
             </label>
             
@@ -333,9 +333,9 @@ export function AddRecurringDialog({
                   type="radio"
                   checked={monthlyMode === 'date'}
                   onChange={() => setMonthlyMode('date')}
-                  className="text-primary-500 focus:ring-primary-500"
+                  className="text-primary dark:text-primary-600 focus:ring-primary dark:focus:ring-primary-600"
                 />
-                <span className="text-sm">매월</span>
+                <span className="text-sm text-gray-900 dark:text-gray-50">매월</span>
                 <input
                   type="number"
                   min="1"
@@ -343,9 +343,9 @@ export function AddRecurringDialog({
                   value={monthDay}
                   onChange={(e) => setMonthDay(parseInt(e.target.value) || 1)}
                   disabled={monthlyMode !== 'date'}
-                  className="w-16 px-2 py-1 border border-[#E5E7EB] rounded-lg text-sm disabled:bg-[#F5F5F5]"
+                  className="w-16 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded-lg text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800 bg-warm-white dark:bg-dark-ocean-card text-gray-900 dark:text-gray-50"
                 />
-                <span className="text-sm">일</span>
+                <span className="text-sm text-gray-900 dark:text-gray-50">일</span>
               </label>
 
               <label className="flex items-center gap-2">
@@ -353,14 +353,14 @@ export function AddRecurringDialog({
                   type="radio"
                   checked={monthlyMode === 'weekday'}
                   onChange={() => setMonthlyMode('weekday')}
-                  className="text-primary-500 focus:ring-primary-500"
+                  className="text-primary dark:text-primary-600 focus:ring-primary dark:focus:ring-primary-600"
                 />
-                <span className="text-sm">매월</span>
+                <span className="text-sm text-gray-900 dark:text-gray-50">매월</span>
                 <select
                   value={nthWeek}
                   onChange={(e) => setNthWeek(parseInt(e.target.value))}
                   disabled={monthlyMode !== 'weekday'}
-                  className="px-2 py-1 border border-[#E5E7EB] rounded-lg text-sm disabled:bg-[#F5F5F5]"
+                  className="px-2 py-1 border border-gray-200 dark:border-gray-600 rounded-lg text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800 bg-warm-white dark:bg-dark-ocean-card text-gray-900 dark:text-gray-50"
                 >
                   <option value={1}>첫째주</option>
                   <option value={2}>둘째주</option>
@@ -372,7 +372,7 @@ export function AddRecurringDialog({
                   value={nthWeekday}
                   onChange={(e) => setNthWeekday(parseInt(e.target.value))}
                   disabled={monthlyMode !== 'weekday'}
-                  className="px-2 py-1 border border-[#E5E7EB] rounded-lg text-sm disabled:bg-[#F5F5F5]"
+                  className="px-2 py-1 border border-gray-200 dark:border-gray-600 rounded-lg text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800 bg-warm-white dark:bg-dark-ocean-card text-gray-900 dark:text-gray-50"
                 >
                   {dayNames.map((day, index) => (
                     <option key={index + 1} value={index + 1}>{day}요일</option>
@@ -386,36 +386,36 @@ export function AddRecurringDialog({
         {/* 연간 반복 옵션 */}
         {frequency === 'yearly' && (
           <div className="space-y-3">
-            <label className="block text-sm font-medium text-[#9CA3AF]">
+            <label className="block text-sm font-medium text-gray-400 dark:text-gray-500">
               반복 날짜
             </label>
             
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs text-[#9CA3AF] mb-1">월</label>
+                <label className="block text-xs text-gray-400 dark:text-gray-500 mb-1">월</label>
                 <input
                   type="number"
                   min="1"
                   max="12"
                   value={yearMonth}
                   onChange={(e) => setYearMonth(parseInt(e.target.value) || 1)}
-                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2D9F6B]"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 bg-warm-white dark:bg-dark-ocean-card text-gray-900 dark:text-gray-50"
                 />
               </div>
               <div>
-                <label className="block text-xs text-[#9CA3AF] mb-1">일</label>
+                <label className="block text-xs text-gray-400 dark:text-gray-500 mb-1">일</label>
                 <input
                   type="number"
                   min="1"
                   max="31"
                   value={monthDay}
                   onChange={(e) => setMonthDay(parseInt(e.target.value) || 1)}
-                  className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2D9F6B]"
+                  className="w-full px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 bg-warm-white dark:bg-dark-ocean-card text-gray-900 dark:text-gray-50"
                 />
               </div>
             </div>
 
-            <div className="text-xs text-[#9CA3AF]">
+            <div className="text-xs text-gray-400 dark:text-gray-500">
               예: 매년 {yearMonth}월 {monthDay}일
             </div>
           </div>
@@ -423,7 +423,7 @@ export function AddRecurringDialog({
 
         {/* 시작 날짜 */}
         <div>
-          <label className="block text-sm font-medium text-[#9CA3AF] mb-2">
+          <label className="block text-sm font-medium text-gray-400 dark:text-gray-500 mb-2">
             시작 날짜
           </label>
           <DatePickerInput
@@ -434,7 +434,7 @@ export function AddRecurringDialog({
 
         {/* 종료 조건 */}
         <div>
-          <label className="block text-sm font-medium text-[#9CA3AF] mb-2">
+          <label className="block text-sm font-medium text-gray-400 dark:text-gray-500 mb-2">
             종료 조건
           </label>
           
@@ -444,9 +444,9 @@ export function AddRecurringDialog({
                 type="radio"
                 checked={endType === 'never'}
                 onChange={() => setEndType('never')}
-                className="text-primary-500 focus:ring-primary-500"
+                className="text-primary dark:text-primary-600 focus:ring-primary dark:focus:ring-primary-600"
               />
-              <span className="text-sm">종료 안함</span>
+              <span className="text-sm text-gray-900 dark:text-gray-50">종료 안함</span>
             </label>
 
             <label className="flex items-center gap-2">
@@ -454,9 +454,9 @@ export function AddRecurringDialog({
                 type="radio"
                 checked={endType === 'date'}
                 onChange={() => setEndType('date')}
-                className="text-primary-500 focus:ring-primary-500"
+                className="text-primary dark:text-primary-600 focus:ring-primary dark:focus:ring-primary-600"
               />
-              <span className="text-sm">날짜 지정</span>
+              <span className="text-sm text-gray-900 dark:text-gray-50">날짜 지정</span>
               {endType === 'date' && (
                 <div className="ml-2">
                   <DatePickerInput
@@ -473,7 +473,7 @@ export function AddRecurringDialog({
                 type="radio"
                 checked={endType === 'count'}
                 onChange={() => setEndType('count')}
-                className="text-primary-500 focus:ring-primary-500"
+                className="text-primary dark:text-primary-600 focus:ring-primary dark:focus:ring-primary-600"
               />
               <input
                 type="number"
@@ -482,9 +482,9 @@ export function AddRecurringDialog({
                 value={count}
                 onChange={(e) => setCount(parseInt(e.target.value) || 1)}
                 disabled={endType !== 'count'}
-                className="w-16 px-2 py-1 border border-[#E5E7EB] rounded-lg text-sm disabled:bg-[#F5F5F5] mx-2"
+                className="w-16 px-2 py-1 border border-gray-200 dark:border-gray-600 rounded-lg text-sm disabled:bg-gray-100 dark:disabled:bg-gray-800 mx-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50"
               />
-              <span className="text-sm">회 반복 후 종료</span>
+              <span className="text-sm text-gray-900 dark:text-gray-50">회 반복 후 종료</span>
             </label>
           </div>
         </div>

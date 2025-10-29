@@ -17,7 +17,7 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
-        className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 transition-colors p-5"
+        className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 transition-colors p-5"
       >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-4">🎯 카테고리별 시간 분석</h3>
         <div className="flex items-center justify-center h-64 text-gray-600 dark:text-gray-400">

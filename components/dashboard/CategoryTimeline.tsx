@@ -15,7 +15,7 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
 
   if (timedTodos.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 p-8 transition-colors">
+      <div className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 p-8 transition-colors">
         <div className="text-center text-gray-400 dark:text-gray-500">
           <p className="text-body-small">시간이 지정된 할일이 없습니다</p>
         </div>
@@ -48,7 +48,7 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
   const displayMaxHour = Math.min(23, Math.max(maxHour + 1, displayMinHour + 8));
 
   return (
-    <div className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 transition-colors">
+    <div className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 transition-colors">
       {/* Header */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-600">
         <h3 className="text-h3 text-gray-900 dark:text-gray-50">시간대별 타임라인</h3>
@@ -106,7 +106,7 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
                                 {/* Todo Card */}
                                 <div 
                                   className={`p-3 rounded-md border-l-4 transition-colors ${
-                                    todo.completed ? 'bg-gray-50 dark:bg-gray-800 opacity-60' : 'bg-white dark:bg-gray-700'
+                                    todo.completed ? 'bg-gray-50 dark:bg-gray-800 opacity-60' : 'bg-warm-white dark:bg-dark-ocean-card'
                                   }`}
                                   style={{ 
                                     borderLeftColor: categoryColor,

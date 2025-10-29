@@ -52,7 +52,7 @@ export function TimePicker({ value, onChange, placeholder = '시간 선택' }: T
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1 px-2 py-1 text-caption border border-gray-200 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors bg-white dark:bg-gray-800"
+        className="flex items-center gap-1 px-2 py-1 text-caption border border-gray-200 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors bg-warm-white dark:bg-dark-ocean-panel"
       >
         <Clock size={12} className="text-gray-600 dark:text-gray-400" />
         <span className="text-gray-900 dark:text-gray-50">
@@ -61,7 +61,7 @@ export function TimePicker({ value, onChange, placeholder = '시간 선택' }: T
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 p-3 animate-slide-up">
+        <div className="absolute top-full left-0 mt-1 bg-warm-white dark:bg-dark-ocean-card border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 p-3 animate-slide-up">
           <div className="flex gap-3">
             {/* Hours */}
             <div className="flex flex-col">
@@ -75,7 +75,7 @@ export function TimePicker({ value, onChange, placeholder = '시간 선택' }: T
                     className={`px-3 py-1 text-caption rounded transition-colors ${
                       selectedHour === hour
                         ? 'bg-primary dark:bg-primary-600 text-white'
-                        : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-600'
+                        : 'bg-warm-white dark:bg-dark-ocean-panel text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-600'
                     }`}
                   >
                     {String(hour).padStart(2, '0')}
@@ -96,7 +96,7 @@ export function TimePicker({ value, onChange, placeholder = '시간 선택' }: T
                     className={`px-3 py-1 text-caption rounded transition-colors ${
                       selectedMinute === minute
                         ? 'bg-primary dark:bg-primary-600 text-white'
-                        : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-600'
+                        : 'bg-warm-white dark:bg-dark-ocean-panel text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-600'
                     }`}
                   >
                     {String(minute).padStart(2, '0')}
