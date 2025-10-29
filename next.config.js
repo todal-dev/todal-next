@@ -45,7 +45,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net", // Tailwind requires unsafe-inline, Pretendard font from CDN
               "img-src 'self' data: https:",
               "font-src 'self' data: https://cdn.jsdelivr.net", // Pretendard font from CDN
-              "connect-src 'self' https://*.supabase.co https://www.googleapis.com",
+              "connect-src 'self' https://*.supabase.co https://www.googleapis.com https://apis.data.go.kr",
               "frame-ancestors 'self'",
             ].join('; ')
           },

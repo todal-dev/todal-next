@@ -67,19 +67,10 @@ export function useHolidays() {
       setHolidays(new Set(holidaySet));
       setIsLoading(false);
 
-      // 공공데이터포털 API로 공휴일 정보 로드
-      const apiKey = process.env.NEXT_PUBLIC_HOLIDAY_API_KEY;
-      if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
-        console.log('공휴일 API 키가 설정되지 않았습니다. 기본 데이터를 사용합니다.');
-        return;
-      }
-
-      // 여러 연도의 공휴일을 병렬로 로드
+      // 여러 연도의 공휴일을 병렬로 로드 (서버 API Route 사용)
       try {
         const fetchPromises = yearsToLoad.map(year => 
-          fetch(
-            `https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo?solYear=${year}&_type=json&numOfRows=100&serviceKey=${encodeURIComponent(apiKey)}`
-          )
+          fetch(`/api/holidays?year=${year}`)
         );
 
         const responses = await Promise.all(fetchPromises);
