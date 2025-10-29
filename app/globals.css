@@ -115,6 +115,40 @@
     scrollbar-width: none;
   }
 
+  /* Mobile Touch Optimizations */
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Prevent text selection during drag on mobile */
+  .no-select {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* Mobile-friendly minimum touch targets */
+  @media (max-width: 768px) {
+    /* Increase touch target sizes on mobile */
+    button,
+    a,
+    [role="button"],
+    input[type="checkbox"],
+    input[type="radio"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+
+    /* Better scrolling on iOS */
+    .calendar-grid,
+    .overflow-auto,
+    .overflow-y-auto {
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
@@ -124,6 +158,12 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+
+  /* Prevent overscroll bounce on mobile */
+  html,
+  body {
+    overscroll-behavior: none;
   }
 }
 
