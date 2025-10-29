@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import Image from 'next/image';
 import { DesktopLayout } from '@/components/layout/DesktopLayout';
 import { MobileLayout } from '@/components/layout/MobileLayout';
+import { Header } from '@/components/layout/Header';
 import { useTodos } from '@/hooks/data/useTodos';
 import { useCategories } from '@/hooks/data/useCategories';
 import { TodoProvider } from '@/contexts/TodoContext';
 import { CategoryProvider } from '@/contexts/CategoryContext';
-import { LogoutButton } from '@/components/auth/LogoutButton';
-import { GoogleCalendarSyncButton } from '@/components/calendar/GoogleCalendarSyncButton';
 import { fetchTodos, fetchCategories } from '@/lib/supabase/queries';
+import { generateRecurringEvents } from '@/utils/recurringUtils';
+import { formatDateKey } from '@/utils/calendarUtils';
 import type { Todo, Category } from '@/types/calendar';
 
 interface TodoByDateCategory {
@@ -72,33 +72,21 @@ export default function Home() {
   // Supabase에서 데이터 로드
   useEffect(() => {
     async function loadData() {
-      console.log('🔄 Loading data from Supabase...');
       try {
         const [todosData, categoriesData] = await Promise.all([
           fetchTodos(),
           fetchCategories(),
         ]);
 
-        console.log('📊 Loaded data:', {
-          todos: todosData.length,
-          categories: categoriesData.length,
-        });
-
         if (todosData.length > 0) {
-          console.log('✅ Setting todos:', todosData);
           setInitialTodos(todosData);
-        } else {
-          console.log('⚠️ No todos found, using sample data');
         }
         
         if (categoriesData.length > 0) {
-          console.log('✅ Setting categories:', categoriesData);
           setInitialCategories(categoriesData);
-        } else {
-          console.log('⚠️ No categories found, using default');
         }
       } catch (error) {
-        console.error('❌ Failed to load data:', error);
+        // logger는 이미 lib/supabase/queries.ts에서 에러 로깅
       } finally {
         setLoading(false);
       }
@@ -142,7 +130,7 @@ export default function Home() {
     handleMoveCategory,
   } = useCategories(initialCategories, todos);
 
-  // Group todos by date (for mini calendar)
+  // Group todos by date (for mini calendar) - 최적화됨
   const todosByDate = useMemo(() => {
     const grouped: Record<string, TodoByDate> = {};
 
@@ -156,36 +144,37 @@ export default function Home() {
       allDates.push(new Date(d));
     }
 
+    // 일반 할일과 반복 할일 분리 처리 (성능 최적화)
+    const regularTodos = todos.filter(t => !t.recurrenceRule);
+    const recurringTodos = todos.filter(t => t.recurrenceRule);
+
     // 할일 확장 (반복 일정 포함)
-    const expandedTodos: Todo[] = [];
-    todos.forEach((todo) => {
-      if (todo.recurrenceRule) {
-        // 반복 일정 확장
-        const generated: Todo[] = [];
-        for (const date of allDates) {
-          const events = require('@/utils/recurringUtils').generateRecurringEvents(todo, [date]);
-          events.forEach((event: Todo) => {
-            const dateKey = require('@/utils/calendarUtils').formatDateKey(event.date);
-            const isCompleted = todo.completedDates?.includes(dateKey) || false;
-            generated.push({
-              ...event,
-              completed: isCompleted
-            });
+    const expandedTodos: Todo[] = [...regularTodos];
+
+    // 반복 일정만 확장 (정적 import 사용)
+    recurringTodos.forEach((todo) => {
+      try {
+        const generatedEvents = generateRecurringEvents(todo, allDates);
+        generatedEvents.forEach((event) => {
+          const dateKey = formatDateKey(event.date);
+          const isCompleted = todo.completedDates?.includes(dateKey) || false;
+          expandedTodos.push({
+            ...event,
+            completed: isCompleted,
           });
-        }
-        expandedTodos.push(...generated);
-      } else {
-        // 일반 할일만 추가
-        expandedTodos.push(todo);
+        });
+      } catch (error) {
+        console.error('반복 일정 생성 중 오류 발생:', error, todo);
+        // 에러가 발생한 할일은 건너뛰고 계속 진행
       }
     });
 
+    // 카테고리 Map 생성 (O(n) → O(1) 조회)
+    const categoryMap = new Map(categories.map(c => [c.id, c]));
+
     // Only process top-level todos (don't count subtasks)
     expandedTodos.forEach((todo) => {
-      const year = todo.date.getFullYear();
-      const month = String(todo.date.getMonth() + 1).padStart(2, '0');
-      const day = String(todo.date.getDate()).padStart(2, '0');
-      const dateKey = `${year}-${month}-${day}`;
+      const dateKey = formatDateKey(todo.date);
 
       if (!grouped[dateKey]) {
         grouped[dateKey] = { completed: 0, total: 0, byCategory: [] };
@@ -196,8 +185,8 @@ export default function Home() {
         grouped[dateKey].completed += 1;
       }
 
-      // Add category information
-      const category = categories.find(c => c.id === todo.categoryId);
+      // Add category information (Map 사용으로 최적화)
+      const category = categoryMap.get(todo.categoryId);
       if (category) {
         const existingCat = grouped[dateKey].byCategory.find(c => c.categoryId === todo.categoryId);
         if (existingCat) {
@@ -218,13 +207,13 @@ export default function Home() {
     return grouped;
   }, [todos, categories]);
 
-  // Memoize category deletion handler
+  // Memoize category deletion handler (todos 의존성 제거로 최적화)
   const handleDeleteCategoryWithTodos = useCallback((id: string) => {
     handleDeleteCategory(id, () => {
       // Delete all todos with this category
-      setTodos(todos.filter(todo => todo.categoryId !== id));
+      setTodos(prevTodos => prevTodos.filter(todo => todo.categoryId !== id));
     });
-  }, [handleDeleteCategory, todos, setTodos]);
+  }, [handleDeleteCategory, setTodos]);
 
   // Memoize recurring handler wrapper
   const handleAddRecurringWrapper = useCallback((
@@ -236,6 +225,13 @@ export default function Home() {
   ) => {
     handleAddRecurring(text, startTime, endTime, recurrenceRule, selectedDate, categoryId);
   }, [handleAddRecurring, selectedDate]);
+
+  // 검색 결과 선택 시 해당 날짜로 이동 및 하이라이트
+  const handleSelectSearchResult = useCallback((todo: Todo) => {
+    setSelectedDate(todo.date);
+    // 선택된 할일을 하이라이트하거나 스크롤하는 로직을 추가할 수 있음
+    console.log('Selected todo from search:', todo);
+  }, []);
 
   // Create context values - handlers are memoized with useCallback, so we only need todos and selectedDate
   const todoContextValue = useMemo(
@@ -324,15 +320,7 @@ export default function Home() {
       <CategoryProvider value={categoryContextValue}>
         <div className="flex flex-col h-screen bg-white">
           {/* Header */}
-          <header className="border-b border-neutral-gray-300 bg-white h-12 px-5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Image src="/logo.png" alt="Todal Logo" width={90} height={90} />
-            </div>
-            <div className="flex gap-2 items-center">
-              <GoogleCalendarSyncButton />
-              <LogoutButton />
-            </div>
-          </header>
+          <Header categories={categories} onSelectTodo={handleSelectSearchResult} />
 
           {/* Main Content */}
           <div className="flex flex-1 overflow-hidden">
