@@ -211,7 +211,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
         text: todo.text,
         startTime: todo.startTime,
         endTime: todo.endTime,
-        recurrenceRule: todo.recurrenceRule,
+        recurrenceRule: todo.recurrenceRule as any,
         categoryId: todo.categoryId,
       });
       setRecurringDialogOpen(true);
@@ -222,7 +222,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
     text: string,
     startTime: string,
     endTime: string,
-    recurrenceRule: RecurrenceRuleLocal,
+    recurrenceRule: any,
     categoryId: string
   ) => {
     if (convertingToRecurring) {

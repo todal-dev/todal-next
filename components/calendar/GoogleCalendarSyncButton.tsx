@@ -21,6 +21,7 @@ export function GoogleCalendarSyncButton() {
       document.addEventListener('mousedown', handleClickOutside)
       return () => document.removeEventListener('mousedown', handleClickOutside)
     }
+    return undefined
   }, [showMenu])
 
   const handleImport = async () => {

@@ -28,7 +28,6 @@ interface CalendarGridProps {
   editingTodoId: string | null;
   editingText: string;
   setEditingText: (text: string) => void;
-  setPendingEditId: (id: string) => void;
   startEdit: (id: string, text: string) => void;
   handleFinishEdit: () => void;
   cancelEdit: () => void;
@@ -63,7 +62,6 @@ const CalendarGridComponent = ({
   editingTodoId,
   editingText,
   setEditingText,
-  setPendingEditId,
   startEdit,
   handleFinishEdit,
   cancelEdit,
@@ -85,11 +83,11 @@ const CalendarGridComponent = ({
   }, [weekDays, weekTodos]);
 
   return (
-    <div ref={gridScrollRef} className="flex-1 overflow-auto calendar-grid">
+    <div ref={gridScrollRef} className="flex-1 overflow-auto calendar-grid touch-pan-x touch-pan-y">
       {/* Week Days Header - Fixed at top */}
       <div className="sticky top-0 z-20 bg-white border-b border-neutral-gray-300">
         <div className="flex min-w-full">
-          <div className="w-16 bg-neutral-gray-50 border-r border-neutral-gray-300 shrink-0 sticky left-0 z-30" />
+          <div className="w-12 sm:w-16 bg-neutral-gray-50 border-r border-neutral-gray-300 shrink-0 sticky left-0 z-30" />
           <div className="flex flex-1">
             {weekDays.map((date, index) => {
               const isToday =
@@ -104,12 +102,12 @@ const CalendarGridComponent = ({
               return (
                 <div
                   key={index}
-                  className={`flex-1 min-w-[100px] text-center py-3 border-r border-neutral-gray-300 ${
+                  className={`flex-1 min-w-[50px] sm:min-w-[100px] text-center py-2 sm:py-3 border-r border-neutral-gray-300 flex flex-col items-center justify-center ${
                     isToday ? 'bg-primary-50' : ''
                   }`}
                 >
                   <div 
-                    className={`text-xs font-medium ${
+                    className={`text-[11px] sm:text-xs font-medium mb-0.5 ${
                       isSunday || holiday 
                         ? 'text-red-500' 
                         : isSaturday 
@@ -120,17 +118,24 @@ const CalendarGridComponent = ({
                     {dayNames[date.getDay()]}
                   </div>
                   <div
-                    className={`text-lg font-semibold ${
-                      isToday 
-                        ? 'text-primary-500' 
-                        : isSunday || holiday
-                        ? 'text-red-500'
-                        : isSaturday
-                        ? 'text-blue-500'
-                        : 'text-neutral-text-primary'
-                    }`}
+                    className={`
+                      flex items-center justify-center
+                      ${isToday ? 'w-8 h-8 sm:w-auto sm:h-auto rounded-full bg-primary-600' : ''}
+                    `}
                   >
-                    {date.getDate()}
+                    <div
+                      className={`text-sm sm:text-lg font-semibold ${
+                        isToday 
+                          ? 'text-white' 
+                          : isSunday || holiday
+                          ? 'text-red-500'
+                          : isSaturday
+                          ? 'text-blue-500'
+                          : 'text-neutral-text-primary'
+                      }`}
+                    >
+                      {date.getDate()}
+                    </div>
                   </div>
                 </div>
               );
@@ -142,16 +147,27 @@ const CalendarGridComponent = ({
       {/* Time Grid */}
       <div className="flex min-w-full" style={{ height: `${hourHeight * 24}px` }}>
         {/* Time Column */}
-        <div className="w-16 bg-neutral-gray-50 border-r border-neutral-gray-300 shrink-0 sticky left-0 z-10">
-          {hours.map((hour) => (
-            <div
-              key={hour}
-              className="border-b border-neutral-gray-200 text-xs text-neutral-text-secondary pt-1 text-center font-medium bg-neutral-gray-50"
-              style={{ height: `${hourHeight}px` }}
-            >
-              {String(hour).padStart(2, '0')}:00
-            </div>
-          ))}
+        <div className="w-12 sm:w-16 bg-neutral-gray-50 border-r border-neutral-gray-300 shrink-0 sticky left-0 z-10">
+          {hours.map((hour) => {
+            // 모바일: 오전/오후 형식, 데스크톱: 24시간 형식
+            const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+            const displayTime = isMobile 
+              ? hour === 0 ? '오전 12시'
+                : hour < 12 ? `오전 ${hour}시`
+                : hour === 12 ? '오후 12시'
+                : `오후 ${hour - 12}시`
+              : `${String(hour).padStart(2, '0')}:00`;
+
+            return (
+              <div
+                key={hour}
+                className="border-b border-neutral-gray-200 text-[10px] sm:text-xs text-neutral-text-secondary pt-1 px-0.5 text-center font-medium bg-neutral-gray-50 leading-tight"
+                style={{ height: `${hourHeight}px` }}
+              >
+                {displayTime}
+              </div>
+            );
+          })}
         </div>
 
         {/* Days Grid */}
@@ -174,7 +190,7 @@ const CalendarGridComponent = ({
             return (
               <div
                 key={dayIndex}
-                className={`flex-1 border-r border-neutral-gray-300 min-w-[100px] relative calendar-day-column transition-colors ${
+                className={`flex-1 border-r border-neutral-gray-300 min-w-[50px] sm:min-w-[100px] relative calendar-day-column transition-colors ${
                   isDraggingOverThisDay ? 'bg-primary-50' : ''
                 }`}
               >

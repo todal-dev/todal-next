@@ -11,6 +11,8 @@ import { DuplicateDialog } from '@/components/ui/dialogs/DuplicateDialog';
 import { AddRecurringDialog } from '@/components/ui/dialogs/AddRecurringDialog';
 import { CalendarHeader } from '@/components/calendar/CalendarHeader';
 import { CalendarGrid } from '@/components/calendar/CalendarGrid';
+import { FloatingActionButton } from '@/components/ui/FloatingActionButton';
+import { MobileDateHeader } from '@/components/calendar/MobileDateHeader';
 import type { Todo } from '@/types/calendar';
 import { getWeekDays, formatDateKey } from '@/utils/calendarUtils';
 import { generateRecurringEvents } from '@/utils/recurringUtils';
@@ -43,6 +45,20 @@ export function BigCalendar() {
 
   const { categories, onEditRecurring } = useCategoryContext();
   const { isHoliday } = useHolidays();
+  
+  // 모바일 FAB 다이얼로그
+  const [showMobileFAB, setShowMobileFAB] = useState(false);
+  
+  // 모바일 화면 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setShowMobileFAB(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   const [currentWeekStart, setCurrentWeekStart] = useState(() => {
     const date = new Date(selectedDate);
@@ -99,7 +115,6 @@ export function BigCalendar() {
     editingTodoId,
     editingText,
     setEditingText,
-    setPendingEditId,
     startEdit,
     finishEdit: handleFinishEdit,
     cancelEdit,
@@ -418,24 +433,41 @@ export function BigCalendar() {
     }
   }, [todos, onEditTodo, onToggleRecurringInstance]);
 
+  // FAB 클릭 핸들러 - 새 일정 추가
+  const [showQuickAddDialog, setShowQuickAddDialog] = useState(false);
+  
+  const handleFABClick = () => {
+    setShowQuickAddDialog(true);
+  };
+
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Calendar Header */}
-      <CalendarHeader
-        year={year}
-        monthName={monthName}
-        categories={categories}
-        selectedCategories={selectedCategories}
-        completionFilter={completionFilter}
-        showCategoryFilter={showCategoryFilter}
-        showCompletionFilter={showCompletionFilter}
-        setShowCategoryFilter={setShowCategoryFilter}
-        setShowCompletionFilter={setShowCompletionFilter}
-        handleCategoryToggle={handleCategoryToggle}
-        handleCompletionFilterChange={handleCompletionFilterChange}
-        handlePrevWeek={handlePrevWeek}
-        handleNextWeek={handleNextWeek}
+    <div className="flex flex-col h-full bg-white relative">
+      {/* Mobile Date Header - Mobile only */}
+      <MobileDateHeader
+        currentWeekStart={currentWeekStart}
+        onPrevWeek={handlePrevWeek}
+        onNextWeek={handleNextWeek}
+        onDateSelect={(date) => setCurrentWeekStart(date)}
       />
+
+      {/* Calendar Header - Desktop only */}
+      <div className="hidden md:block">
+        <CalendarHeader
+          year={year}
+          monthName={monthName}
+          categories={categories}
+          selectedCategories={selectedCategories}
+          completionFilter={completionFilter}
+          showCategoryFilter={showCategoryFilter}
+          showCompletionFilter={showCompletionFilter}
+          setShowCategoryFilter={setShowCategoryFilter}
+          setShowCompletionFilter={setShowCompletionFilter}
+          handleCategoryToggle={handleCategoryToggle}
+          handleCompletionFilterChange={handleCompletionFilterChange}
+          handlePrevWeek={handlePrevWeek}
+          handleNextWeek={handleNextWeek}
+        />
+      </div>
 
       {/* Calendar Grid */}
       <CalendarGrid
@@ -462,7 +494,6 @@ export function BigCalendar() {
         editingTodoId={editingTodoId}
         editingText={editingText}
         setEditingText={setEditingText}
-        setPendingEditId={setPendingEditId}
         startEdit={startEdit}
         handleFinishEdit={handleFinishEdit}
         cancelEdit={cancelEdit}
@@ -593,6 +624,36 @@ export function BigCalendar() {
           }
           return undefined;
         })() : undefined}
+      />
+
+      {/* Mobile FAB - Only show on mobile */}
+      {showMobileFAB && (
+        <FloatingActionButton 
+          onClick={handleFABClick}
+          label="새 일정 추가"
+        />
+      )}
+
+      {/* Quick Add Dialog for Mobile FAB */}
+      <AddRecurringDialog
+        isOpen={showQuickAddDialog}
+        onClose={() => setShowQuickAddDialog(false)}
+        onConfirm={(text, startTime, endTime, recurrenceRule, categoryId) => {
+          // 일반 일정 추가
+          onAddTodo?.({
+            text,
+            date: selectedDate,
+            startTime,
+            endTime,
+            categoryId,
+            completed: false,
+            subtasks: [],
+            recurrenceRule: recurrenceRule?.frequency ? recurrenceRule : undefined,
+          });
+          setShowQuickAddDialog(false);
+        }}
+        selectedDate={selectedDate}
+        categories={categories}
       />
     </div>
   );

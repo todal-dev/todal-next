@@ -113,7 +113,7 @@ const TodoItemComponent = ({
         style={style}
         {...attributes}
         {...listeners}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neutral-gray-50 transition-colors group cursor-grab active:cursor-grabbing"
+        className="flex items-center gap-2 px-3 py-2 sm:py-1.5 rounded-md hover:bg-neutral-gray-50 active:bg-neutral-gray-100 transition-colors group cursor-grab active:cursor-grabbing touch-manipulation min-h-[44px]"
       >
         <div
           onMouseDown={(e) => e.stopPropagation()}
@@ -133,7 +133,7 @@ const TodoItemComponent = ({
           placeholder="할일 입력..."
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
-          className={`text-sm bg-transparent focus:outline-none border-0 focus:ring-0 cursor-text w-full min-w-[100px] max-w-[400px] overflow-hidden text-ellipsis ${
+          className={`text-sm sm:text-sm bg-transparent focus:outline-none border-0 focus:ring-0 cursor-text w-full min-w-[100px] max-w-full sm:max-w-[400px] overflow-hidden text-ellipsis ${
             todo.completed
               ? 'line-through text-neutral-text-secondary'
               : 'text-neutral-text-primary'

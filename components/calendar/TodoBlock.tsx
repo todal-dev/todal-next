@@ -99,56 +99,82 @@ const TodoBlockComponent = ({
       onContextMenu={(e) => handleContextMenu(e, todo.id)}
       onMouseEnter={() => hasSubtasks && setShowSubtasks(true)}
       onMouseLeave={() => setShowSubtasks(false)}
-      onMouseDown={(e) => {
-        // Always stop propagation to prevent grid drag from starting
-        e.stopPropagation();
-
-        // Finish any pending edit before interacting with this todo
-        if (editingTodoId && editingTodoId !== todo.id) {
-          handleFinishEdit();
-          // Don't start drag when finishing an edit, just let the click happen
-          return;
-        }
-
-        // Only start drag if not clicking on resize handles or input
-        const target = e.target as HTMLElement;
-        if (!target.classList.contains('cursor-ns-resize') &&
-            target.tagName !== 'INPUT') {
-          handleTodoDragStart(e, todo.id, todo.date, todo.startTime!, todo.endTime!);
-        }
-      }}
-      className={`absolute py-1 pr-2 pl-1.5 rounded text-xs overflow-visible cursor-move hover:brightness-95 group select-none `}
+       onMouseDown={(e) => {
+         // Always stop propagation to prevent grid drag from starting
+         e.stopPropagation();
+ 
+         // Finish any pending edit before interacting with this todo
+         if (editingTodoId && editingTodoId !== todo.id) {
+           handleFinishEdit();
+           // Don't start drag when finishing an edit, just let the click happen
+           return;
+         }
+ 
+         // Only start drag if not clicking on resize handles or input
+         const target = e.target as HTMLElement;
+         if (!target.classList.contains('cursor-ns-resize') &&
+             target.tagName !== 'INPUT') {
+           handleTodoDragStart(e, todo.id, todo.date, todo.startTime!, todo.endTime!);
+         }
+       }}
+       onClick={(e) => {
+         // 모바일에서 클릭으로 완료 토글 (체크박스가 없으므로)
+         if (window.innerWidth < 640) {
+           const target = e.target as HTMLElement;
+           // 입력 중이 아니고, 리사이즈 핸들도 아닐 때만
+           if (target.tagName !== 'INPUT' && !target.classList.contains('cursor-ns-resize')) {
+             e.stopPropagation();
+             handleToggleCompletion(todo.id);
+           }
+         }
+       }}
+      className={`absolute py-1.5 sm:py-1 px-1.5 sm:pr-2 sm:pl-1.5 rounded text-xs overflow-visible cursor-move hover:brightness-95 active:brightness-90 group select-none touch-manipulation ${
+        todo.completed ? 'opacity-60' : ''
+      }`}
       style={{
         ...style,
         backgroundColor: category?.color || '#3B82F6',
-        borderLeft: `4px solid rgba(255, 255, 255, 0.5)`,
+        borderLeft: `3px solid rgba(255, 255, 255, 0.6)`,
         color: 'white',
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
         zIndex: isResizing ? 20 : 10,
         opacity: isDraggingThis ? 0.3 : (isPastEvent && !todo.completed) ? 0.5 : 1,
+        minHeight: '32px', // Minimum touch target size on mobile
+        textDecoration: todo.completed ? 'line-through' : 'none',
       }}
       title={`${todo.text} (${formatTimeWithoutSeconds(displayStartTime)} - ${formatTimeWithoutSeconds(displayEndTime)})`}
     >
       {/* Top resize handle */}
       <div
-        className="absolute top-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-0 left-0 right-0 h-3 sm:h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation"
         style={{
           background: 'linear-gradient(to top, transparent, rgba(0,0,0,0.2))',
         }}
         onMouseDown={(e) => handleResizeStart(e, todo.id, 'top', todo.startTime!, todo.endTime!)}
+        onTouchStart={(e) => {
+          e.stopPropagation();
+          const touch = e.touches[0];
+          const mouseEvent = new MouseEvent('mousedown', {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            bubbles: true,
+          });
+          handleResizeStart(mouseEvent as any, todo.id, 'top', todo.startTime!, todo.endTime!);
+        }}
       />
 
-      {/* Checkbox - Top Right */}
+      {/* Checkbox - Desktop only (Top Right) */}
       <div
-        className="absolute top-1 right-1 z-10"
+        className="absolute top-1 right-1 z-10 hidden sm:block"
         onClick={(e) => {
           e.stopPropagation();
           handleToggleCompletion(todo.id);
         }}
         onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
       >
         <div
-          className="w-4 h-4 rounded border-2 border-white flex items-center justify-center cursor-pointer hover:bg-white/20 transition-colors"
+          className="w-4 h-4 rounded border-2 border-white flex items-center justify-center cursor-pointer hover:bg-white/20 active:bg-white/30 transition-colors touch-manipulation"
           style={{
             backgroundColor: todo.completed ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
           }}
@@ -161,8 +187,8 @@ const TodoBlockComponent = ({
 
       {/* Content */}
       <div className="relative">
-        <div className="flex items-center gap-1 pr-6">
-          {isRecurring && <Repeat size={12} className="flex-shrink-0" />}
+        <div className="flex items-center gap-0.5 sm:gap-1 pr-0 sm:pr-6">
+          {isRecurring && <Repeat size={10} className="flex-shrink-0 sm:w-3 sm:h-3" />}
           {editingTodoId === todo.id ? (
             <input
               type="text"
@@ -181,12 +207,12 @@ const TodoBlockComponent = ({
                 backgroundColor: 'rgba(255, 255, 255, 0.2)',
                 borderColor: 'rgba(255, 255, 255, 0.5)',
               }}
-              className="flex-1 rounded px-2 py-0.5 font-semibold outline-none border-2 min-w-0 placeholder-white/70"
+              className="flex-1 rounded px-1 sm:px-2 py-0.5 text-[10px] sm:text-xs font-semibold outline-none border-2 min-w-0 placeholder-white/70"
               autoFocus
             />
           ) : (
             <div
-              className="font-semibold cursor-text hover:underline break-words"
+              className="text-[10px] sm:text-xs font-semibold cursor-text break-words line-clamp-2 leading-tight"
               onDoubleClick={(e) => {
                 e.stopPropagation();
                 startEdit(todo.id, todo.text);
@@ -196,13 +222,15 @@ const TodoBlockComponent = ({
             </div>
           )}
         </div>
-        <div className="text-xs opacity-90">
+        {/* 시간 표시 - 데스크톱만 */}
+        <div className="text-[10px] sm:text-xs opacity-90 hidden sm:block mt-0.5">
           {formatTimeWithoutSeconds(displayStartTime)} - {formatTimeWithoutSeconds(displayEndTime)}
         </div>
+        {/* 하위 항목 뱃지 - 더 작게 */}
         {hasSubtasks && (
-          <div className="text-xs opacity-90 mt-0.5">
-            <span className="flex items-center gap-0.5 bg-white/20 px-1.5 py-0.5 rounded inline-flex">
-              <ListTodo size={10} />
+          <div className="text-[9px] sm:text-[10px] opacity-90 mt-0.5 hidden sm:block">
+            <span className="flex items-center gap-0.5 bg-white/20 px-1 py-0.5 rounded inline-flex">
+              <ListTodo size={8} className="sm:w-2.5 sm:h-2.5" />
               <span className="font-medium">{subtaskCount}</span>
             </span>
           </div>
@@ -211,11 +239,21 @@ const TodoBlockComponent = ({
 
       {/* Bottom resize handle */}
       <div
-        className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute bottom-0 left-0 right-0 h-3 sm:h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation"
         style={{
           background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.2))',
         }}
         onMouseDown={(e) => handleResizeStart(e, todo.id, 'bottom', todo.startTime!, todo.endTime!)}
+        onTouchStart={(e) => {
+          e.stopPropagation();
+          const touch = e.touches[0];
+          const mouseEvent = new MouseEvent('mousedown', {
+            clientX: touch.clientX,
+            clientY: touch.clientY,
+            bubbles: true,
+          });
+          handleResizeStart(mouseEvent as any, todo.id, 'bottom', todo.startTime!, todo.endTime!);
+        }}
       />
 
       {/* 하위 항목 툴팁 */}

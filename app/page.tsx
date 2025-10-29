@@ -318,12 +318,14 @@ export default function Home() {
   return (
     <TodoProvider value={todoContextValue}>
       <CategoryProvider value={categoryContextValue}>
-        <div className="flex flex-col h-screen bg-white">
+        <div className="flex flex-col h-screen bg-white overflow-hidden">
           {/* Header */}
-          <Header categories={categories} onSelectTodo={handleSelectSearchResult} />
+          <div className="flex-shrink-0">
+            <Header categories={categories} onSelectTodo={handleSelectSearchResult} />
+          </div>
 
           {/* Main Content */}
-          <div className="flex flex-1 overflow-hidden">
+          <div className="flex flex-1 overflow-hidden min-h-0">
             {/* Desktop Layout */}
             <DesktopLayout todosByDate={todosByDate} />
 
