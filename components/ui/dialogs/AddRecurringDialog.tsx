@@ -482,7 +482,7 @@ export function AddRecurringDialog({
                 value={count}
                 onChange={(e) => setCount(parseInt(e.target.value) || 1)}
                 disabled={endType !== 'count'}
-                className="w-16 px-2 py-1 border border-neutral-gray-300 rounded-md text-sm disabled:bg-gray-100 mx-2"
+                className="w-16 px-2 py-1 border border-[#E5E7EB] rounded-lg text-sm disabled:bg-[#F5F5F5] mx-2"
               />
               <span className="text-sm">회 반복 후 종료</span>
             </label>
