@@ -128,7 +128,7 @@ function RecurringTodoItem({
               }}
               onMouseDown={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
-              className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity cursor-move text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-light"
+              className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity cursor-move text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100"
               title="캘린더로 드래그"
             >
               <Calendar size={12} />
@@ -145,7 +145,7 @@ function RecurringTodoItem({
             e.stopPropagation();
             onEdit();
           }}
-          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-light transition-colors"
+          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 transition-colors"
           title="편집"
         >
           <Edit2 size={13} />
@@ -248,7 +248,7 @@ export function RecurringSection({
       {/* Simple Header */}
       <div className="flex items-center justify-between px-3 mb-1">
         <div className="flex items-center gap-1.5">
-          <Repeat size={14} className="text-primary dark:text-primary-light" />
+          <Repeat size={14} className="text-primary dark:text-primary-100" />
           <span className="text-caption font-medium text-gray-600 dark:text-gray-400">
             반복 일정
           </span>
@@ -260,7 +260,7 @@ export function RecurringSection({
         </div>
         <button
           onClick={onAddRecurring}
-          className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-primary-light dark:hover:bg-primary-700 text-primary dark:text-primary-light transition-colors cursor-pointer"
+          className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-primary-50 dark:hover:bg-primary-700 text-primary dark:text-primary-100 transition-colors cursor-pointer"
         >
           <Plus size={12} />
           <span className="text-caption font-medium">추가</span>

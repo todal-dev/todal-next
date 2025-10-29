@@ -100,7 +100,7 @@ export function GoogleCalendarSyncButton() {
             onClick={handleImport}
             className="w-full px-4 py-3 text-left text-body-small hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center gap-3 transition-colors cursor-pointer text-gray-900 dark:text-gray-50"
           >
-            <Download size={16} className="text-primary dark:text-primary-light" />
+            <Download size={16} className="text-primary dark:text-primary-100" />
             <span>가져오기</span>
           </button>
           <div className="border-t border-gray-100 dark:border-gray-600"></div>
@@ -108,7 +108,7 @@ export function GoogleCalendarSyncButton() {
             onClick={handleExport}
             className="w-full px-4 py-3 text-left text-body-small hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center gap-3 transition-colors cursor-pointer text-gray-900 dark:text-gray-50"
           >
-            <Upload size={16} className="text-primary dark:text-primary-light" />
+            <Upload size={16} className="text-primary dark:text-primary-100" />
             <span>내보내기</span>
           </button>
         </div>
@@ -119,7 +119,7 @@ export function GoogleCalendarSyncButton() {
         <div
           className={`absolute top-full right-0 mt-2 px-4 py-2 rounded-md shadow-lg text-body-small whitespace-nowrap z-[110] animate-slide-up ${
             message.type === 'success'
-              ? 'bg-primary-light dark:bg-primary-900/30 text-primary-dark dark:text-primary-light border border-primary dark:border-primary-600'
+              ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-100 border border-primary dark:border-primary-600'
               : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'
           }`}
         >

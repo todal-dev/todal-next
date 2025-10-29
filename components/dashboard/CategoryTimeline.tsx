@@ -117,7 +117,7 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
                                   <div className="flex items-start gap-3">
                                     <div className="flex-shrink-0 mt-0.5">
                                       {todo.completed ? (
-                                        <CheckCircle2 className="w-4 h-4 text-primary dark:text-primary-light" />
+                                        <CheckCircle2 className="w-4 h-4 text-primary dark:text-primary-100" />
                                       ) : (
                                         <Circle className="w-4 h-4 text-gray-200 dark:text-gray-600" />
                                       )}

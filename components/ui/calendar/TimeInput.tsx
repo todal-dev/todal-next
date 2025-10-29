@@ -96,7 +96,7 @@ export function TimeInput({ value, onChange, placeholder = '00:00' }: TimeInputP
                     onClick={() => handleTimeSelect(hour, currentMinute)}
                     className={`w-full px-3 py-2 text-body-small text-left transition-colors ${
                       currentHour === hour
-                        ? 'bg-primary-light dark:bg-primary-700 text-primary dark:text-primary-light font-medium'
+                        ? 'bg-primary-50 dark:bg-primary-700 text-primary dark:text-primary-100 font-medium'
                         : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
                     }`}
                   >
@@ -119,7 +119,7 @@ export function TimeInput({ value, onChange, placeholder = '00:00' }: TimeInputP
                     onClick={() => handleTimeSelect(currentHour, minute)}
                     className={`w-full px-3 py-2 text-body-small text-left transition-colors ${
                       currentMinute === minute
-                        ? 'bg-primary-light dark:bg-primary-700 text-primary dark:text-primary-light font-medium'
+                        ? 'bg-primary-50 dark:bg-primary-700 text-primary dark:text-primary-100 font-medium'
                         : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
                     }`}
                   >

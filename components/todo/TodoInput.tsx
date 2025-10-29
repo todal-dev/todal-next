@@ -106,7 +106,7 @@ export function TodoInput({
           animate={{ opacity: 1 }}
           transition={{ duration: 0.15 }}
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-light w-full text-left min-h-[44px]"
+          className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 w-full text-left min-h-[44px]"
         >
           <Plus size={14} />
           <span className="text-body-small">할일 추가</span>

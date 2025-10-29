@@ -76,7 +76,7 @@ export function CustomSelect<T = string>({
               type="button"
               onClick={() => handleSelect(option.value)}
               className={`w-full px-3 py-2 flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors text-left ${
-                option.value === value ? 'bg-primary-light dark:bg-primary-700' : ''
+                option.value === value ? 'bg-primary-50 dark:bg-primary-700' : ''
               }`}
             >
               {option.icon}

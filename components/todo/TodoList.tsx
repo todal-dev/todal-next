@@ -153,8 +153,9 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
   // 카테고리별로 그룹화 (반복 TODO는 cat-recurring에 자동 배치) - useMemo로 최적화
   const todosByCategory = useMemo(() => {
     return categories
-      .map(cat => ({
+      .map((cat, originalIndex) => ({
         ...cat,
+        originalIndex,
         items: filteredTodos.filter(todo => {
           // 반복 카테고리: recurrenceRule이 있는 TODO만
           if (cat.id === 'cat-recurring') {
@@ -171,7 +172,8 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
         // 기타 카테고리는 맨 아래
         if (a.id === 'cat-etc') return 1;
         if (b.id === 'cat-etc') return -1;
-        return 0;
+        // 나머지는 원래 순서 유지
+        return a.originalIndex - b.originalIndex;
       });
   }, [categories, filteredTodos]);
 
@@ -344,11 +346,21 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
       if (onMoveCategory) {
         const oldIndex = categories.findIndex(c => c.id === activeId);
         const newIndex = categories.findIndex(c => c.id === overId);
+        const recurringIndex = categories.findIndex(c => c.id === 'cat-recurring');
         const etcIndex = categories.findIndex(c => c.id === 'cat-etc');
+        const googleCalendarIndex = categories.findIndex(c => c.name === 'Google Calendar');
 
         if (oldIndex !== -1 && newIndex !== -1) {
+          // "반복" 카테고리 위로는 이동 불가
+          if (recurringIndex !== -1 && newIndex <= recurringIndex) {
+            return;
+          }
           // "기타" 카테고리 아래로는 이동 불가
           if (etcIndex !== -1 && newIndex >= etcIndex) {
+            return;
+          }
+          // "Google Calendar" 카테고리 아래로는 이동 불가
+          if (googleCalendarIndex !== -1 && newIndex >= googleCalendarIndex) {
             return;
           }
           onMoveCategory(activeId, newIndex);
@@ -485,7 +497,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.15 }}
                 onClick={() => setAddingNewCategory(true)}
-                className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-light cursor-pointer"
+                className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 cursor-pointer"
               >
                 <Plus size={16} />
                 <span className="text-body-small font-medium">카테고리 추가</span>

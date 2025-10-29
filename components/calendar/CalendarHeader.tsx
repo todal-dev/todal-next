@@ -82,7 +82,7 @@ const CalendarHeaderComponent = ({
           {showCategoryFilter && (
             <div className="absolute top-full mt-1 right-0 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 min-w-[180px] sm:min-w-[200px] max-w-[90vw] animate-slide-up">
               <div className="py-1 max-h-[60vh] overflow-y-auto">
-                {categories.filter(cat => cat.id !== 'cat-recurring').map((category) => (
+                {categories.filter(cat => cat.id !== 'cat-recurring' && cat.name !== 'Google Calendar').map((category) => (
                   <button
                     key={category.id}
                     onClick={() => handleCategoryToggle(category.id)}
@@ -128,7 +128,7 @@ const CalendarHeaderComponent = ({
                 <button
                   onClick={() => handleCompletionFilterChange('all')}
                   className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-600 active:bg-gray-100 dark:active:bg-gray-500 transition-colors text-left min-h-[44px] ${
-                    completionFilter === 'all' ? 'bg-primary-light dark:bg-primary-700' : ''
+                    completionFilter === 'all' ? 'bg-primary-50 dark:bg-primary-700' : ''
                   }`}
                 >
                   <span className="text-body-small text-gray-900 dark:text-gray-50">전체</span>
@@ -136,7 +136,7 @@ const CalendarHeaderComponent = ({
                 <button
                   onClick={() => handleCompletionFilterChange('completed')}
                   className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-600 active:bg-gray-100 dark:active:bg-gray-500 transition-colors text-left min-h-[44px] ${
-                    completionFilter === 'completed' ? 'bg-primary-light dark:bg-primary-700' : ''
+                    completionFilter === 'completed' ? 'bg-primary-50 dark:bg-primary-700' : ''
                   }`}
                 >
                   <span className="text-body-small text-gray-900 dark:text-gray-50">완료</span>
@@ -144,7 +144,7 @@ const CalendarHeaderComponent = ({
                 <button
                   onClick={() => handleCompletionFilterChange('incomplete')}
                   className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-600 active:bg-gray-100 dark:active:bg-gray-500 transition-colors text-left min-h-[44px] ${
-                    completionFilter === 'incomplete' ? 'bg-primary-light dark:bg-primary-700' : ''
+                    completionFilter === 'incomplete' ? 'bg-primary-50 dark:bg-primary-700' : ''
                   }`}
                 >
                   <span className="text-body-small text-gray-900 dark:text-gray-50">미완료</span>

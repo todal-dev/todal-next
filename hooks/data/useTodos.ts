@@ -120,18 +120,24 @@ export function useTodos(initialTodos: Todo[] = []) {
 
   // Toggle todo completion (toggles all subtasks, updates parent)
   const handleToggleTodo = useCallback(async (id: string) => {
-    // 먼저 로컬 상태 업데이트해서 현재 값 확인
+    let updatedCompleted: boolean | undefined;
+    
+    // 1. 먼저 로컬 상태 업데이트
     setTodos(prevTodos => {
       const updatedTodos = toggleRecursively(prevTodos, id);
       const todo = findTodoById(updatedTodos, id);
       
       if (todo) {
-        // DB 업데이트
-        updateTodoDB(id, { completed: todo.completed });
+        updatedCompleted = todo.completed;
       }
       
       return updatedTodos;
     });
+    
+    // 2. 렌더링이 완료된 후 DB 업데이트
+    if (updatedCompleted !== undefined) {
+      await updateTodoDB(id, { completed: updatedCompleted });
+    }
   }, []);
 
   // Helper function to find todo by id

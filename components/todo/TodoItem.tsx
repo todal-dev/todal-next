@@ -100,14 +100,19 @@ const TodoItemComponent = ({
     },
   });
 
-  // 드래그 중 공간 제거 (단, 원래 자리로 돌아갈 때는 공간 유지)
-  const shouldRemoveSpace = isDragging && overTodoId !== todo.id;
+  // 드래그 중 항상 원래 자리의 공간 제거
+  const shouldRemoveSpace = isDragging;
   const style = getDraggableStyle(transform, transition, isDragging, 0, shouldRemoveSpace);
 
   const hasTime = todo.startTime && todo.endTime;
 
+  // 외부 wrapper div에도 공간 제거 스타일 적용
+  const wrapperStyle = shouldRemoveSpace
+    ? { paddingLeft: `${level * 24}px`, height: 0, minHeight: 0, maxHeight: 0, overflow: 'hidden' as const }
+    : { paddingLeft: `${level * 24}px` };
+
   return (
-    <div style={{ paddingLeft: `${level * 24}px` }}>
+    <div style={wrapperStyle}>
       <div
         ref={setNodeRef}
         style={style}
@@ -265,7 +270,7 @@ const TodoItemComponent = ({
               />
               <button
                 onClick={() => setEditingTime(false)}
-                className="text-caption px-2 py-1 bg-primary text-white rounded-md hover:bg-primary-dark dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors cursor-pointer"
+                className="text-caption px-2 py-1 bg-primary text-white rounded-md hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 transition-colors cursor-pointer"
               >
                 Done
               </button>
@@ -277,7 +282,7 @@ const TodoItemComponent = ({
                   onClick={() => setEditingTime(true)}
                   onMouseDown={(e) => e.stopPropagation()}
                   onTouchStart={(e) => e.stopPropagation()}
-                  className="text-caption text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-light flex items-center gap-1 cursor-pointer transition-colors"
+                  className="text-caption text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 flex items-center gap-1 cursor-pointer transition-colors"
                 >
                   <Clock size={12} />
                   <span>
@@ -293,7 +298,7 @@ const TodoItemComponent = ({
                     }}
                     onMouseDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
-                    className="text-caption text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-light flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                    className="text-caption text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
                   >
                     <Clock size={12} />
                     <span>시간 설정</span>
@@ -316,7 +321,7 @@ const TodoItemComponent = ({
                     }}
                     onMouseDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
-                    className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all cursor-move text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-light p-1"
+                    className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all cursor-move text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 p-1"
                     title="캘린더로 드래그"
                   >
                     <Calendar size={14} />
@@ -335,7 +340,7 @@ const TodoItemComponent = ({
                 e.stopPropagation();
                 onEdit(todo.id, todo.text);
               }}
-              className="p-1 hover:bg-primary-light dark:hover:bg-primary-700 rounded transition-colors text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-light opacity-0 group-hover:opacity-100 cursor-pointer"
+              className="p-1 hover:bg-primary-50 dark:hover:bg-primary-700 rounded transition-colors text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 opacity-0 group-hover:opacity-100 cursor-pointer"
               title="반복 일정 편집"
             >
               <Edit2 size={14} />
@@ -357,7 +362,7 @@ const TodoItemComponent = ({
         </div>
       </div>
 
-      {todo.subtasks && todo.subtasks.length > 0 && (
+      {!shouldRemoveSpace && todo.subtasks && todo.subtasks.length > 0 && (
         <div>
           {todo.subtasks.map((subtask, idx) => (
             <TodoItem

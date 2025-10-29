@@ -96,7 +96,7 @@ const CategorySectionComponent = ({
   const [isAddingTodo, setIsAddingTodo] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  // Make category draggable (except "반복" and "기타")
+  // Make category draggable (except "반복", "기타", "Google Calendar")
   const {
     attributes,
     listeners,
@@ -111,7 +111,7 @@ const CategorySectionComponent = ({
       id: category.id,
       index: categoryIndex,
     },
-    disabled: category.id === 'cat-recurring' || category.id === 'cat-etc',
+    disabled: category.id === 'cat-recurring' || category.id === 'cat-etc' || category.name === 'Google Calendar',
   });
 
   const style = getDraggableStyle(transform, transition, isDragging);
@@ -141,14 +141,14 @@ const CategorySectionComponent = ({
           {...attributes}
           {...listeners}
           className={`flex items-center gap-2 px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 group relative mb-1 transition-colors ${
-            category.id !== 'cat-recurring' && category.id !== 'cat-etc' ? 'cursor-grab active:cursor-grabbing' : ''
+            category.id !== 'cat-recurring' && category.id !== 'cat-etc' && category.name !== 'Google Calendar' ? 'cursor-grab active:cursor-grabbing' : ''
           }`}
           suppressHydrationWarning
         >
           {/* 반복 카테고리는 아이콘만 표시, 나머지는 색상 버튼 */}
           {category.id === 'cat-recurring' ? (
             <div className="flex-shrink-0">
-              <Repeat size={16} className="text-primary dark:text-primary-light" />
+              <Repeat size={16} className="text-primary dark:text-primary-100" />
             </div>
           ) : (
             <div
@@ -236,7 +236,7 @@ const CategorySectionComponent = ({
             }}
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
-            className="flex-shrink-0 p-1 hover:bg-primary-light dark:hover:bg-primary-700 rounded transition-colors text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-light cursor-pointer"
+            className="flex-shrink-0 p-1 hover:bg-primary-50 dark:hover:bg-primary-700 rounded transition-colors text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 cursor-pointer"
             title="할일 추가"
           >
             <Plus size={16} />

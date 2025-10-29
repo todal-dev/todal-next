@@ -41,7 +41,7 @@ export function Header({ categories, onSelectTodo }: HeaderProps) {
             href="/"
             className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all cursor-pointer ${
               pathname === '/'
-                ? 'bg-primary-light dark:bg-primary-700 text-primary dark:text-primary-light font-medium'
+                ? 'bg-primary-50 dark:bg-primary-700 text-primary dark:text-primary-100 font-medium'
                 : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300'
             }`}
           >
@@ -53,7 +53,7 @@ export function Header({ categories, onSelectTodo }: HeaderProps) {
             href="/dashboard"
             className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all cursor-pointer ${
               pathname === '/dashboard'
-                ? 'bg-primary-light dark:bg-primary-700 text-primary dark:text-primary-light font-medium'
+                ? 'bg-primary-50 dark:bg-primary-700 text-primary dark:text-primary-100 font-medium'
                 : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300'
             }`}
           >
@@ -115,7 +115,7 @@ export function Header({ categories, onSelectTodo }: HeaderProps) {
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all cursor-pointer ${
                 pathname === '/'
-                  ? 'bg-primary-light dark:bg-primary-700 text-primary dark:text-primary-light font-medium'
+                  ? 'bg-primary-50 dark:bg-primary-700 text-primary dark:text-primary-100 font-medium'
                   : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300'
               }`}
             >
@@ -128,7 +128,7 @@ export function Header({ categories, onSelectTodo }: HeaderProps) {
               onClick={() => setIsMobileMenuOpen(false)}
               className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all cursor-pointer ${
                 pathname === '/dashboard'
-                  ? 'bg-primary-light dark:bg-primary-700 text-primary dark:text-primary-light font-medium'
+                  ? 'bg-primary-50 dark:bg-primary-700 text-primary dark:text-primary-100 font-medium'
                   : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300'
               }`}
             >

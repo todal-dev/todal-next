@@ -136,7 +136,7 @@ export function SearchBar({ categories, onSelectTodo }: SearchBarProps) {
                         {todo.recurrenceRule && (
                           <>
                             <span>•</span>
-                            <span className="px-1.5 py-0.5 bg-primary-light dark:bg-primary-700 text-primary dark:text-primary-light rounded">
+                            <span className="px-1.5 py-0.5 bg-primary-50 dark:bg-primary-700 text-primary dark:text-primary-100 rounded">
                               반복
                             </span>
                           </>

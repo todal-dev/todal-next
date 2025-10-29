@@ -162,9 +162,9 @@ export function DatePicker({ value, onChange, minDate, maxDate, size = 'md' }: D
                 ${day.isDisabled ? 'cursor-not-allowed opacity-30' : 'cursor-pointer'}
                 ${
                   day.isSelected
-                    ? 'bg-primary dark:bg-primary-600 text-white hover:bg-primary-dark dark:hover:bg-primary-700'
+                    ? 'bg-primary dark:bg-primary-600 text-white hover:bg-primary-700 dark:hover:bg-primary-700'
                     : day.isToday && day.isCurrentMonth
-                    ? 'bg-primary-light dark:bg-primary-900/30 text-primary dark:text-primary-light hover:bg-primary-100 dark:hover:bg-primary-900/40'
+                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary dark:text-primary-100 hover:bg-primary-100 dark:hover:bg-primary-900/40'
                     : day.isCurrentMonth
                     ? isSunday
                       ? 'text-red-500 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700'
@@ -177,7 +177,7 @@ export function DatePicker({ value, onChange, minDate, maxDate, size = 'md' }: D
             >
               {day.date.getDate()}
               {day.isToday && day.isCurrentMonth && !day.isSelected && (
-                <div className={`absolute ${isSmall ? 'bottom-0.5' : 'bottom-1'} left-1/2 transform -translate-x-1/2 ${isSmall ? 'w-0.5 h-0.5' : 'w-1 h-1'} rounded-full bg-primary dark:bg-primary-light`} />
+                <div className={`absolute ${isSmall ? 'bottom-0.5' : 'bottom-1'} left-1/2 transform -translate-x-1/2 ${isSmall ? 'w-0.5 h-0.5' : 'w-1 h-1'} rounded-full bg-primary dark:bg-primary-100`} />
               )}
             </motion.button>
           );

@@ -188,7 +188,7 @@ const CalendarGridComponent = ({
               <div
                 key={dayIndex}
                 className={`flex-1 border-r border-gray-200 dark:border-gray-600 min-w-[50px] sm:min-w-[100px] relative calendar-day-column transition-colors ${
-                  isDraggingOverThisDay ? 'bg-primary-light dark:bg-primary-900/30' : ''
+                  isDraggingOverThisDay ? 'bg-primary-50 dark:bg-primary-900/30' : ''
                 }`}
               >
                 {/* Time Grid Background */}

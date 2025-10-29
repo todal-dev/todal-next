@@ -42,7 +42,7 @@ export function CategorySidebar({
           onClick={() => onSelectCategory(null)}
           className={`w-full text-left p-4 rounded-md transition-all ${
             selectedCategoryId === null
-              ? 'bg-primary-light dark:bg-primary-900/30 border-2 border-primary dark:border-primary-600'
+              ? 'bg-primary-50 dark:bg-primary-900/30 border-2 border-primary dark:border-primary-600'
               : 'bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'
           }`}
         >
@@ -83,7 +83,7 @@ export function CategorySidebar({
               onClick={() => onSelectCategory(category.id)}
               className={`w-full text-left p-4 rounded-md transition-all ${
                 isSelected
-                  ? 'bg-primary-light dark:bg-primary-900/30 border-2 border-primary dark:border-primary-600'
+                  ? 'bg-primary-50 dark:bg-primary-900/30 border-2 border-primary dark:border-primary-600'
                   : 'bg-warm-white dark:bg-dark-ocean-card border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
               }`}
             >

@@ -53,13 +53,13 @@ export function CategoryChangeDialog({
       }
     >
       <div className="space-y-2 max-h-[400px] overflow-y-auto">
-        {categories.map((category) => (
+        {categories.filter(cat => cat.id !== 'cat-recurring' && cat.name !== 'Google Calendar').map((category) => (
           <button
             key={category.id}
             onClick={() => setSelectedCategoryId(category.id)}
             className={`w-full px-4 py-3 text-left rounded-md border transition-colors flex items-center gap-3 ${
               selectedCategoryId === category.id
-                ? 'border-primary dark:border-primary-600 bg-primary-light dark:bg-primary-900/30'
+                ? 'border-primary dark:border-primary-600 bg-primary-50 dark:bg-primary-900/30'
                 : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
             }`}
           >
@@ -72,7 +72,7 @@ export function CategoryChangeDialog({
             </span>
             {selectedCategoryId === category.id && (
               <svg
-                className="w-5 h-5 ml-auto text-primary dark:text-primary-light"
+                className="w-5 h-5 ml-auto text-primary dark:text-primary-100"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

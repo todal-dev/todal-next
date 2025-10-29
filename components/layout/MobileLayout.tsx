@@ -38,7 +38,7 @@ const MobileLayoutComponent = ({ todosByDate }: MobileLayoutProps) => {
             border-b-2 min-h-[48px]
             ${
               activeTab === 'todo'
-                ? 'border-b-primary dark:border-b-primary-600 text-primary dark:text-primary-light'
+                ? 'border-b-primary dark:border-b-primary-600 text-primary dark:text-primary-100'
                 : 'border-b-transparent text-gray-400 dark:text-gray-500 active:bg-gray-50 dark:active:bg-gray-700'
             }
           `}
@@ -53,7 +53,7 @@ const MobileLayoutComponent = ({ todosByDate }: MobileLayoutProps) => {
             border-b-2 min-h-[48px]
             ${
               activeTab === 'calendar'
-                ? 'border-b-primary dark:border-b-primary-600 text-primary dark:text-primary-light'
+                ? 'border-b-primary dark:border-b-primary-600 text-primary dark:text-primary-100'
                 : 'border-b-transparent text-gray-400 dark:text-gray-500 active:bg-gray-50 dark:active:bg-gray-700'
             }
           `}

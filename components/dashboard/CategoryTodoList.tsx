@@ -63,11 +63,11 @@ export function CategoryTodoList({ todos, categoryName, categoryColor }: Categor
             <div key={dateKey} className="p-6">
               {/* Date Header */}
               <div className="flex items-center gap-2 mb-4">
-                <h4 className={`text-body-small font-medium ${isToday ? 'text-primary dark:text-primary-light' : 'text-gray-600 dark:text-gray-400'}`}>
+                <h4 className={`text-body-small font-medium ${isToday ? 'text-primary dark:text-primary-100' : 'text-gray-600 dark:text-gray-400'}`}>
                   {format(date, 'M월 d일 (EEE)', { locale: ko })}
                 </h4>
                 {isToday && (
-                  <span className="px-2 py-0.5 bg-primary-light dark:bg-primary-900/30 text-primary-dark dark:text-primary-light text-label rounded-full">
+                  <span className="px-2 py-0.5 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-100 text-label rounded-full">
                     오늘
                   </span>
                 )}
@@ -100,7 +100,7 @@ export function CategoryTodoList({ todos, categoryName, categoryColor }: Categor
                       {/* Checkbox */}
                       <div className="flex-shrink-0">
                         {todo.completed ? (
-                          <CheckCircle2 className="w-5 h-5 text-primary dark:text-primary-light" />
+                          <CheckCircle2 className="w-5 h-5 text-primary dark:text-primary-100" />
                         ) : (
                           <Circle className="w-5 h-5 text-gray-200 dark:text-gray-600" />
                         )}

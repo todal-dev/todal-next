@@ -56,34 +56,37 @@ export function BaseDialog({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ duration: 0.2, ease: 'easeOut' }}
-            className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-warm-white dark:bg-dark-ocean-card rounded-lg sm:rounded-xl shadow-xl w-full mx-4 max-h-[90vh] overflow-y-auto ${sizeClasses[size]} ${className}`}
+            transition={{ 
+              duration: 0.25, 
+              ease: [0.4, 0, 0.2, 1] // cubic-bezier from design guide
+            }}
+            className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-dark-ocean-card rounded-2xl shadow-2xl w-full mx-4 max-h-[90vh] overflow-y-auto ${sizeClasses[size]} ${className}`}
             style={{ zIndex: zIndex + 10 }}
           >
             {/* Header */}
-            <div className={`flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 ${showHeaderBorder ? 'border-b border-gray-200 dark:border-gray-600' : ''}`}>
-              <h2 className="text-h3 text-gray-900 dark:text-gray-50">
+            <div className={`flex items-center justify-between px-5 sm:px-7 py-4 sm:py-5 ${showHeaderBorder ? 'border-b border-gray-200 dark:border-gray-600' : ''}`}>
+              <h2 className="text-h3 font-semibold text-gray-900 dark:text-gray-50">
                 {title}
               </h2>
               {showCloseButton && (
                 <button
                   onClick={onClose}
-                  className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-600 active:bg-gray-200 dark:active:bg-gray-500 transition-colors cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center touch-manipulation"
+                  className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 transition-all cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation hover:scale-105 active:scale-95"
                   aria-label="닫기"
                 >
-                  <X size={20} className="text-gray-600 dark:text-gray-400" />
+                  <X size={20} className="text-gray-500 dark:text-gray-400" />
                 </button>
               )}
             </div>
 
             {/* Content */}
-            <div className="px-4 sm:px-6 py-4">
+            <div className="px-5 sm:px-7 py-5">
               {children}
             </div>
 
             {/* Footer */}
             {footer && (
-              <div className={`flex items-center justify-end gap-2 px-4 sm:px-6 py-3 sm:py-4 ${showFooterBorder ? 'border-t border-gray-200 dark:border-gray-600' : ''}`}>
+              <div className={`flex items-center justify-end gap-3 px-5 sm:px-7 py-4 sm:py-5 ${showFooterBorder ? 'border-t border-gray-200 dark:border-gray-600' : ''}`}>
                 {footer}
               </div>
             )}
@@ -113,14 +116,14 @@ export function DialogFooter({
     <>
       <button
         onClick={onCancel}
-        className="px-4 py-2.5 text-body-small font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-600 active:bg-gray-200 dark:active:bg-gray-500 rounded-md transition-colors cursor-pointer min-h-[44px] touch-manipulation"
+        className="px-5 py-3 text-body font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 rounded-xl transition-all cursor-pointer min-h-[48px] touch-manipulation hover:scale-[1.02] active:scale-[0.98]"
       >
         {cancelText}
       </button>
       <button
         onClick={onConfirm}
         disabled={confirmDisabled}
-        className="px-4 py-2.5 text-body-small font-medium text-white bg-primary dark:bg-primary-600 hover:bg-primary-dark dark:hover:bg-primary-700 active:bg-primary-700 dark:active:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer min-h-[44px] touch-manipulation"
+        className="px-6 py-3 text-body font-semibold text-white bg-primary dark:bg-primary-600 hover:bg-primary-700 dark:hover:bg-primary-700 active:bg-primary-700 dark:active:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer min-h-[48px] touch-manipulation shadow-md hover:shadow-lg"
       >
         {confirmText}
       </button>

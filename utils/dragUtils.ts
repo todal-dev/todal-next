@@ -67,9 +67,12 @@ export function getDraggableStyle(
     return {
       ...baseStyle,
       height: 0,
+      minHeight: 0,
+      maxHeight: 0,
       overflow: 'hidden' as const,
       margin: 0,
       padding: 0,
+      border: 'none',
     };
   }
 

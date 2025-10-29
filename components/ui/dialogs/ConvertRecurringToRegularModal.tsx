@@ -66,7 +66,7 @@ export function ConvertRecurringToRegularModal({
                 onConvertThisOnly();
                 onClose();
               }}
-              className="w-full px-4 py-2.5 bg-primary dark:bg-primary-600 hover:bg-primary-dark dark:hover:bg-primary-700 text-white rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer font-medium"
+              className="w-full px-4 py-2.5 bg-primary dark:bg-primary-600 hover:bg-primary-700 dark:hover:bg-primary-700 text-white rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer font-medium"
             >
               일반 할일로 변환
             </button>

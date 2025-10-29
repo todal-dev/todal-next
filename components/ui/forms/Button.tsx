@@ -20,7 +20,7 @@ export function Button({
 
   const variantStyles = {
     primary:
-      'bg-primary text-white hover:bg-primary-dark dark:bg-primary-600 dark:hover:bg-primary-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed dark:disabled:bg-gray-700 dark:disabled:text-gray-500',
+      'bg-primary text-white hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed dark:disabled:bg-gray-700 dark:disabled:text-gray-500',
     secondary:
       'bg-gray-100 text-gray-900 border border-gray-200 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-50 dark:border-gray-600 dark:hover:bg-gray-600 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed dark:disabled:bg-gray-800 dark:disabled:text-gray-600',
     ghost:
