@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { Calendar, Download, Upload } from 'lucide-react'
 import { syncGoogleCalendarToTodal, exportTodosToGoogleCalendar } from '@/lib/google/calendar'
 
 export function GoogleCalendarSyncButton() {
@@ -81,29 +82,34 @@ export function GoogleCalendarSyncButton() {
       <button
         onClick={() => setShowMenu(!showMenu)}
         disabled={syncing}
-        className="px-4 py-2 text-sm flex items-center gap-2 text-neutral-text-primary hover:bg-neutral-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-3 py-2 text-body-small flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         title="구글 캘린더 동기화"
       >
-        <span className="text-lg">📅</span>
-        <span>{syncing ? '동기화 중...' : '캘린더 동기화'}</span>
+        {syncing ? (
+          <div className="w-4 h-4 border-2 border-gray-200 dark:border-gray-600 border-t-primary dark:border-t-primary-600 rounded-full animate-spin"></div>
+        ) : (
+          <Calendar size={16} className="text-gray-400 dark:text-gray-500" />
+        )}
+        <span className="hidden sm:inline">{syncing ? '동기화 중' : '구글 캘린더'}</span>
       </button>
 
       {/* Dropdown Menu */}
       {showMenu && !syncing && (
-        <div className="absolute top-full right-0 mt-2 bg-white border border-neutral-gray-300 rounded-lg shadow-lg py-1 min-w-[200px] z-10">
+        <div className="absolute top-full right-0 mt-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg overflow-hidden min-w-[180px] z-[100] animate-slide-up">
           <button
             onClick={handleImport}
-            className="w-full px-4 py-2 text-left text-sm hover:bg-neutral-gray-50 flex items-center gap-2"
+            className="w-full px-4 py-3 text-left text-body-small hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center gap-3 transition-colors cursor-pointer text-gray-900 dark:text-gray-50"
           >
-            <span>⬇️</span>
-            <span>Google에서 가져오기</span>
+            <Download size={16} className="text-primary dark:text-primary-light" />
+            <span>가져오기</span>
           </button>
+          <div className="border-t border-gray-100 dark:border-gray-600"></div>
           <button
             onClick={handleExport}
-            className="w-full px-4 py-2 text-left text-sm hover:bg-neutral-gray-50 flex items-center gap-2"
+            className="w-full px-4 py-3 text-left text-body-small hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center gap-3 transition-colors cursor-pointer text-gray-900 dark:text-gray-50"
           >
-            <span>⬆️</span>
-            <span>Google에 내보내기</span>
+            <Upload size={16} className="text-primary dark:text-primary-light" />
+            <span>내보내기</span>
           </button>
         </div>
       )}
@@ -111,10 +117,10 @@ export function GoogleCalendarSyncButton() {
       {/* Toast Message */}
       {message && (
         <div
-          className={`absolute top-full right-0 mt-2 px-4 py-2 rounded-lg shadow-lg text-sm whitespace-nowrap z-20 ${
+          className={`absolute top-full right-0 mt-2 px-4 py-2 rounded-md shadow-lg text-body-small whitespace-nowrap z-[110] animate-slide-up ${
             message.type === 'success'
-              ? 'bg-green-100 text-green-700 border border-green-200'
-              : 'bg-red-100 text-red-700 border border-red-200'
+              ? 'bg-primary-light dark:bg-primary-900/30 text-primary-dark dark:text-primary-light border border-primary dark:border-primary-600'
+              : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'
           }`}
         >
           {message.text}

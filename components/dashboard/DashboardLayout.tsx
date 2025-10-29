@@ -58,7 +58,7 @@ export function DashboardLayout({ categories, todos }: DashboardLayoutProps) {
   }, [categories, selectedCategoryId]);
 
   return (
-    <div className="flex h-full bg-[#FAFAFA]">
+    <div className="flex h-full bg-gray-50 dark:bg-gray-900 transition-colors">
       {/* Left Sidebar - Categories */}
       <CategorySidebar
         categories={categories}
@@ -72,10 +72,10 @@ export function DashboardLayout({ categories, todos }: DashboardLayoutProps) {
         <div className="max-w-7xl mx-auto p-6 space-y-6">
           {/* Page Header */}
           <div>
-            <h1 className="text-2xl font-semibold text-[#111827]">
+            <h1 className="text-h1 text-gray-900 dark:text-gray-50">
               {selectedCategory.name}
             </h1>
-            <p className="text-sm text-[#9CA3AF] mt-1">
+            <p className="text-body-small text-gray-400 dark:text-gray-500 mt-1">
               {filteredTodos.length}개의 할일
             </p>
           </div>

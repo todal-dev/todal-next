@@ -28,32 +28,32 @@ export function CategoryTodoList({ todos, categoryName, categoryColor }: Categor
 
   if (todos.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-[#E5E7EB] p-8">
-        <div className="text-center text-[#9CA3AF]">
-          <p className="text-sm">할일이 없습니다</p>
+      <div className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 p-8 transition-colors">
+        <div className="text-center text-gray-400 dark:text-gray-500">
+          <p className="text-body-small">할일이 없습니다</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg border border-[#E5E7EB]">
+    <div className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 transition-colors">
       {/* Header */}
-      <div className="p-6 border-b border-[#E5E7EB]">
+      <div className="p-6 border-b border-gray-200 dark:border-gray-600">
         <div className="flex items-center gap-3">
           <div 
             className="w-4 h-4 rounded-full" 
             style={{ backgroundColor: categoryColor }}
           ></div>
-          <h3 className="text-lg font-semibold text-[#111827]">{categoryName}</h3>
-          <span className="text-sm text-[#9CA3AF]">
+          <h3 className="text-h3 text-gray-900 dark:text-gray-50">{categoryName}</h3>
+          <span className="text-body-small text-gray-400 dark:text-gray-500">
             {todos.filter(t => t.completed).length}/{todos.length} 완료
           </span>
         </div>
       </div>
 
       {/* Todo List by Date */}
-      <div className="divide-y divide-[#F5F5F5]">
+      <div className="divide-y divide-gray-100 dark:divide-gray-600">
         {sortedDates.map((dateKey) => {
           const dateTodos = todosByDate[dateKey];
           const date = new Date(dateKey);
@@ -63,11 +63,11 @@ export function CategoryTodoList({ todos, categoryName, categoryColor }: Categor
             <div key={dateKey} className="p-6">
               {/* Date Header */}
               <div className="flex items-center gap-2 mb-4">
-                <h4 className={`text-sm font-medium ${isToday ? 'text-[#2D9F6B]' : 'text-[#4B5563]'}`}>
+                <h4 className={`text-body-small font-medium ${isToday ? 'text-primary dark:text-primary-light' : 'text-gray-600 dark:text-gray-400'}`}>
                   {format(date, 'M월 d일 (EEE)', { locale: ko })}
                 </h4>
                 {isToday && (
-                  <span className="px-2 py-0.5 bg-[#E8F5EE] text-[#1F7A51] text-xs font-medium rounded-full">
+                  <span className="px-2 py-0.5 bg-primary-light dark:bg-primary-900/30 text-primary-dark dark:text-primary-light text-label rounded-full">
                     오늘
                   </span>
                 )}
@@ -91,32 +91,32 @@ export function CategoryTodoList({ todos, categoryName, categoryColor }: Categor
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: index * 0.05 }}
-                      className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
+                      className={`flex items-center gap-3 p-3 rounded-md transition-all ${
                         todo.completed 
-                          ? 'bg-[#FAFAFA]' 
-                          : 'hover:bg-[#FAFAFA]'
+                          ? 'bg-gray-50 dark:bg-gray-800' 
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-800'
                       }`}
                     >
                       {/* Checkbox */}
                       <div className="flex-shrink-0">
                         {todo.completed ? (
-                          <CheckCircle2 className="w-5 h-5 text-[#2D9F6B]" />
+                          <CheckCircle2 className="w-5 h-5 text-primary dark:text-primary-light" />
                         ) : (
-                          <Circle className="w-5 h-5 text-[#E5E7EB]" />
+                          <Circle className="w-5 h-5 text-gray-200 dark:text-gray-600" />
                         )}
                       </div>
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm ${
+                        <p className={`text-body ${
                           todo.completed 
-                            ? 'line-through text-[#9CA3AF]' 
-                            : 'text-[#111827]'
+                            ? 'line-through text-gray-400 dark:text-gray-500' 
+                            : 'text-gray-900 dark:text-gray-50'
                         }`}>
                           {todo.text}
                         </p>
                         {(todo.startTime || todo.endTime) && (
-                          <div className="flex items-center gap-1 mt-1 text-xs text-[#9CA3AF]">
+                          <div className="flex items-center gap-1 mt-1 text-caption text-gray-400 dark:text-gray-500">
                             <Clock className="w-3 h-3" />
                             <span>
                               {todo.startTime} {todo.endTime && `- ${todo.endTime}`}

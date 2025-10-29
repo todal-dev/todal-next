@@ -67,21 +67,21 @@ export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsPro
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg border border-[#E5E7EB] p-6"
+          className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 p-6 transition-colors"
         >
           <div className="flex items-center gap-3 mb-3">
             <div 
-              className="w-10 h-10 rounded-lg flex items-center justify-center"
+              className="w-10 h-10 rounded-md flex items-center justify-center"
               style={{ backgroundColor: `${categoryColor}20` }}
             >
               <CheckCircle2 className="w-5 h-5" style={{ color: categoryColor }} />
             </div>
             <div>
-              <p className="text-sm text-[#9CA3AF]">완료율</p>
-              <p className="text-2xl font-bold text-[#111827]">{completionRate.toFixed(0)}%</p>
+              <p className="text-body-small text-gray-400 dark:text-gray-500">완료율</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-50">{completionRate.toFixed(0)}%</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-[#4B5563]">
+          <div className="flex items-center gap-2 text-body-small text-gray-600 dark:text-gray-400">
             <span>{completedTodos}/{totalTodos} 완료</span>
           </div>
         </motion.div>
@@ -91,18 +91,18 @@ export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsPro
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-lg border border-[#E5E7EB] p-6"
+          className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 p-6 transition-colors"
         >
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-md bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
+              <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-[#9CA3AF]">총 시간</p>
-              <p className="text-2xl font-bold text-[#111827]">{totalHours.toFixed(1)}h</p>
+              <p className="text-body-small text-gray-400 dark:text-gray-500">총 시간</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-50">{totalHours.toFixed(1)}h</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-[#4B5563]">
+          <div className="flex items-center gap-2 text-body-small text-gray-600 dark:text-gray-400">
             <span>완료 {completedHours.toFixed(1)}h</span>
           </div>
         </motion.div>
@@ -112,20 +112,20 @@ export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsPro
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-lg border border-[#E5E7EB] p-6"
+          className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 p-6 transition-colors"
         >
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-purple-600" />
+            <div className="w-10 h-10 rounded-md bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
+              <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <p className="text-sm text-[#9CA3AF]">평균 시간</p>
-              <p className="text-2xl font-bold text-[#111827]">
+              <p className="text-body-small text-gray-400 dark:text-gray-500">평균 시간</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-gray-50">
                 {totalTodos > 0 ? (totalHours / totalTodos).toFixed(1) : 0}h
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-sm text-[#4B5563]">
+          <div className="flex items-center gap-2 text-body-small text-gray-600 dark:text-gray-400">
             <span>할일당</span>
           </div>
         </motion.div>
@@ -137,11 +137,11 @@ export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsPro
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-lg border border-[#E5E7EB] p-6"
+          className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 p-6 transition-colors"
         >
           <div className="mb-4">
-            <h3 className="text-lg font-semibold text-[#111827]">시간대별 생산성</h3>
-            <p className="text-sm text-[#9CA3AF] mt-1">완료된 할일 수</p>
+            <h3 className="text-h3 text-gray-900 dark:text-gray-50">시간대별 생산성</h3>
+            <p className="text-body-small text-gray-400 dark:text-gray-500 mt-1">완료된 할일 수</p>
           </div>
 
           <ResponsiveContainer width="100%" height={250}>
@@ -178,13 +178,13 @@ export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsPro
           </ResponsiveContainer>
 
           {/* Legend */}
-          <div className="mt-4 flex items-center justify-center gap-6 text-sm">
+          <div className="mt-4 flex items-center justify-center gap-6 text-body-small">
             <div className="flex items-center gap-2">
               <div 
                 className="w-3 h-3 rounded" 
                 style={{ backgroundColor: categoryColor }}
               ></div>
-              <span className="text-[#4B5563]">완료된 할일</span>
+              <span className="text-gray-600 dark:text-gray-400">완료된 할일</span>
             </div>
           </div>
         </motion.div>

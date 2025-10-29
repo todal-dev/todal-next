@@ -17,11 +17,11 @@ export function WeeklyProductivityChart({ data }: WeeklyProductivityChartProps) 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.1 }}
-      className="bg-white rounded-lg border border-neutral-gray-300 p-5"
+      className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 transition-colors p-5"
     >
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-neutral-text-primary mb-1">📊 주간 생산성</h3>
-        <p className="text-sm text-neutral-text-secondary">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-1">📊 주간 생산성</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           평균 완료율: {avgPercentage.toFixed(0)}% · 최고: {bestDay.day} ({bestDay.percentage.toFixed(0)}%)
         </p>
       </div>
@@ -62,7 +62,7 @@ export function WeeklyProductivityChart({ data }: WeeklyProductivityChartProps) 
         </BarChart>
       </ResponsiveContainer>
 
-      <div className="mt-4 flex items-center gap-4 text-xs text-neutral-text-secondary">
+      <div className="mt-4 flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
         <div className="flex items-center gap-1">
           <div className="w-3 h-3 rounded-full bg-green-500"></div>
           <span>70% 이상</span>

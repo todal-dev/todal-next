@@ -132,22 +132,22 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
   };
 
   const getDateColor = (day: number | null) => {
-    if (!day) return 'text-neutral-gray-300';
+    if (!day) return 'text-gray-300 dark:text-gray-700';
     
     const dayOfWeek = getDayOfWeek(day);
     const holiday = checkIsHoliday(day);
 
     // 일요일 또는 공휴일: 빨간색
     if (dayOfWeek === 0 || holiday) {
-      return 'text-status-error';
+      return 'text-status-error dark:text-red-400';
     }
 
     // 토요일: 파란색
     if (dayOfWeek === 6) {
-      return 'text-status-info';
+      return 'text-status-info dark:text-blue-400';
     }
 
-    return 'text-neutral-text-primary';
+    return 'text-gray-900 dark:text-gray-50';
   };
 
   // 년월 선택용 변수들
@@ -156,36 +156,36 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
   const months = Array.from({ length: 12 }, (_, i) => i);
 
   return (
-    <div className="p-1.5 border-b border-neutral-gray-300">
+    <div className="p-1.5 border-b border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800">
       {/* Month/Year Header with Dropdown */}
       <div className="flex items-center justify-between mb-1.5 relative">
         <div className="relative" ref={dropdownRef}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-semibold text-neutral-text-primary hover:bg-neutral-gray-100 transition-all duration-150 cursor-pointer active:bg-neutral-gray-200"
+            className="flex items-center gap-1.5 px-2 py-1 rounded-md text-caption font-semibold text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-fast cursor-pointer active:bg-gray-100 dark:active:bg-gray-600"
             aria-label="년월 선택"
           >
             <span>{year}년 {monthName}</span>
-            <Calendar size={14} className="text-neutral-text-secondary" />
+            <Calendar size={14} className="text-gray-600 dark:text-gray-400" />
           </button>
 
           {/* Dropdown Menu */}
           {isDropdownOpen && (
-            <div className="absolute top-full left-0 mt-1 bg-white border border-neutral-gray-300 rounded-lg shadow-lg z-50 min-w-max">
+            <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-50 min-w-max animate-slide-up">
               {/* Year Selector */}
-              <div className="px-3 py-2 border-b border-neutral-gray-200">
-                <div className="text-xs font-semibold text-neutral-text-secondary mb-2">연도</div>
+              <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-600">
+                <div className="text-caption font-semibold text-gray-400 dark:text-gray-500 mb-2">연도</div>
                 <div className="flex gap-1 flex-wrap">
                   {yearRange.map((y) => (
                     <button
                       key={y}
                       onClick={() => handleSelectYear(y)}
                       className={`
-                        px-2 py-1 rounded text-xs font-medium transition-all duration-150
+                        px-2 py-1 rounded text-caption font-medium transition-all duration-fast
                         ${
                           dropdownYear === y
-                            ? 'bg-primary-500 text-white'
-                            : 'bg-white text-neutral-text-primary hover:bg-neutral-gray-300 cursor-pointer'
+                            ? 'bg-primary text-white dark:bg-primary-600'
+                            : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer'
                         }
                       `}
                     >
@@ -197,7 +197,7 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
 
               {/* Month Selector */}
               <div className="px-3 py-2">
-                <div className="text-xs font-semibold text-neutral-text-secondary mb-2">월</div>
+                <div className="text-caption font-semibold text-gray-400 dark:text-gray-500 mb-2">월</div>
                 <div className="grid grid-cols-3 gap-1">
                   {months.map((m) => {
                     const monthLabel = new Date(dropdownYear, m, 1).toLocaleString('ko-KR', { month: 'short' });
@@ -206,11 +206,11 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
                         key={m}
                         onClick={() => handleSelectMonth(m)}
                         className={`
-                          px-2 py-1.5 rounded text-xs font-medium transition-all duration-150
+                          px-2 py-1.5 rounded text-caption font-medium transition-all duration-fast
                           ${
                             dropdownYear === currentDate.getFullYear() && m === currentDate.getMonth()
-                              ? 'bg-primary-500 text-white'
-                              : 'bg-white text-neutral-text-primary hover:bg-neutral-gray-300 cursor-pointer'
+                              ? 'bg-primary text-white dark:bg-primary-600'
+                              : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer'
                           }
                         `}
                       >
@@ -228,17 +228,17 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
         <div className="flex gap-0.5">
           <button
             onClick={handlePrevMonth}
-            className="p-0.5 hover:bg-neutral-gray-100 rounded transition-all duration-150 cursor-pointer active:bg-neutral-gray-200"
+            className="p-0.5 hover:bg-gray-50 dark:hover:bg-gray-700 rounded transition-all duration-fast cursor-pointer active:bg-gray-100 dark:active:bg-gray-600"
             aria-label="이전 달"
           >
-            <ChevronLeft size={14} className="text-neutral-text-secondary" />
+            <ChevronLeft size={14} className="text-gray-600 dark:text-gray-400" />
           </button>
           <button
             onClick={handleNextMonth}
-            className="p-0.5 hover:bg-neutral-gray-100 rounded transition-all duration-150 cursor-pointer active:bg-neutral-gray-200"
+            className="p-0.5 hover:bg-gray-50 dark:hover:bg-gray-700 rounded transition-all duration-fast cursor-pointer active:bg-gray-100 dark:active:bg-gray-600"
             aria-label="다음 달"
           >
-            <ChevronRight size={14} className="text-neutral-text-secondary" />
+            <ChevronRight size={14} className="text-gray-600 dark:text-gray-400" />
           </button>
         </div>
       </div>
@@ -248,8 +248,8 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
         {['일', '월', '화', '수', '목', '금', '토'].map((day, index) => (
           <div
             key={day}
-            className={`text-xs font-semibold text-center h-3.5 ${
-              index === 0 ? 'text-status-error' : index === 6 ? 'text-status-info' : 'text-neutral-text-secondary'
+            className={`text-caption font-semibold text-center h-3.5 ${
+              index === 0 ? 'text-status-error dark:text-red-400' : index === 6 ? 'text-status-info dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
             }`}
           >
             {day}
@@ -275,13 +275,13 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
                 ${day ? 'cursor-pointer' : 'cursor-default disabled:cursor-default'}
                 ${
                   selected
-                    ? 'bg-gradient-to-br from-primary-600 to-primary-700 text-white font-semibold'
+                    ? 'bg-gradient-to-br from-primary-600 to-primary-700 dark:from-primary-500 dark:to-primary-600 text-white font-semibold'
                     : today && (!todos || todos.completed < todos.total)
-                    ? 'bg-primary-100'
+                    ? 'bg-primary-100 dark:bg-primary-900/30'
                     : day && todos && todos.completed === todos.total
-                    ? 'bg-gradient-to-br from-primary-100 to-primary-200 ring-2 ring-primary-500 hover:from-primary-200 hover:to-primary-300'
+                    ? 'bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/40 dark:to-primary-800/40 ring-2 ring-primary dark:ring-primary-600 hover:from-primary-200 hover:to-primary-300 dark:hover:from-primary-900/50 dark:hover:to-primary-800/50'
                     : day
-                    ? 'hover:bg-neutral-gray-100 active:bg-neutral-gray-200'
+                    ? 'hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600'
                     : ''
                 }
               `}
@@ -306,7 +306,7 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
                   </div>
 
                   {/* Completed/Total Count */}
-                  <div className={`text-[10px] ${selected ? 'text-white' : 'text-neutral-text-secondary'}`}>
+                  <div className={`text-[10px] ${selected ? 'text-white' : 'text-gray-600 dark:text-gray-400'}`}>
                     {todos.completed}/{todos.total}
                   </div>
                 </div>

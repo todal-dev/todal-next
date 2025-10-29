@@ -69,7 +69,7 @@ export function TodoInput({
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neutral-gray-50"
+            className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 min-h-[44px]"
           >
             <Checkbox checked={false} onChange={() => {}} className="flex-shrink-0" />
             <input
@@ -93,7 +93,7 @@ export function TodoInput({
                   setValue('');
                 }, 150);
               }}
-              className="flex-1 text-sm bg-transparent text-neutral-text-primary placeholder:text-neutral-text-tertiary focus:outline-none border-0 focus:ring-0"
+              className="flex-1 text-body bg-transparent text-gray-900 dark:text-gray-50 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none border-0 focus:ring-0"
             />
           </motion.div>
         )}
@@ -106,10 +106,10 @@ export function TodoInput({
           animate={{ opacity: 1 }}
           transition={{ duration: 0.15 }}
           onClick={() => setIsAdding(true)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neutral-gray-50 transition-colors text-neutral-text-tertiary hover:text-primary-500 w-full text-left"
+          className="flex items-center gap-2 px-4 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-light w-full text-left min-h-[44px]"
         >
           <Plus size={14} />
-          <span className="text-sm">Add todo</span>
+          <span className="text-body-small">할일 추가</span>
         </motion.button>
       )}
     </div>

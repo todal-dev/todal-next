@@ -8,7 +8,7 @@ interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>
 
 export function Checkbox({ label, className = '', disabled = false, ...props }: CheckboxProps) {
   return (
-    <label className="inline-flex items-center gap-3 cursor-pointer">
+    <label className={`inline-flex items-center gap-3 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
       <div className="relative">
         <input
           type="checkbox"
@@ -18,25 +18,26 @@ export function Checkbox({ label, className = '', disabled = false, ...props }: 
         />
         <div
           className={`
-            w-5 h-5 rounded-xs border-2
+            w-5 h-5 rounded-xs border
             transition-all duration-normal
             flex items-center justify-center
             ${
               props.checked
-                ? 'bg-primary-500 border-primary-500 text-white'
-                : 'border-neutral-gray-300 bg-white hover:border-neutral-gray-400'
+                ? 'bg-primary border-primary text-white animate-bounce-in dark:bg-primary-600 dark:border-primary-600'
+                : 'border-gray-300 bg-white hover:border-primary dark:bg-gray-700 dark:border-gray-600 dark:hover:border-primary-600'
             }
-            ${disabled ? 'bg-neutral-gray-50 border-neutral-gray-300 cursor-not-allowed' : ''}
-            peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-primary-500
+            ${disabled ? 'bg-gray-50 border-gray-300 dark:bg-gray-800 dark:border-gray-700' : ''}
+            peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-primary
+            dark:peer-focus-visible:ring-primary-600
           `}
         >
-          {props.checked && <Check size={16} strokeWidth={3} />}
+          {props.checked && <Check size={14} strokeWidth={3} />}
         </div>
       </div>
       {label && (
         <span
           className={`text-body ${
-            disabled ? 'text-neutral-text-tertiary' : 'text-neutral-text-primary'
+            disabled ? 'text-gray-400 dark:text-gray-600' : 'text-gray-900 dark:text-gray-50'
           }`}
         >
           {label}

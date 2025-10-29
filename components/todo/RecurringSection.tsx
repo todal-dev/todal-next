@@ -64,13 +64,13 @@ function RecurringTodoItem({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-neutral-gray-50 transition-colors group relative cursor-grab active:cursor-grabbing"
+      className="flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group relative cursor-grab active:cursor-grabbing"
       {...attributes}
       {...listeners}
     >
       {/* Left accent bar - 카테고리 색상 */}
       <div
-        className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 rounded-full"
+        className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-4 rounded-full shadow-sm"
         style={{ backgroundColor: categoryColor }}
       ></div>
 
@@ -87,16 +87,16 @@ function RecurringTodoItem({
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
-          <span className={`text-sm truncate ${
+          <span className={`text-body truncate ${
             isCompletedToday
-              ? 'line-through text-neutral-text-secondary'
-              : 'text-neutral-text-primary'
+              ? 'line-through text-gray-400 dark:text-gray-500'
+              : 'text-gray-900 dark:text-gray-50'
           }`}>
             {todo.text}
           </span>
           {recurrenceText && (
             <span
-              className="text-xs font-medium flex-shrink-0"
+              className="text-caption font-medium flex-shrink-0"
               style={{ color: categoryColor }}
             >
               {recurrenceText}
@@ -105,7 +105,7 @@ function RecurringTodoItem({
         </div>
         <div className="flex items-center gap-1 mt-0.5">
           {todo.startTime && todo.endTime && (
-            <div className="text-xs text-neutral-text-tertiary">
+            <div className="text-caption text-gray-400 dark:text-gray-500">
               {todo.startTime} - {todo.endTime}
             </div>
           )}
@@ -128,7 +128,7 @@ function RecurringTodoItem({
               }}
               onMouseDown={(e) => e.stopPropagation()}
               onPointerDown={(e) => e.stopPropagation()}
-              className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity cursor-move text-neutral-text-tertiary hover:text-primary-500"
+              className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity cursor-move text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-light"
               title="캘린더로 드래그"
             >
               <Calendar size={12} />
@@ -145,7 +145,7 @@ function RecurringTodoItem({
             e.stopPropagation();
             onEdit();
           }}
-          className="p-1 rounded hover:bg-neutral-gray-100 text-neutral-text-secondary hover:text-primary-500 transition-colors"
+          className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-light transition-colors"
           title="편집"
         >
           <Edit2 size={13} />
@@ -158,7 +158,7 @@ function RecurringTodoItem({
             e.stopPropagation();
             onDelete();
           }}
-          className="p-1 rounded hover:bg-red-100 text-neutral-text-secondary hover:text-red-500 transition-colors cursor-pointer"
+          className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors cursor-pointer"
           title="삭제"
         >
           <Trash2 size={13} />
@@ -248,22 +248,22 @@ export function RecurringSection({
       {/* Simple Header */}
       <div className="flex items-center justify-between px-3 mb-1">
         <div className="flex items-center gap-1.5">
-          <Repeat size={14} className="text-primary-500" />
-          <span className="text-xs font-medium text-neutral-text-secondary">
+          <Repeat size={14} className="text-primary dark:text-primary-light" />
+          <span className="text-caption font-medium text-gray-600 dark:text-gray-400">
             반복 일정
           </span>
           {totalCount > 0 && (
-            <span className="text-xs text-neutral-text-tertiary">
+            <span className="text-caption text-gray-400 dark:text-gray-500">
               {completedCount}/{totalCount}
             </span>
           )}
         </div>
         <button
           onClick={onAddRecurring}
-          className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-primary-50 text-primary-500 transition-colors cursor-pointer"
+          className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-primary-light dark:hover:bg-primary-700 text-primary dark:text-primary-light transition-colors cursor-pointer"
         >
           <Plus size={12} />
-          <span className="text-xs font-medium">추가</span>
+          <span className="text-caption font-medium">추가</span>
         </button>
       </div>
 

@@ -8,6 +8,7 @@ import { Search, LayoutDashboard, Calendar, Menu, X } from 'lucide-react';
 import { GoogleCalendarSyncButton } from '@/components/calendar/GoogleCalendarSyncButton';
 import { LogoutButton } from '@/components/auth/LogoutButton';
 import { SearchBar } from '@/components/search/SearchBar';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import type { Category, Todo } from '@/types/calendar';
 
 interface HeaderProps {
@@ -21,7 +22,7 @@ export function Header({ categories, onSelectTodo }: HeaderProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
-    <header className="border-b border-neutral-gray-300 bg-white h-14 sm:h-16 px-3 sm:px-5 flex items-center justify-between relative z-30">
+    <header className="border-b border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 h-14 sm:h-16 px-3 sm:px-5 flex items-center justify-between relative z-30 transition-colors">
       <div className="flex items-center gap-2 sm:gap-6 flex-1 min-w-0">
         {/* Logo */}
         <Link href="/" className="flex-shrink-0">
@@ -38,10 +39,10 @@ export function Header({ categories, onSelectTodo }: HeaderProps) {
         <nav className="hidden md:flex items-center gap-1">
           <Link
             href="/"
-            className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all cursor-pointer ${
               pathname === '/'
-                ? 'bg-primary-50 text-primary-600 font-medium'
-                : 'text-neutral-text-secondary hover:bg-neutral-gray-50 hover:text-neutral-text-primary'
+                ? 'bg-primary-light dark:bg-primary-700 text-primary dark:text-primary-light font-medium'
+                : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300'
             }`}
           >
             <Calendar size={18} />
@@ -50,10 +51,10 @@ export function Header({ categories, onSelectTodo }: HeaderProps) {
           
           <Link
             href="/dashboard"
-            className={`flex items-center gap-2 px-3 py-2 rounded-md transition-colors ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all cursor-pointer ${
               pathname === '/dashboard'
-                ? 'bg-primary-50 text-primary-600 font-medium'
-                : 'text-neutral-text-secondary hover:bg-neutral-gray-50 hover:text-neutral-text-primary'
+                ? 'bg-primary-light dark:bg-primary-700 text-primary dark:text-primary-light font-medium'
+                : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300'
             }`}
           >
             <LayoutDashboard size={18} />
@@ -66,10 +67,10 @@ export function Header({ categories, onSelectTodo }: HeaderProps) {
         {/* Mobile Search Toggle */}
         <button
           onClick={() => setIsSearchOpen(!isSearchOpen)}
-          className="md:hidden p-2 rounded-md hover:bg-neutral-gray-50 transition-colors"
+          className="md:hidden p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
           aria-label="검색"
         >
-          <Search size={20} className="text-neutral-text-secondary" />
+          <Search size={20} className="text-gray-400 dark:text-gray-500" />
         </button>
 
         {/* Desktop Search Bar */}
@@ -79,6 +80,7 @@ export function Header({ categories, onSelectTodo }: HeaderProps) {
 
         {/* Desktop Actions */}
         <div className="hidden sm:flex gap-2 items-center">
+          <ThemeToggle />
           <GoogleCalendarSyncButton />
           <LogoutButton />
         </div>
@@ -86,35 +88,35 @@ export function Header({ categories, onSelectTodo }: HeaderProps) {
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="md:hidden p-2 rounded-md hover:bg-neutral-gray-50 transition-colors"
+          className="md:hidden p-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
           aria-label="메뉴"
         >
           {isMobileMenuOpen ? (
-            <X size={20} className="text-neutral-text-secondary" />
+            <X size={20} className="text-gray-400 dark:text-gray-500" />
           ) : (
-            <Menu size={20} className="text-neutral-text-secondary" />
+            <Menu size={20} className="text-gray-400 dark:text-gray-500" />
           )}
         </button>
       </div>
 
       {/* Mobile Search Overlay */}
       {isSearchOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-neutral-gray-300 p-3 shadow-lg z-40">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 p-3 shadow-lg z-40 animate-slide-up">
           <SearchBar categories={categories} onSelectTodo={onSelectTodo || (() => {})} />
         </div>
       )}
 
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 bg-white border-b border-neutral-gray-300 shadow-lg z-40">
+        <div className="md:hidden absolute top-full left-0 right-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 shadow-lg z-40 animate-slide-up">
           <nav className="flex flex-col p-3 gap-2">
             <Link
               href="/"
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all cursor-pointer ${
                 pathname === '/'
-                  ? 'bg-primary-50 text-primary-600 font-medium'
-                  : 'text-neutral-text-secondary hover:bg-neutral-gray-50 hover:text-neutral-text-primary'
+                  ? 'bg-primary-light dark:bg-primary-700 text-primary dark:text-primary-light font-medium'
+                  : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300'
               }`}
             >
               <Calendar size={20} />
@@ -124,19 +126,22 @@ export function Header({ categories, onSelectTodo }: HeaderProps) {
             <Link
               href="/dashboard"
               onClick={() => setIsMobileMenuOpen(false)}
-              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-colors ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-md transition-all cursor-pointer ${
                 pathname === '/dashboard'
-                  ? 'bg-primary-50 text-primary-600 font-medium'
-                  : 'text-neutral-text-secondary hover:bg-neutral-gray-50 hover:text-neutral-text-primary'
+                  ? 'bg-primary-light dark:bg-primary-700 text-primary dark:text-primary-light font-medium'
+                  : 'text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-600 dark:hover:text-gray-300'
               }`}
             >
               <LayoutDashboard size={20} />
               <span className="text-base">대시보드</span>
             </Link>
 
-            <div className="border-t border-neutral-gray-300 my-2"></div>
+            <div className="border-t border-gray-200 dark:border-gray-600 my-2"></div>
 
             <div className="flex flex-col gap-2 px-2">
+              <div className="flex justify-center py-2">
+                <ThemeToggle />
+              </div>
               <GoogleCalendarSyncButton />
               <LogoutButton />
             </div>

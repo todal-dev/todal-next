@@ -41,7 +41,7 @@ export function DateMoveDialog({ isOpen, currentDate, onClose, onConfirm }: Date
       }
     >
       <div>
-        <label className="text-sm text-neutral-text-secondary mb-3 block">
+        <label className="text-body-small text-gray-400 dark:text-gray-500 mb-3 block">
           새 날짜 선택
         </label>
         <DatePicker

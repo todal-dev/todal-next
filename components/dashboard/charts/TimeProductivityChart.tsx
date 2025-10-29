@@ -18,10 +18,10 @@ export function TimeProductivityChart({ data }: TimeProductivityChartProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.3 }}
-        className="bg-white rounded-lg border border-neutral-gray-300 p-5"
+        className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 transition-colors p-5"
       >
-        <h3 className="text-lg font-semibold text-neutral-text-primary mb-4">⏱️ 시간대별 생산성</h3>
-        <div className="flex items-center justify-center h-64 text-neutral-text-secondary">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-4">⏱️ 시간대별 생산성</h3>
+        <div className="flex items-center justify-center h-64 text-gray-600 dark:text-gray-400">
           시간이 기록된 일정이 없습니다
         </div>
       </motion.div>
@@ -33,11 +33,11 @@ export function TimeProductivityChart({ data }: TimeProductivityChartProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.3 }}
-      className="bg-white rounded-lg border border-neutral-gray-300 p-5"
+      className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 transition-colors p-5"
     >
       <div className="mb-4">
-        <h3 className="text-lg font-semibold text-neutral-text-primary mb-1">⏱️ 시간대별 생산성</h3>
-        <p className="text-sm text-neutral-text-secondary">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-1">⏱️ 시간대별 생산성</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           🌟 최고 시간대: {bestTimeSlot.label}-{bestTimeSlot.hour + 2}:00 
           {bestTimeSlot.completionRate > 0 && ` (완료율 ${bestTimeSlot.completionRate.toFixed(0)}%)`}
         </p>

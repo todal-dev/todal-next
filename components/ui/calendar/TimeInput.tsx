@@ -73,20 +73,20 @@ export function TimeInput({ value, onChange, placeholder = '00:00' }: TimeInputP
           onBlur={handleInputBlur}
           onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
-          className="w-full pl-10 pr-3 py-2 border border-[#E5E7EB] rounded-lg text-sm text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2D9F6B] transition-all"
+          className="w-full h-10 pl-10 pr-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md text-body bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 transition-all"
         />
         <Clock 
-          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#9CA3AF] pointer-events-none" 
+          className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 dark:text-gray-500 pointer-events-none" 
         />
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#E5E7EB] rounded-lg shadow-lg z-50 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 overflow-hidden animate-slide-up">
           <div className="grid grid-cols-2">
             {/* Hours */}
-            <div className="border-r border-[#E5E7EB]">
-              <div className="px-3 py-2 bg-[#FAFAFA] border-b border-[#E5E7EB]">
-                <span className="text-xs font-medium text-[#4B5563]">시</span>
+            <div className="border-r border-gray-200 dark:border-gray-600">
+              <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+                <span className="text-caption font-medium text-gray-600 dark:text-gray-400">시</span>
               </div>
               <div className="max-h-48 overflow-y-auto">
                 {hours.map((hour) => (
@@ -94,10 +94,10 @@ export function TimeInput({ value, onChange, placeholder = '00:00' }: TimeInputP
                     key={hour}
                     type="button"
                     onClick={() => handleTimeSelect(hour, currentMinute)}
-                    className={`w-full px-3 py-2 text-sm text-left transition-colors ${
+                    className={`w-full px-3 py-2 text-body-small text-left transition-colors ${
                       currentHour === hour
-                        ? 'bg-[#E8F5EE] text-[#2D9F6B] font-medium'
-                        : 'text-[#4B5563] hover:bg-[#FAFAFA]'
+                        ? 'bg-primary-light dark:bg-primary-700 text-primary dark:text-primary-light font-medium'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
                     }`}
                   >
                     {String(hour).padStart(2, '0')}
@@ -108,8 +108,8 @@ export function TimeInput({ value, onChange, placeholder = '00:00' }: TimeInputP
 
             {/* Minutes */}
             <div>
-              <div className="px-3 py-2 bg-[#FAFAFA] border-b border-[#E5E7EB]">
-                <span className="text-xs font-medium text-[#4B5563]">분</span>
+              <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600">
+                <span className="text-caption font-medium text-gray-600 dark:text-gray-400">분</span>
               </div>
               <div>
                 {minutes.map((minute) => (
@@ -117,10 +117,10 @@ export function TimeInput({ value, onChange, placeholder = '00:00' }: TimeInputP
                     key={minute}
                     type="button"
                     onClick={() => handleTimeSelect(currentHour, minute)}
-                    className={`w-full px-3 py-2 text-sm text-left transition-colors ${
+                    className={`w-full px-3 py-2 text-body-small text-left transition-colors ${
                       currentMinute === minute
-                        ? 'bg-[#E8F5EE] text-[#2D9F6B] font-medium'
-                        : 'text-[#4B5563] hover:bg-[#FAFAFA]'
+                        ? 'bg-primary-light dark:bg-primary-700 text-primary dark:text-primary-light font-medium'
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
                     }`}
                   >
                     {String(minute).padStart(2, '0')}

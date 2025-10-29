@@ -47,7 +47,7 @@ export function SimpleContextMenu({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.1 }}
-          className="fixed bg-white rounded-lg shadow-xl border border-neutral-gray-300 py-1 min-w-[180px] z-50"
+          className="fixed bg-white dark:bg-gray-700 rounded-md shadow-xl border border-gray-200 dark:border-gray-600 py-1 min-w-[180px] z-50"
           style={{
             left: `${x}px`,
             top: `${y}px`,
@@ -59,20 +59,20 @@ export function SimpleContextMenu({
               onEdit();
               onClose();
             }}
-            className="w-full px-4 py-2 text-left text-sm hover:bg-neutral-gray-50 flex items-center gap-2 text-neutral-text-primary cursor-pointer"
+            className="w-full px-4 py-2 text-left text-body-small hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center gap-2 text-gray-900 dark:text-gray-50 cursor-pointer transition-colors"
           >
             <Edit size={16} />
             편집
           </button>
 
-          <div className="border-t border-neutral-gray-200 my-1" />
+          <div className="border-t border-gray-200 dark:border-gray-600 my-1" />
 
           <button
             onClick={() => {
               onDelete();
               onClose();
             }}
-            className="w-full px-4 py-2 text-left text-sm hover:bg-red-50 flex items-center gap-2 text-red-600 cursor-pointer"
+            className="w-full px-4 py-2 text-left text-body-small hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2 text-red-600 dark:text-red-400 cursor-pointer transition-colors"
           >
             <Trash2 size={16} />
             삭제

@@ -59,38 +59,38 @@ export function MobileDateHeader({
   };
 
   return (
-    <div className="md:hidden bg-white border-b border-neutral-gray-300 px-3 py-2 flex items-center justify-between sticky top-0 z-20">
+    <div className="md:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 px-3 py-2 flex items-center justify-between sticky top-0 z-20 transition-colors">
       {/* Month/Year Selector */}
       <div className="relative" ref={pickerRef}>
         <button
           onClick={() => setShowMonthPicker(!showMonthPicker)}
-          className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-neutral-gray-50 active:bg-neutral-gray-100 transition-colors min-h-[40px]"
+          className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 transition-colors min-h-[40px]"
           aria-label="월 선택"
         >
-          <span className="text-base font-semibold text-neutral-text-primary">
+          <span className="text-h3 text-gray-900 dark:text-gray-50">
             {year}년 {monthName}
           </span>
-          <CalendarIcon size={16} className="text-neutral-text-secondary" />
+          <CalendarIcon size={16} className="text-gray-600 dark:text-gray-400" />
         </button>
 
         {/* Month Picker Dropdown */}
         {showMonthPicker && (
-          <div className="absolute top-full left-0 mt-1 bg-white border border-neutral-gray-300 rounded-lg shadow-lg z-50 min-w-[280px] max-w-[90vw]">
+          <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 min-w-[280px] max-w-[90vw] animate-slide-up">
             {/* Year Selector */}
-            <div className="px-3 py-2 border-b border-neutral-gray-200">
-              <div className="text-xs font-semibold text-neutral-text-secondary mb-2">연도</div>
+            <div className="px-3 py-2 border-b border-gray-200 dark:border-gray-600">
+              <div className="text-caption font-semibold text-gray-400 dark:text-gray-500 mb-2">연도</div>
               <div className="flex gap-1 flex-wrap">
                 {yearRange.map((y) => (
                   <button
                     key={y}
                     onClick={() => setSelectedYear(y)}
                     className={`
-                      px-2.5 py-1.5 rounded text-xs font-medium transition-all
+                      px-2.5 py-1.5 rounded text-caption font-medium transition-all
                       min-h-[36px] touch-manipulation
                       ${
                         selectedYear === y
-                          ? 'bg-primary-500 text-white'
-                          : 'bg-white text-neutral-text-primary hover:bg-neutral-gray-100 active:bg-neutral-gray-200'
+                          ? 'bg-primary dark:bg-primary-600 text-white'
+                          : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-600 active:bg-gray-200 dark:active:bg-gray-500'
                       }
                     `}
                   >
@@ -102,7 +102,7 @@ export function MobileDateHeader({
 
             {/* Month Selector */}
             <div className="px-3 py-2 max-h-[50vh] overflow-y-auto">
-              <div className="text-xs font-semibold text-neutral-text-secondary mb-2">월</div>
+              <div className="text-caption font-semibold text-gray-400 dark:text-gray-500 mb-2">월</div>
               <div className="grid grid-cols-3 gap-2">
                 {months.map((m) => {
                   const monthLabel = new Date(selectedYear, m, 1).toLocaleString('ko-KR', { month: 'short' });
@@ -113,12 +113,12 @@ export function MobileDateHeader({
                       key={m}
                       onClick={() => handleMonthSelect(m)}
                       className={`
-                        px-3 py-2 rounded text-sm font-medium transition-all
+                        px-3 py-2 rounded text-body-small font-medium transition-all
                         min-h-[44px] touch-manipulation
                         ${
                           isCurrentMonth
-                            ? 'bg-primary-500 text-white'
-                            : 'bg-white text-neutral-text-primary hover:bg-neutral-gray-100 active:bg-neutral-gray-200'
+                            ? 'bg-primary dark:bg-primary-600 text-white'
+                            : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 hover:bg-gray-100 dark:hover:bg-gray-600 active:bg-gray-200 dark:active:bg-gray-500'
                         }
                       `}
                     >
@@ -136,17 +136,17 @@ export function MobileDateHeader({
       <div className="flex gap-1">
         <button
           onClick={onPrevWeek}
-          className="p-2 hover:bg-neutral-gray-100 active:bg-neutral-gray-200 rounded-md transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+          className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 rounded-md transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
           aria-label="이전 주"
         >
-          <ChevronLeft size={20} className="text-neutral-text-secondary" />
+          <ChevronLeft size={20} className="text-gray-600 dark:text-gray-400" />
         </button>
         <button
           onClick={onNextWeek}
-          className="p-2 hover:bg-neutral-gray-100 active:bg-neutral-gray-200 rounded-md transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
+          className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 rounded-md transition-colors min-w-[40px] min-h-[40px] flex items-center justify-center"
           aria-label="다음 주"
         >
-          <ChevronRight size={20} className="text-neutral-text-secondary" />
+          <ChevronRight size={20} className="text-gray-600 dark:text-gray-400" />
         </button>
       </div>
     </div>

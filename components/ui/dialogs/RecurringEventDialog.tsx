@@ -26,7 +26,7 @@ export function RecurringEventDialog({
       showHeaderBorder={false}
     >
       <div>
-        <p className="text-sm text-neutral-text-secondary mb-6">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
           이 이벤트는 반복 일정입니다. 어떤 항목을 수정하시겠습니까?
         </p>
 
@@ -36,12 +36,12 @@ export function RecurringEventDialog({
               onSelectThis();
               onClose();
             }}
-            className="w-full px-4 py-3 text-left rounded-lg border border-neutral-gray-300 hover:bg-neutral-gray-50 transition-colors"
+            className="w-full px-4 py-3 text-left rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
           >
-            <div className="font-medium text-neutral-text-primary">
+            <div className="font-medium text-gray-900 dark:text-gray-50">
               이 이벤트만
             </div>
-            <div className="text-xs text-neutral-text-secondary mt-1">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
               현재 선택한 이벤트만 수정합니다
             </div>
           </button>
@@ -51,19 +51,19 @@ export function RecurringEventDialog({
               onSelectAll();
               onClose();
             }}
-            className="w-full px-4 py-3 text-left rounded-lg border border-neutral-gray-300 hover:bg-neutral-gray-50 transition-colors"
+            className="w-full px-4 py-3 text-left rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
           >
-            <div className="font-medium text-neutral-text-primary">
+            <div className="font-medium text-gray-900 dark:text-gray-50">
               모든 이벤트
             </div>
-            <div className="text-xs text-neutral-text-secondary mt-1">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
               반복되는 모든 이벤트를 수정합니다
             </div>
           </button>
 
           <button
             onClick={onClose}
-            className="w-full px-4 py-2 text-center rounded-lg bg-neutral-gray-100 hover:bg-neutral-gray-200 text-neutral-text-secondary transition-colors"
+            className="w-full px-4 py-2 text-center rounded-md bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
           >
             취소
           </button>

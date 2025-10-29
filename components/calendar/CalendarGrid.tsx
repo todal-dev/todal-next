@@ -85,9 +85,9 @@ const CalendarGridComponent = ({
   return (
     <div ref={gridScrollRef} className="flex-1 overflow-auto calendar-grid touch-pan-x touch-pan-y">
       {/* Week Days Header - Fixed at top */}
-      <div className="sticky top-0 z-20 bg-white border-b border-neutral-gray-300">
+      <div className="sticky top-0 z-20 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-600 transition-colors">
         <div className="flex min-w-full">
-          <div className="w-12 sm:w-16 bg-neutral-gray-50 border-r border-neutral-gray-300 shrink-0 sticky left-0 z-30" />
+          <div className="w-12 sm:w-16 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-600 shrink-0 sticky left-0 z-30" />
           <div className="flex flex-1">
             {weekDays.map((date, index) => {
               const isToday =
@@ -102,17 +102,17 @@ const CalendarGridComponent = ({
               return (
                 <div
                   key={index}
-                  className={`flex-1 min-w-[50px] sm:min-w-[100px] text-center py-2 sm:py-3 border-r border-neutral-gray-300 flex flex-col items-center justify-center ${
-                    isToday ? 'bg-primary-50' : ''
+                  className={`flex-1 min-w-[50px] sm:min-w-[100px] text-center py-2 sm:py-3 border-r border-gray-200 dark:border-gray-600 flex flex-col items-center justify-center transition-colors ${
+                    isToday ? 'bg-primary-light dark:bg-primary-900/30' : ''
                   }`}
                 >
                   <div 
-                    className={`text-[11px] sm:text-xs font-medium mb-0.5 ${
+                    className={`text-[11px] sm:text-caption font-medium mb-0.5 ${
                       isSunday || holiday 
-                        ? 'text-red-500' 
+                        ? 'text-red-500 dark:text-red-400' 
                         : isSaturday 
-                        ? 'text-blue-500' 
-                        : 'text-neutral-text-secondary'
+                        ? 'text-blue-500 dark:text-blue-400' 
+                        : 'text-gray-600 dark:text-gray-400'
                     }`}
                   >
                     {dayNames[date.getDay()]}
@@ -120,18 +120,18 @@ const CalendarGridComponent = ({
                   <div
                     className={`
                       flex items-center justify-center
-                      ${isToday ? 'w-8 h-8 sm:w-auto sm:h-auto rounded-full bg-primary-600' : ''}
+                      ${isToday ? 'w-8 h-8 sm:w-auto sm:h-auto rounded-full bg-primary-600 dark:bg-primary-600' : ''}
                     `}
                   >
                     <div
-                      className={`text-sm sm:text-lg font-semibold ${
+                      className={`text-sm sm:text-h3 font-semibold ${
                         isToday 
                           ? 'text-white' 
                           : isSunday || holiday
-                          ? 'text-red-500'
+                          ? 'text-red-500 dark:text-red-400'
                           : isSaturday
-                          ? 'text-blue-500'
-                          : 'text-neutral-text-primary'
+                          ? 'text-blue-500 dark:text-blue-400'
+                          : 'text-gray-900 dark:text-gray-50'
                       }`}
                     >
                       {date.getDate()}
@@ -147,7 +147,7 @@ const CalendarGridComponent = ({
       {/* Time Grid */}
       <div className="flex min-w-full" style={{ height: `${hourHeight * 24}px` }}>
         {/* Time Column */}
-        <div className="w-12 sm:w-16 bg-neutral-gray-50 border-r border-neutral-gray-300 shrink-0 sticky left-0 z-10">
+        <div className="w-12 sm:w-16 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-600 shrink-0 sticky left-0 z-10 transition-colors">
           {hours.map((hour) => {
             // 모바일: 오전/오후 형식, 데스크톱: 24시간 형식
             const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
@@ -161,7 +161,7 @@ const CalendarGridComponent = ({
             return (
               <div
                 key={hour}
-                className="border-b border-neutral-gray-200 text-[10px] sm:text-xs text-neutral-text-secondary pt-1 px-0.5 text-center font-medium bg-neutral-gray-50 leading-tight"
+                className="border-b border-gray-200 dark:border-gray-700 text-[10px] sm:text-caption text-gray-600 dark:text-gray-400 pt-1 px-0.5 text-center font-medium bg-gray-50 dark:bg-gray-900 leading-tight"
                 style={{ height: `${hourHeight}px` }}
               >
                 {displayTime}
@@ -190,8 +190,8 @@ const CalendarGridComponent = ({
             return (
               <div
                 key={dayIndex}
-                className={`flex-1 border-r border-neutral-gray-300 min-w-[50px] sm:min-w-[100px] relative calendar-day-column transition-colors ${
-                  isDraggingOverThisDay ? 'bg-primary-50' : ''
+                className={`flex-1 border-r border-gray-200 dark:border-gray-600 min-w-[50px] sm:min-w-[100px] relative calendar-day-column transition-colors ${
+                  isDraggingOverThisDay ? 'bg-primary-light dark:bg-primary-900/30' : ''
                 }`}
               >
                 {/* Time Grid Background */}
@@ -199,7 +199,7 @@ const CalendarGridComponent = ({
                   <div
                     key={`${dayIndex}-${hour}`}
                     data-hour={hour}
-                    className="border-b border-neutral-gray-200 hover:bg-neutral-gray-50 transition-colors cursor-pointer"
+                    className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
                     style={{ height: `${hourHeight}px` }}
                     onMouseDown={(e) => handleCalendarDragStart(date, hour, e)}
                     onMouseMove={(e) => handleCalendarDragMove(date, hour, e)}

@@ -51,7 +51,7 @@ export function RenameDialog({ isOpen, currentName, onClose, onConfirm }: Rename
           if (e.key === 'Enter') handleSubmit();
           if (e.key === 'Escape') onClose();
         }}
-        className="w-full px-3 py-2 border border-neutral-gray-300 rounded-lg focus:outline-none focus:border-primary-500 text-neutral-text-primary"
+        className="w-full h-10 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 focus:border-primary dark:focus:border-primary-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 placeholder:text-gray-400 dark:placeholder:text-gray-500"
         placeholder="새 이름을 입력하세요"
       />
     </BaseDialog>

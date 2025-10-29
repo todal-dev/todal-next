@@ -44,15 +44,15 @@ const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
     <>
       <div className="hidden md:flex w-full">
         {/* Left Panel - Mini Calendar + Recurring Section + Todo List (35%) */}
-        <div className="flex-[35] border-r border-neutral-gray-300 flex flex-col bg-white">
+        <div className="flex-[35] border-r border-gray-200 dark:border-gray-600 flex flex-col bg-white dark:bg-gray-800 transition-colors">
           {/* Mini Calendar */}
-          <div className="shrink-0 border-b border-neutral-gray-300">
+          <div className="shrink-0 border-b border-gray-200 dark:border-gray-600">
             <MiniCalendar onDateSelect={onDateSelect} todosByDate={todosByDate} />
           </div>
 
           {/* 오늘 할일 제목 */}
-          <div className="flex-shrink-0 px-5 pt-5 pb-3 border-b border-neutral-gray-300 flex items-center justify-between">
-            <h1 className="text-lg font-semibold text-neutral-text-primary">
+          <div className="flex-shrink-0 px-5 pt-5 pb-3 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between">
+            <h1 className="text-h3 text-gray-900 dark:text-gray-50">
               {selectedDate.toLocaleString('ko-KR', { month: 'long', day: 'numeric' })}의 할일
             </h1>
             {addingNewCategory ? (
@@ -61,10 +61,10 @@ const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
                 animate={{ opacity: 1, width: 'auto' }}
                 exit={{ opacity: 0, width: 0 }}
                 transition={{ duration: 0.2 }}
-                className="flex items-center gap-2 px-3 py-1 rounded-md bg-neutral-gray-100"
+                className="flex items-center gap-2 px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700"
               >
                 <div
-                  className="flex-shrink-0 w-4 h-4 rounded-full cursor-pointer"
+                  className="flex-shrink-0 w-4 h-4 rounded-full cursor-pointer transition-transform hover:scale-110"
                   style={{ backgroundColor: newCategoryColor }}
                   onClick={() => {
                     const currentIndex = colorPalette.indexOf(newCategoryColor);
@@ -101,7 +101,7 @@ const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
                       setAddingNewCategory(false);
                     }, 150);
                   }}
-                  className="w-32 font-semibold text-sm bg-transparent text-neutral-text-primary focus:outline-none border-0 focus:ring-0"
+                  className="w-32 font-semibold text-body-small bg-transparent text-gray-900 dark:text-gray-50 focus:outline-none border-0 focus:ring-0"
                 />
               </motion.div>
             ) : (
@@ -110,10 +110,10 @@ const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.15 }}
                 onClick={() => setAddingNewCategory(true)}
-                className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-neutral-gray-50 transition-colors text-neutral-text-secondary hover:text-primary-500 cursor-pointer"
+                className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-light cursor-pointer"
               >
                 <Plus size={16} />
-                <span className="text-sm font-medium">카테고리 추가</span>
+                <span className="text-body-small font-medium">카테고리 추가</span>
               </motion.button>
             )}
           </div>

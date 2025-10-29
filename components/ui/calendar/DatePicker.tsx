@@ -110,22 +110,22 @@ export function DatePicker({ value, onChange, minDate, maxDate, size = 'md' }: D
       <div className={`flex items-center justify-between ${isSmall ? 'mb-2' : 'mb-3'}`}>
         <button
           onClick={handlePrevMonth}
-          className={`${isSmall ? 'p-1' : 'p-1.5'} rounded-md hover:bg-neutral-gray-100 transition-colors`}
+          className={`${isSmall ? 'p-1' : 'p-1.5'} rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}
           aria-label="이전 달"
         >
-          <ChevronLeft size={isSmall ? 16 : 18} className="text-neutral-text-secondary" />
+          <ChevronLeft size={isSmall ? 16 : 18} className="text-gray-600 dark:text-gray-400" />
         </button>
 
-        <div className={`${isSmall ? 'text-sm' : 'text-base'} font-semibold text-neutral-text-primary`}>
+        <div className={`${isSmall ? 'text-body-small' : 'text-body'} font-semibold text-gray-900 dark:text-gray-50`}>
           {currentMonth.getFullYear()}년 {currentMonth.getMonth() + 1}월
         </div>
 
         <button
           onClick={handleNextMonth}
-          className={`${isSmall ? 'p-1' : 'p-1.5'} rounded-md hover:bg-neutral-gray-100 transition-colors`}
+          className={`${isSmall ? 'p-1' : 'p-1.5'} rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors`}
           aria-label="다음 달"
         >
-          <ChevronRight size={isSmall ? 16 : 18} className="text-neutral-text-secondary" />
+          <ChevronRight size={isSmall ? 16 : 18} className="text-gray-600 dark:text-gray-400" />
         </button>
       </div>
 
@@ -134,8 +134,8 @@ export function DatePicker({ value, onChange, minDate, maxDate, size = 'md' }: D
         {weekDays.map((day, index) => (
           <div
             key={day}
-            className={`text-xs font-medium text-center ${isSmall ? 'py-1' : 'py-1.5'} ${
-              index === 0 ? 'text-red-500' : index === 6 ? 'text-blue-500' : 'text-neutral-text-secondary'
+            className={`text-caption font-medium text-center ${isSmall ? 'py-1' : 'py-1.5'} ${
+              index === 0 ? 'text-red-500 dark:text-red-400' : index === 6 ? 'text-blue-500 dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
             }`}
           >
             {day}
@@ -158,26 +158,26 @@ export function DatePicker({ value, onChange, minDate, maxDate, size = 'md' }: D
               whileHover={!day.isDisabled ? { scale: 1.05 } : undefined}
               whileTap={!day.isDisabled ? { scale: 0.95 } : undefined}
               className={`
-                relative aspect-square ${isSmall ? 'rounded' : 'rounded-md'} ${isSmall ? 'text-xs' : 'text-sm'} font-medium transition-colors flex items-center justify-center ${isSmall ? 'min-h-[28px]' : 'min-h-[32px]'}
+                relative aspect-square ${isSmall ? 'rounded' : 'rounded-md'} ${isSmall ? 'text-caption' : 'text-body-small'} font-medium transition-colors flex items-center justify-center ${isSmall ? 'min-h-[28px]' : 'min-h-[32px]'}
                 ${day.isDisabled ? 'cursor-not-allowed opacity-30' : 'cursor-pointer'}
                 ${
                   day.isSelected
-                    ? 'bg-primary-500 text-white hover:bg-primary-600'
+                    ? 'bg-primary dark:bg-primary-600 text-white hover:bg-primary-dark dark:hover:bg-primary-700'
                     : day.isToday && day.isCurrentMonth
-                    ? 'bg-primary-50 text-primary-600 hover:bg-primary-100'
+                    ? 'bg-primary-light dark:bg-primary-900/30 text-primary dark:text-primary-light hover:bg-primary-100 dark:hover:bg-primary-900/40'
                     : day.isCurrentMonth
                     ? isSunday
-                      ? 'text-red-500 hover:bg-neutral-gray-50'
+                      ? 'text-red-500 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700'
                       : isSaturday
-                      ? 'text-blue-500 hover:bg-neutral-gray-50'
-                      : 'text-neutral-text-primary hover:bg-neutral-gray-50'
-                    : 'text-neutral-text-tertiary hover:bg-neutral-gray-50'
+                      ? 'text-blue-500 dark:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      : 'text-gray-900 dark:text-gray-50 hover:bg-gray-50 dark:hover:bg-gray-700'
+                    : 'text-gray-400 dark:text-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }
               `}
             >
               {day.date.getDate()}
               {day.isToday && day.isCurrentMonth && !day.isSelected && (
-                <div className={`absolute ${isSmall ? 'bottom-0.5' : 'bottom-1'} left-1/2 transform -translate-x-1/2 ${isSmall ? 'w-0.5 h-0.5' : 'w-1 h-1'} rounded-full bg-primary-500`} />
+                <div className={`absolute ${isSmall ? 'bottom-0.5' : 'bottom-1'} left-1/2 transform -translate-x-1/2 ${isSmall ? 'w-0.5 h-0.5' : 'w-1 h-1'} rounded-full bg-primary dark:bg-primary-light`} />
               )}
             </motion.button>
           );

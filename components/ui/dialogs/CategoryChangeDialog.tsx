@@ -57,22 +57,22 @@ export function CategoryChangeDialog({
           <button
             key={category.id}
             onClick={() => setSelectedCategoryId(category.id)}
-            className={`w-full px-4 py-3 text-left rounded-lg border transition-colors flex items-center gap-3 ${
+            className={`w-full px-4 py-3 text-left rounded-md border transition-colors flex items-center gap-3 ${
               selectedCategoryId === category.id
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-neutral-gray-300 hover:bg-neutral-gray-50'
+                ? 'border-primary dark:border-primary-600 bg-primary-light dark:bg-primary-900/30'
+                : 'border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
             }`}
           >
             <div
               className="w-4 h-4 rounded-full flex-shrink-0"
               style={{ backgroundColor: category.color }}
             />
-            <span className="font-medium text-neutral-text-primary">
+            <span className="font-medium text-gray-900 dark:text-gray-50">
               {category.name}
             </span>
             {selectedCategoryId === category.id && (
               <svg
-                className="w-5 h-5 ml-auto text-primary-500"
+                className="w-5 h-5 ml-auto text-primary dark:text-primary-light"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

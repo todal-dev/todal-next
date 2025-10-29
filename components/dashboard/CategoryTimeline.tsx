@@ -15,9 +15,9 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
 
   if (timedTodos.length === 0) {
     return (
-      <div className="bg-white rounded-lg border border-[#E5E7EB] p-8">
-        <div className="text-center text-[#9CA3AF]">
-          <p className="text-sm">시간이 지정된 할일이 없습니다</p>
+      <div className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 p-8 transition-colors">
+        <div className="text-center text-gray-400 dark:text-gray-500">
+          <p className="text-body-small">시간이 지정된 할일이 없습니다</p>
         </div>
       </div>
     );
@@ -48,11 +48,11 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
   const displayMaxHour = Math.min(23, Math.max(maxHour + 1, displayMinHour + 8));
 
   return (
-    <div className="bg-white rounded-lg border border-[#E5E7EB]">
+    <div className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 transition-colors">
       {/* Header */}
-      <div className="p-6 border-b border-[#E5E7EB]">
-        <h3 className="text-lg font-semibold text-[#111827]">시간대별 타임라인</h3>
-        <p className="text-sm text-[#9CA3AF] mt-1">
+      <div className="p-6 border-b border-gray-200 dark:border-gray-600">
+        <h3 className="text-h3 text-gray-900 dark:text-gray-50">시간대별 타임라인</h3>
+        <p className="text-body-small text-gray-400 dark:text-gray-500 mt-1">
           {timedTodos.length}개의 일정
         </p>
       </div>
@@ -61,7 +61,7 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
       <div className="p-6">
         <div className="relative">
           {/* Timeline Line */}
-          <div className="absolute left-12 top-0 bottom-0 w-0.5 bg-[#E5E7EB]"></div>
+          <div className="absolute left-12 top-0 bottom-0 w-0.5 bg-gray-200 dark:bg-gray-600"></div>
 
           {/* Hours */}
           <div className="space-y-6">
@@ -74,7 +74,7 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
                   {/* Time Label */}
                   <div className="flex items-start gap-6">
                     <div className="w-12 flex-shrink-0 text-right">
-                      <span className="text-sm font-medium text-[#4B5563]">
+                      <span className="text-body-small font-medium text-gray-600 dark:text-gray-400">
                         {hour.toString().padStart(2, '0')}:00
                       </span>
                     </div>
@@ -99,14 +99,14 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
                               >
                                 {/* Dot */}
                                 <div 
-                                  className="absolute -left-[30px] top-2 w-3 h-3 rounded-full border-2 border-white shadow-sm"
+                                  className="absolute -left-[30px] top-2 w-3 h-3 rounded-full border-2 border-white dark:border-gray-700 shadow-sm"
                                   style={{ backgroundColor: categoryColor }}
                                 ></div>
 
                                 {/* Todo Card */}
                                 <div 
-                                  className={`p-3 rounded-lg border-l-4 ${
-                                    todo.completed ? 'bg-[#FAFAFA] opacity-60' : 'bg-white'
+                                  className={`p-3 rounded-md border-l-4 transition-colors ${
+                                    todo.completed ? 'bg-gray-50 dark:bg-gray-800 opacity-60' : 'bg-white dark:bg-gray-700'
                                   }`}
                                   style={{ 
                                     borderLeftColor: categoryColor,
@@ -117,20 +117,20 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
                                   <div className="flex items-start gap-3">
                                     <div className="flex-shrink-0 mt-0.5">
                                       {todo.completed ? (
-                                        <CheckCircle2 className="w-4 h-4 text-[#2D9F6B]" />
+                                        <CheckCircle2 className="w-4 h-4 text-primary dark:text-primary-light" />
                                       ) : (
-                                        <Circle className="w-4 h-4 text-[#E5E7EB]" />
+                                        <Circle className="w-4 h-4 text-gray-200 dark:text-gray-600" />
                                       )}
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                      <p className={`text-sm font-medium ${
+                                      <p className={`text-body-small font-medium ${
                                         todo.completed 
-                                          ? 'line-through text-[#9CA3AF]' 
-                                          : 'text-[#111827]'
+                                          ? 'line-through text-gray-400 dark:text-gray-500' 
+                                          : 'text-gray-900 dark:text-gray-50'
                                       }`}>
                                         {todo.text}
                                       </p>
-                                      <p className="text-xs text-[#9CA3AF] mt-1">
+                                      <p className="text-caption text-gray-400 dark:text-gray-500 mt-1">
                                         {todo.startTime} - {todo.endTime} ({duration.toFixed(1)}h)
                                       </p>
                                     </div>

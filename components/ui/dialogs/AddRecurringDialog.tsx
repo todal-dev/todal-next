@@ -189,15 +189,15 @@ export function AddRecurringDialog({
       <div className="space-y-4">
         {/* 변환 안내 메시지 (새로 추가할 때만) */}
         {!editingTodo && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-2">
-            <p className="text-xs text-blue-800">
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-2">
+            <p className="text-caption text-blue-800 dark:text-blue-400">
               💡 <strong>일반 할일에서 변환 시:</strong> 새로운 반복 할일이 생성되며, 기존 일반 할일은 그대로 유지됩니다.
             </p>
           </div>
         )}
         {/* 할일 제목 */}
         <div>
-          <label className="block text-sm font-medium text-[#9CA3AF] mb-1">
+          <label className="block text-body-small font-medium text-gray-400 dark:text-gray-500 mb-1">
             할일 제목
           </label>
           <input
@@ -211,14 +211,14 @@ export function AddRecurringDialog({
               }
             }}
             placeholder="예: 아침 운동"
-            className="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2D9F6B]"
+            className="w-full h-10 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md text-body focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50 placeholder:text-gray-400 dark:placeholder:text-gray-500"
             autoFocus
           />
         </div>
 
         {/* 카테고리 (반복 카테고리 제외) */}
         <div>
-          <label className="block text-sm font-medium text-[#9CA3AF] mb-1">
+          <label className="block text-body-small font-medium text-gray-400 dark:text-gray-500 mb-1">
             카테고리
           </label>
           <CategorySelect
@@ -231,7 +231,7 @@ export function AddRecurringDialog({
         {/* 시간 */}
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="block text-sm font-medium text-[#9CA3AF] mb-1">
+            <label className="block text-body-small font-medium text-gray-400 dark:text-gray-500 mb-1">
               시작 시간
             </label>
             <TimeInput
@@ -241,7 +241,7 @@ export function AddRecurringDialog({
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#9CA3AF] mb-1">
+            <label className="block text-body-small font-medium text-gray-400 dark:text-gray-500 mb-1">
               종료 시간
             </label>
             <TimeInput
@@ -254,7 +254,7 @@ export function AddRecurringDialog({
 
         {/* 반복 주기 */}
         <div>
-          <label className="block text-sm font-medium text-[#9CA3AF] mb-1">
+          <label className="block text-body-small font-medium text-gray-400 dark:text-gray-500 mb-1">
             반복 주기
           </label>
           <CustomSelect
@@ -271,7 +271,7 @@ export function AddRecurringDialog({
 
         {/* 간격 */}
         <div>
-          <label className="block text-sm font-medium text-[#9CA3AF] mb-1">
+          <label className="block text-body-small font-medium text-gray-400 dark:text-gray-500 mb-1">
             간격
           </label>
           <div className="flex items-center gap-2">
@@ -281,9 +281,9 @@ export function AddRecurringDialog({
               max="30"
               value={interval}
               onChange={(e) => setInterval(parseInt(e.target.value) || 1)}
-              className="w-20 px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#2D9F6B]"
+              className="w-20 h-10 px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md text-body-small focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-50"
             />
-            <span className="text-sm text-[#9CA3AF]">
+            <span className="text-body-small text-gray-400 dark:text-gray-500">
               {frequency === 'daily' && '일마다'}
               {frequency === 'weekly' && '주마다'}
               {frequency === 'monthly' && '개월마다'}
@@ -295,7 +295,7 @@ export function AddRecurringDialog({
         {/* 요일 선택 (주간 반복일 때만) */}
         {frequency === 'weekly' && (
           <div>
-            <label className="block text-sm font-medium text-[#9CA3AF] mb-2">
+            <label className="block text-body-small font-medium text-gray-400 dark:text-gray-500 mb-2">
               반복 요일
             </label>
             <div className="flex gap-2">
@@ -306,10 +306,10 @@ export function AddRecurringDialog({
                   <button
                     key={dayValue}
                     onClick={() => toggleDayOfWeek(dayValue)}
-                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
+                    className={`flex-1 py-2 rounded-md text-body-small font-medium transition-all cursor-pointer ${
                       isSelected
-                        ? 'bg-[#2D9F6B] text-white'
-                        : 'bg-[#F5F5F5] text-[#9CA3AF] hover:bg-[#E5E7EB]'
+                        ? 'bg-primary dark:bg-primary-600 text-white'
+                        : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700'
                     }`}
                   >
                     {day}

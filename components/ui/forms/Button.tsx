@@ -3,7 +3,7 @@
 import { ReactNode } from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   children: ReactNode;
 }
@@ -16,21 +16,23 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-md transition-all duration-normal active:scale-95 touch-manipulation';
+    'inline-flex items-center justify-center font-medium rounded-md transition-all duration-normal touch-manipulation hover:scale-[1.02] active:scale-[0.98]';
 
   const variantStyles = {
     primary:
-      'bg-primary-500 text-white hover:bg-primary-700 active:bg-primary-700 disabled:bg-neutral-gray-300 disabled:text-neutral-text-tertiary disabled:cursor-not-allowed',
+      'bg-primary text-white hover:bg-primary-dark dark:bg-primary-600 dark:hover:bg-primary-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed dark:disabled:bg-gray-700 dark:disabled:text-gray-500',
     secondary:
-      'bg-neutral-gray-50 text-neutral-text-primary border border-neutral-gray-300 hover:bg-neutral-gray-100 active:bg-neutral-gray-100 active:border-primary-500 disabled:bg-neutral-gray-50 disabled:text-neutral-text-tertiary disabled:cursor-not-allowed',
+      'bg-gray-100 text-gray-900 border border-gray-200 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-50 dark:border-gray-600 dark:hover:bg-gray-600 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed dark:disabled:bg-gray-800 dark:disabled:text-gray-600',
     ghost:
-      'bg-transparent text-secondary hover:bg-neutral-gray-50 active:text-primary-500 disabled:text-neutral-text-tertiary disabled:cursor-not-allowed',
+      'bg-transparent text-gray-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700 disabled:text-gray-400 disabled:cursor-not-allowed dark:disabled:text-gray-600',
+    danger:
+      'bg-status-error text-white hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed dark:disabled:bg-gray-700 dark:disabled:text-gray-500',
   };
 
   const sizeStyles = {
-    sm: 'px-3 py-2 text-caption min-h-[36px] sm:h-8',
-    md: 'px-5 py-3 text-body min-h-[44px] sm:h-10',
-    lg: 'px-6 py-4 text-body min-h-[48px] sm:h-12',
+    sm: 'h-9 px-4 text-body-small min-h-[36px]',
+    md: 'h-10 px-5 text-body min-h-[44px]',
+    lg: 'h-12 px-6 text-body min-h-[48px]',
   };
 
   return (

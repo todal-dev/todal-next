@@ -140,7 +140,7 @@ const CategorySectionComponent = ({
         <div
           {...attributes}
           {...listeners}
-          className={`flex items-center gap-2 px-3 py-2 rounded-md bg-neutral-gray-100 group relative mb-1 ${
+          className={`flex items-center gap-2 px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 group relative mb-1 transition-colors ${
             category.id !== 'cat-recurring' && category.id !== 'cat-etc' ? 'cursor-grab active:cursor-grabbing' : ''
           }`}
           suppressHydrationWarning
@@ -148,7 +148,7 @@ const CategorySectionComponent = ({
           {/* 반복 카테고리는 아이콘만 표시, 나머지는 색상 버튼 */}
           {category.id === 'cat-recurring' ? (
             <div className="flex-shrink-0">
-              <Repeat size={16} className="text-primary-500" />
+              <Repeat size={16} className="text-primary dark:text-primary-light" />
             </div>
           ) : (
             <div
@@ -158,9 +158,9 @@ const CategorySectionComponent = ({
             >
               <button
                 onClick={() => setColorPickerOpen(!colorPickerOpen)}
-                className="flex-shrink-0 w-4 h-4 rounded-full hover:ring-2 hover:ring-offset-1 hover:ring-neutral-gray-400 transition-all cursor-pointer"
+                className="flex-shrink-0 w-4 h-4 rounded-full hover:ring-2 hover:ring-offset-1 hover:ring-gray-400 dark:hover:ring-gray-500 transition-all cursor-pointer"
                 style={{ backgroundColor: category.color }}
-                title="Change color"
+                title="색상 변경"
               />
 
               <AnimatePresence>
@@ -170,7 +170,7 @@ const CategorySectionComponent = ({
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: -5 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute top-full left-0 mt-2 p-4 bg-white border border-neutral-gray-300 rounded-lg shadow-lg z-50 min-w-[240px]"
+                    className="absolute top-full left-0 mt-2 p-4 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 min-w-[240px]"
                   >
                     <div className="grid grid-cols-5 gap-4">
                       {colorPalette.map((color) => (
@@ -181,7 +181,7 @@ const CategorySectionComponent = ({
                             setColorPickerOpen(false);
                           }}
                           className={`w-7 h-7 rounded-full hover:scale-110 transition-transform ${
-                            category.color === color ? 'ring-2 ring-offset-2 ring-neutral-gray-500' : ''
+                            category.color === color ? 'ring-2 ring-offset-2 ring-gray-500 dark:ring-gray-400' : ''
                           }`}
                           style={{ backgroundColor: color }}
                           title={color}
@@ -200,7 +200,7 @@ const CategorySectionComponent = ({
             disabled={category.id === 'cat-recurring' || category.id === 'cat-etc'}
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
-            className={`font-semibold text-sm bg-transparent text-neutral-text-primary focus:outline-none border-0 focus:ring-0 cursor-text ${
+            className={`font-semibold text-body-small bg-transparent text-gray-900 dark:text-gray-50 focus:outline-none border-0 focus:ring-0 cursor-text ${
               category.id === 'cat-recurring' || category.id === 'cat-etc' ? 'cursor-default' : ''
             }`}
             size={Math.max(category.name.length, 5)}
@@ -221,7 +221,7 @@ const CategorySectionComponent = ({
 
           <div className="flex-1" />
 
-          <span className="text-xs text-neutral-text-secondary">
+          <span className="text-caption text-gray-400 dark:text-gray-500">
             {completedCount}/{totalCount}
           </span>
 
@@ -236,7 +236,7 @@ const CategorySectionComponent = ({
             }}
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
-            className="flex-shrink-0 p-1 hover:bg-primary-100 rounded transition-colors text-neutral-text-secondary hover:text-primary-500 cursor-pointer"
+            className="flex-shrink-0 p-1 hover:bg-primary-light dark:hover:bg-primary-700 rounded transition-colors text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-light cursor-pointer"
             title="할일 추가"
           >
             <Plus size={16} />
@@ -248,8 +248,8 @@ const CategorySectionComponent = ({
               onClick={() => setDeleteDialogOpen(true)}
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
-              className="flex-shrink-0 p-1 hover:bg-red-100 rounded transition-colors text-neutral-text-secondary hover:text-red-600 opacity-0 group-hover:opacity-100 cursor-pointer"
-              title="Delete category"
+              className="flex-shrink-0 p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 cursor-pointer"
+              title="카테고리 삭제"
             >
               <Trash2 size={14} />
             </button>

@@ -25,7 +25,7 @@ export function ConvertRecurringToRegularModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-black/30"
+          className="absolute inset-0 bg-black/30 dark:bg-black/50"
         />
 
         {/* Modal */}
@@ -34,27 +34,27 @@ export function ConvertRecurringToRegularModal({
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ duration: 0.15 }}
-          className="relative bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4"
+          className="relative bg-white dark:bg-gray-700 rounded-md shadow-xl p-6 w-full max-w-md mx-4"
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-neutral-text-primary">
+            <h2 className="text-h3 text-gray-900 dark:text-gray-50">
               일반 할일로 변환
             </h2>
             <button
               onClick={onClose}
-              className="p-1 hover:bg-neutral-gray-100 rounded transition-colors"
+              className="p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-colors"
             >
-              <X size={20} className="text-neutral-text-secondary" />
+              <X size={20} className="text-gray-600 dark:text-gray-400" />
             </button>
           </div>
 
           {/* Description */}
           <div className="mb-6">
-            <p className="text-sm text-neutral-text-secondary mb-2">
+            <p className="text-body-small text-gray-600 dark:text-gray-400 mb-2">
               이 반복 할일을 일반 카테고리로 이동하시겠습니까?
             </p>
-            <p className="text-xs text-neutral-text-tertiary bg-neutral-gray-50 p-3 rounded-md">
+            <p className="text-caption text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-800 p-3 rounded-md">
               💡 선택한 날짜의 항목만 일반 할일로 변환되며, 다른 날짜의 반복 일정은 그대로 유지됩니다.
             </p>
           </div>
@@ -66,14 +66,14 @@ export function ConvertRecurringToRegularModal({
                 onConvertThisOnly();
                 onClose();
               }}
-              className="w-full px-4 py-2.5 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors cursor-pointer font-medium"
+              className="w-full px-4 py-2.5 bg-primary dark:bg-primary-600 hover:bg-primary-dark dark:hover:bg-primary-700 text-white rounded-md transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer font-medium"
             >
               일반 할일로 변환
             </button>
 
             <button
               onClick={onClose}
-              className="w-full px-4 py-2 hover:bg-neutral-gray-100 text-neutral-text-secondary rounded-lg transition-colors cursor-pointer"
+              className="w-full px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-400 rounded-md transition-colors cursor-pointer"
             >
               취소
             </button>

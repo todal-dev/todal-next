@@ -427,7 +427,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
         {/* Header */}
         {!hideTitle && (
           <div className="flex-shrink-0 flex items-center justify-between">
-            <h1 className="text-lg font-semibold text-neutral-text-primary">
+            <h1 className="text-h2 text-gray-900 dark:text-gray-50">
               {selectedDate.toLocaleString('ko-KR', { month: 'long', day: 'numeric' })}의 할일
             </h1>
             {addingNewCategory ? (
@@ -436,10 +436,10 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
                 animate={{ opacity: 1, width: 'auto' }}
                 exit={{ opacity: 0, width: 0 }}
                 transition={{ duration: 0.2 }}
-                className="flex items-center gap-2 px-3 py-1 rounded-md bg-neutral-gray-100"
+                className="flex items-center gap-2 px-3 py-1 rounded-md bg-gray-100 dark:bg-gray-700"
               >
                 <div
-                  className="flex-shrink-0 w-4 h-4 rounded-full cursor-pointer"
+                  className="flex-shrink-0 w-4 h-4 rounded-full cursor-pointer transition-transform hover:scale-110"
                   style={{ backgroundColor: newCategoryColor }}
                   onClick={() => {
                     const currentIndex = colorPalette.indexOf(newCategoryColor);
@@ -476,7 +476,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
                       setAddingNewCategory(false);
                     }, 150);
                   }}
-                  className="w-32 font-semibold text-sm bg-transparent text-neutral-text-primary focus:outline-none border-0 focus:ring-0"
+                  className="w-32 font-semibold text-body-small bg-transparent text-gray-900 dark:text-gray-50 focus:outline-none border-0 focus:ring-0"
                 />
               </motion.div>
             ) : (
@@ -485,10 +485,10 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.15 }}
                 onClick={() => setAddingNewCategory(true)}
-                className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-neutral-gray-50 transition-colors text-neutral-text-secondary hover:text-primary-500 cursor-pointer"
+                className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-light cursor-pointer"
               >
                 <Plus size={16} />
-                <span className="text-sm font-medium">카테고리 추가</span>
+                <span className="text-body-small font-medium">카테고리 추가</span>
               </motion.button>
             )}
           </div>
@@ -534,9 +534,9 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
       {/* DragOverlay - follows cursor */}
       <DragOverlay>
         {activeTodo ? (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white shadow-lg border border-neutral-gray-300">
+          <div className="flex items-center gap-2 px-4 py-2 rounded-md bg-white dark:bg-gray-700 shadow-lg border border-gray-200 dark:border-gray-600">
             <Checkbox checked={activeTodo.completed} onChange={() => {}} className="flex-shrink-0" />
-            <span className={`text-sm ${activeTodo.completed ? 'line-through text-neutral-text-secondary' : 'text-neutral-text-primary'}`}>
+            <span className={`text-body ${activeTodo.completed ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-50'}`}>
               {activeTodo.text}
             </span>
           </div>

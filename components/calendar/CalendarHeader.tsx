@@ -34,9 +34,9 @@ const CalendarHeaderComponent = ({
   handleNextWeek,
 }: CalendarHeaderProps) => {
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 px-3 sm:px-6 py-3 sm:py-4 border-b border-neutral-gray-300">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 transition-colors">
       <div className="flex items-center justify-between w-full sm:w-auto gap-2">
-        <h2 className="text-base sm:text-lg font-semibold text-neutral-text-primary whitespace-nowrap">
+        <h2 className="text-h3 text-gray-900 dark:text-gray-50 whitespace-nowrap">
           {year}년 {monthName}
         </h2>
 
@@ -44,17 +44,17 @@ const CalendarHeaderComponent = ({
         <div className="flex gap-1 sm:hidden">
           <button
             onClick={handlePrevWeek}
-            className="p-1.5 hover:bg-neutral-gray-100 active:bg-neutral-gray-200 rounded-md transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+            className="p-1.5 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 rounded-md transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
             aria-label="이전 주"
           >
-            <ChevronLeft size={18} className="text-neutral-text-secondary" />
+            <ChevronLeft size={18} className="text-gray-600 dark:text-gray-400" />
           </button>
           <button
             onClick={handleNextWeek}
-            className="p-1.5 hover:bg-neutral-gray-100 active:bg-neutral-gray-200 rounded-md transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
+            className="p-1.5 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 rounded-md transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
             aria-label="다음 주"
           >
-            <ChevronRight size={18} className="text-neutral-text-secondary" />
+            <ChevronRight size={18} className="text-gray-600 dark:text-gray-400" />
           </button>
         </div>
       </div>
@@ -67,26 +67,26 @@ const CalendarHeaderComponent = ({
               setShowCategoryFilter(!showCategoryFilter);
               setShowCompletionFilter(false);
             }}
-            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 text-xs sm:text-sm border border-neutral-gray-300 rounded-md hover:bg-neutral-gray-50 active:bg-neutral-gray-100 transition-colors min-h-[36px]"
+            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 text-body-small border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 transition-colors min-h-[36px] bg-white dark:bg-gray-800"
           >
-            <Filter size={14} className="text-neutral-text-secondary sm:w-4 sm:h-4" />
-            <span className="text-neutral-text-primary hidden xs:inline">카테고리</span>
+            <Filter size={14} className="text-gray-600 dark:text-gray-400 sm:w-4 sm:h-4" />
+            <span className="text-gray-900 dark:text-gray-50 hidden xs:inline">카테고리</span>
             {selectedCategories.length > 0 && (
-              <span className="px-1.5 py-0.5 text-xs bg-primary-500 text-white rounded-full">
+              <span className="px-1.5 py-0.5 text-label bg-primary text-white dark:bg-primary-600 rounded-full">
                 {selectedCategories.length}
               </span>
             )}
-            <ChevronDown size={14} className="text-neutral-text-secondary sm:w-4 sm:h-4 hidden sm:inline" />
+            <ChevronDown size={14} className="text-gray-600 dark:text-gray-400 sm:w-4 sm:h-4 hidden sm:inline" />
           </button>
 
           {showCategoryFilter && (
-            <div className="absolute top-full mt-1 right-0 bg-white border border-neutral-gray-300 rounded-md shadow-lg z-50 min-w-[180px] sm:min-w-[200px] max-w-[90vw]">
+            <div className="absolute top-full mt-1 right-0 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 min-w-[180px] sm:min-w-[200px] max-w-[90vw] animate-slide-up">
               <div className="py-1 max-h-[60vh] overflow-y-auto">
                 {categories.filter(cat => cat.id !== 'cat-recurring').map((category) => (
                   <button
                     key={category.id}
                     onClick={() => handleCategoryToggle(category.id)}
-                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-neutral-gray-50 active:bg-neutral-gray-100 transition-colors text-left min-h-[44px]"
+                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-600 active:bg-gray-100 dark:active:bg-gray-500 transition-colors text-left min-h-[44px]"
                   >
                     <div
                       className="w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0"
@@ -99,7 +99,7 @@ const CalendarHeaderComponent = ({
                         <Check size={12} className="text-white" />
                       )}
                     </div>
-                    <span className="text-sm text-neutral-text-primary truncate">{category.name}</span>
+                    <span className="text-body-small text-gray-900 dark:text-gray-50 truncate">{category.name}</span>
                   </button>
                 ))}
               </div>
@@ -114,40 +114,40 @@ const CalendarHeaderComponent = ({
               setShowCompletionFilter(!showCompletionFilter);
               setShowCategoryFilter(false);
             }}
-            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 text-xs sm:text-sm border border-neutral-gray-300 rounded-md hover:bg-neutral-gray-50 active:bg-neutral-gray-100 transition-colors min-h-[36px]"
+            className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 text-body-small border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 transition-colors min-h-[36px] bg-white dark:bg-gray-800"
           >
-            <span className="text-neutral-text-primary">
+            <span className="text-gray-900 dark:text-gray-50">
               {completionFilter === 'all' ? '전체' : completionFilter === 'completed' ? '완료' : '미완료'}
             </span>
-            <ChevronDown size={14} className="text-neutral-text-secondary sm:w-4 sm:h-4" />
+            <ChevronDown size={14} className="text-gray-600 dark:text-gray-400 sm:w-4 sm:h-4" />
           </button>
 
           {showCompletionFilter && (
-            <div className="absolute top-full mt-1 right-0 bg-white border border-neutral-gray-300 rounded-md shadow-lg z-50 min-w-[100px] sm:min-w-[120px]">
+            <div className="absolute top-full mt-1 right-0 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 min-w-[100px] sm:min-w-[120px] animate-slide-up">
               <div className="py-1">
                 <button
                   onClick={() => handleCompletionFilterChange('all')}
-                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-neutral-gray-50 active:bg-neutral-gray-100 transition-colors text-left min-h-[44px] ${
-                    completionFilter === 'all' ? 'bg-primary-50' : ''
+                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-600 active:bg-gray-100 dark:active:bg-gray-500 transition-colors text-left min-h-[44px] ${
+                    completionFilter === 'all' ? 'bg-primary-light dark:bg-primary-700' : ''
                   }`}
                 >
-                  <span className="text-sm text-neutral-text-primary">전체</span>
+                  <span className="text-body-small text-gray-900 dark:text-gray-50">전체</span>
                 </button>
                 <button
                   onClick={() => handleCompletionFilterChange('completed')}
-                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-neutral-gray-50 active:bg-neutral-gray-100 transition-colors text-left min-h-[44px] ${
-                    completionFilter === 'completed' ? 'bg-primary-50' : ''
+                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-600 active:bg-gray-100 dark:active:bg-gray-500 transition-colors text-left min-h-[44px] ${
+                    completionFilter === 'completed' ? 'bg-primary-light dark:bg-primary-700' : ''
                   }`}
                 >
-                  <span className="text-sm text-neutral-text-primary">완료</span>
+                  <span className="text-body-small text-gray-900 dark:text-gray-50">완료</span>
                 </button>
                 <button
                   onClick={() => handleCompletionFilterChange('incomplete')}
-                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-neutral-gray-50 active:bg-neutral-gray-100 transition-colors text-left min-h-[44px] ${
-                    completionFilter === 'incomplete' ? 'bg-primary-50' : ''
+                  className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-600 active:bg-gray-100 dark:active:bg-gray-500 transition-colors text-left min-h-[44px] ${
+                    completionFilter === 'incomplete' ? 'bg-primary-light dark:bg-primary-700' : ''
                   }`}
                 >
-                  <span className="text-sm text-neutral-text-primary">미완료</span>
+                  <span className="text-body-small text-gray-900 dark:text-gray-50">미완료</span>
                 </button>
               </div>
             </div>
@@ -158,17 +158,17 @@ const CalendarHeaderComponent = ({
         <div className="hidden sm:flex gap-2">
           <button
             onClick={handlePrevWeek}
-            className="p-2 hover:bg-neutral-gray-100 active:bg-neutral-gray-200 rounded-md transition-colors cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
+            className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 rounded-md transition-colors cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
             aria-label="이전 주"
           >
-            <ChevronLeft size={20} className="text-neutral-text-secondary" />
+            <ChevronLeft size={20} className="text-gray-600 dark:text-gray-400" />
           </button>
           <button
             onClick={handleNextWeek}
-            className="p-2 hover:bg-neutral-gray-100 active:bg-neutral-gray-200 rounded-md transition-colors cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
+            className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 rounded-md transition-colors cursor-pointer min-w-[40px] min-h-[40px] flex items-center justify-center"
             aria-label="다음 주"
           >
-            <ChevronRight size={20} className="text-neutral-text-secondary" />
+            <ChevronRight size={20} className="text-gray-600 dark:text-gray-400" />
           </button>
         </div>
       </div>

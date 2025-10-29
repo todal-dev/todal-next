@@ -32,12 +32,12 @@ export function DuplicateDialog({ isOpen, todoName, onClose, onConfirm }: Duplic
       }
     >
       <div>
-        <p className="text-neutral-text-secondary mb-4">
-          <span className="font-medium text-neutral-text-primary">"{todoName}"</span>을(를) 복제하시겠습니까?
+        <p className="text-body text-gray-600 dark:text-gray-400 mb-4">
+          <span className="font-medium text-gray-900 dark:text-gray-50">"{todoName}"</span>을(를) 복제하시겠습니까?
         </p>
 
-        <div className="bg-neutral-gray-50 rounded-lg p-3">
-          <div className="text-sm text-neutral-text-secondary">
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-md p-3">
+          <div className="text-body-small text-gray-600 dark:text-gray-400">
             복제된 일정은 같은 날짜와 시간에 생성됩니다.
           </div>
         </div>

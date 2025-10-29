@@ -3,6 +3,7 @@
 import { signOut } from '@/lib/auth/actions'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import { LogOut } from 'lucide-react'
 
 export function LogoutButton() {
   const router = useRouter()
@@ -29,9 +30,15 @@ export function LogoutButton() {
     <button
       onClick={handleLogout}
       disabled={loading}
-      className="px-4 py-2 text-sm text-neutral-text-primary hover:bg-neutral-gray-100 rounded-md transition-colors disabled:opacity-50"
+      className="px-3 py-2 text-body-small flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+      title="로그아웃"
     >
-      {loading ? '로그아웃 중...' : '로그아웃'}
+      {loading ? (
+        <div className="w-4 h-4 border-2 border-gray-200 dark:border-gray-600 border-t-primary dark:border-t-primary-600 rounded-full animate-spin"></div>
+      ) : (
+        <LogOut size={16} className="text-gray-400 dark:text-gray-500" />
+      )}
+      <span className="hidden sm:inline">{loading ? '로그아웃 중' : '로그아웃'}</span>
     </button>
   )
 }

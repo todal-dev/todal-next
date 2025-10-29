@@ -259,17 +259,17 @@ const TodoBlockComponent = ({
       {/* 하위 항목 툴팁 */}
       {showSubtasks && hasSubtasks && (
         <div
-          className="absolute left-0 top-full mt-1 z-50 bg-white shadow-lg rounded-lg border border-neutral-gray-300 p-2 min-w-[200px] max-w-[300px]"
+          className="absolute left-0 top-full mt-1 z-50 bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-600 p-2 min-w-[200px] max-w-[300px] animate-slide-up"
           onMouseDown={(e) => e.stopPropagation()}
         >
-          <div className="text-xs font-semibold text-neutral-text-secondary mb-1 px-1">
+          <div className="text-caption font-semibold text-gray-400 dark:text-gray-500 mb-1 px-1">
             하위 항목 ({subtaskCount})
           </div>
           <div className="space-y-1">
             {todo.subtasks?.map((subtask) => (
               <div
                 key={subtask.id}
-                className="flex items-center gap-2 px-2 py-1 rounded hover:bg-neutral-gray-50"
+                className="flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
               >
                 <div
                   className="w-3 h-3 rounded border-2 flex items-center justify-center flex-shrink-0"
@@ -283,10 +283,10 @@ const TodoBlockComponent = ({
                   )}
                 </div>
                 <span
-                  className={`text-xs ${
+                  className={`text-caption ${
                     subtask.completed
-                      ? 'line-through text-neutral-text-secondary'
-                      : 'text-neutral-text-primary'
+                      ? 'line-through text-gray-400 dark:text-gray-500'
+                      : 'text-gray-900 dark:text-gray-50'
                   }`}
                 >
                   {subtask.text}

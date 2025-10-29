@@ -30,10 +30,10 @@ export function UpcomingEvents({ events }: UpcomingEventsProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.4 }}
-        className="bg-white rounded-lg border border-neutral-gray-300 p-5"
+        className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 transition-colors p-5"
       >
-        <h3 className="text-lg font-semibold text-neutral-text-primary mb-4">📅 다가오는 일정</h3>
-        <div className="flex flex-col items-center justify-center py-8 text-neutral-text-secondary">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-4">📅 다가오는 일정</h3>
+        <div className="flex flex-col items-center justify-center py-8 text-gray-600 dark:text-gray-400">
           <Calendar size={48} className="mb-3 opacity-30" />
           <p className="text-sm">다가오는 일정이 없습니다</p>
         </div>
@@ -46,10 +46,10 @@ export function UpcomingEvents({ events }: UpcomingEventsProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.4 }}
-      className="bg-white rounded-lg border border-neutral-gray-300 p-5"
+      className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 transition-colors p-5"
     >
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-neutral-text-primary">📅 다가오는 일정</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50">📅 다가오는 일정</h3>
         <Link 
           href="/"
           className="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1"
@@ -65,7 +65,7 @@ export function UpcomingEvents({ events }: UpcomingEventsProps) {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.2, delay: 0.5 + index * 0.05 }}
-            className={`border-l-4 ${getPriorityColor(event.priority)} bg-neutral-gray-50 p-3 rounded-r-lg hover:bg-neutral-gray-100 transition-colors cursor-pointer`}
+            className={`border-l-4 ${getPriorityColor(event.priority)} bg-gray-50 dark:bg-gray-800 p-3 rounded-r-lg hover:bg-gray-100 dark:bg-gray-700 transition-colors cursor-pointer`}
           >
             <div className="flex items-start gap-3">
               <div 
@@ -73,8 +73,8 @@ export function UpcomingEvents({ events }: UpcomingEventsProps) {
                 style={{ backgroundColor: event.category.color }}
               ></div>
               <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-neutral-text-primary text-sm truncate">{event.title}</h4>
-                <div className="flex items-center gap-3 mt-1 text-xs text-neutral-text-secondary">
+                <h4 className="font-medium text-gray-900 dark:text-gray-50 text-sm truncate">{event.title}</h4>
+                <div className="flex items-center gap-3 mt-1 text-xs text-gray-600 dark:text-gray-400">
                   <div className="flex items-center gap-1">
                     <Calendar size={12} />
                     <span>{getDateLabel(event.date)}</span>

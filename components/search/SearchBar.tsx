@@ -68,19 +68,19 @@ export function SearchBar({ categories, onSelectTodo }: SearchBarProps) {
     <div className="relative">
       {/* 검색 입력 */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-gray-400" />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => query && setIsOpen(true)}
           placeholder="일정 검색..."
-          className="w-full pl-10 pr-10 py-2 border border-neutral-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-sm"
+          className="w-full h-10 pl-10 pr-10 py-2 border border-gray-200 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 text-body bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 placeholder:text-gray-400 dark:placeholder:text-gray-500"
         />
         {query && (
           <button
             onClick={handleClear}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-gray-400 hover:text-neutral-gray-600"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
@@ -89,22 +89,22 @@ export function SearchBar({ categories, onSelectTodo }: SearchBarProps) {
 
       {/* 검색 결과 드롭다운 */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-neutral-gray-200 rounded-lg shadow-lg max-h-96 overflow-y-auto z-50">
+        <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg max-h-96 overflow-y-auto z-50 animate-slide-up">
           {isLoading ? (
-            <div className="p-4 text-center text-sm text-neutral-text-secondary">
+            <div className="p-4 text-center text-body-small text-gray-400 dark:text-gray-500">
               검색 중...
             </div>
           ) : results.length === 0 ? (
-            <div className="p-4 text-center text-sm text-neutral-text-secondary">
+            <div className="p-4 text-center text-body-small text-gray-400 dark:text-gray-500">
               검색 결과가 없습니다.
             </div>
           ) : (
-            <div className="divide-y divide-neutral-gray-100">
+            <div className="divide-y divide-gray-100 dark:divide-gray-600">
               {results.map((todo) => (
                 <button
                   key={todo.id}
                   onClick={() => handleSelectTodo(todo)}
-                  className="w-full px-4 py-3 text-left hover:bg-neutral-gray-50 transition-colors"
+                  className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                 >
                   <div className="flex items-start gap-3">
                     {/* 카테고리 색상 점 */}
@@ -115,12 +115,12 @@ export function SearchBar({ categories, onSelectTodo }: SearchBarProps) {
                     
                     <div className="flex-1 min-w-0">
                       {/* 할일 제목 */}
-                      <div className="text-sm font-medium text-neutral-text-primary truncate">
+                      <div className="text-body-small font-medium text-gray-900 dark:text-gray-50 truncate">
                         {todo.text}
                       </div>
                       
                       {/* 메타 정보 */}
-                      <div className="flex items-center gap-2 mt-1 text-xs text-neutral-text-secondary">
+                      <div className="flex items-center gap-2 mt-1 text-caption text-gray-400 dark:text-gray-500">
                         <span className="truncate">{getCategoryName(todo.categoryId)}</span>
                         <span>•</span>
                         <span>{new Date(todo.date).toLocaleDateString('ko-KR', { 
@@ -136,7 +136,7 @@ export function SearchBar({ categories, onSelectTodo }: SearchBarProps) {
                         {todo.recurrenceRule && (
                           <>
                             <span>•</span>
-                            <span className="px-1.5 py-0.5 bg-primary-100 text-primary-700 rounded">
+                            <span className="px-1.5 py-0.5 bg-primary-light dark:bg-primary-700 text-primary dark:text-primary-light rounded">
                               반복
                             </span>
                           </>
@@ -144,7 +144,7 @@ export function SearchBar({ categories, onSelectTodo }: SearchBarProps) {
                         {todo.completed && (
                           <>
                             <span>•</span>
-                            <span className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded">
+                            <span className="px-1.5 py-0.5 bg-status-success/10 dark:bg-status-success/20 text-status-success dark:text-green-400 rounded">
                               완료
                             </span>
                           </>
