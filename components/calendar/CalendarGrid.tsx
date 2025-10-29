@@ -103,12 +103,14 @@ const CalendarGridComponent = ({
                 <div
                   key={index}
                   className={`flex-1 min-w-[50px] sm:min-w-[100px] text-center py-2 sm:py-3 border-r border-gray-200 dark:border-gray-600 flex flex-col items-center justify-center transition-colors ${
-                    isToday ? 'bg-primary-light dark:bg-primary-900/30' : ''
+                    isToday ? 'bg-primary-100 dark:bg-primary-900/50 ring-2 ring-inset ring-primary-200 dark:ring-primary-700' : ''
                   }`}
                 >
                   <div 
                     className={`text-[11px] sm:text-caption font-medium mb-0.5 ${
-                      isSunday || holiday 
+                      isToday
+                        ? 'text-primary-700 dark:text-primary-300'
+                        : isSunday || holiday 
                         ? 'text-red-500 dark:text-red-400' 
                         : isSaturday 
                         ? 'text-blue-500 dark:text-blue-400' 
@@ -117,16 +119,11 @@ const CalendarGridComponent = ({
                   >
                     {dayNames[date.getDay()]}
                   </div>
-                  <div
-                    className={`
-                      flex items-center justify-center
-                      ${isToday ? 'w-8 h-8 sm:w-auto sm:h-auto rounded-full bg-primary-600 dark:bg-primary-600' : ''}
-                    `}
-                  >
+                  <div className="text-sm sm:text-h3 font-semibold">
                     <div
-                      className={`text-sm sm:text-h3 font-semibold ${
+                      className={`${
                         isToday 
-                          ? 'text-white' 
+                          ? 'text-primary-700 dark:text-primary-300' 
                           : isSunday || holiday
                           ? 'text-red-500 dark:text-red-400'
                           : isSaturday

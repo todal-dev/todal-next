@@ -277,7 +277,7 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
                   selected
                     ? 'bg-gradient-to-br from-primary-600 to-primary-700 dark:from-primary-500 dark:to-primary-600 text-white font-semibold'
                     : today && (!todos || todos.completed < todos.total)
-                    ? 'bg-primary-100 dark:bg-primary-900/30'
+                    ? 'bg-primary-100 dark:bg-primary-900/50 ring-2 ring-primary-200 dark:ring-primary-700'
                     : day && todos && todos.completed === todos.total
                     ? 'bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/40 dark:to-primary-800/40 ring-2 ring-primary dark:ring-primary-600 hover:from-primary-200 hover:to-primary-300 dark:hover:from-primary-900/50 dark:hover:to-primary-800/50'
                     : day
@@ -287,7 +287,13 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
               `}
             >
               {/* Day Number */}
-              <div className={`text-xs font-medium ${selected ? 'text-white' : getDateColor(day)}`}>
+              <div className={`text-xs font-medium ${
+                selected 
+                  ? 'text-white' 
+                  : today 
+                  ? 'text-primary-700 dark:text-primary-300 font-semibold' 
+                  : getDateColor(day)
+              }`}>
                 {day}
               </div>
 

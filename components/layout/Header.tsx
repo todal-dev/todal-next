@@ -29,9 +29,9 @@ export function Header({ categories, onSelectTodo }: HeaderProps) {
           <Image 
             src="/logo.png" 
             alt="Todal Logo" 
-            width={70} 
-            height={70}
-            className="sm:w-[90px] sm:h-[90px]"
+            width={100} 
+            height={100}
+            className="bg-transparent w-12 h-12 sm:w-25 sm:h-10"
           />
         </Link>
 
