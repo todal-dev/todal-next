@@ -8,7 +8,6 @@ function getNthWeekdayOfMonth(year: number, month: number, nth: number, weekday:
   // nth: 1=첫째, 2=둘째, 3=셋째, 4=넷째, -1=마지막
   // weekday: 1=월, 2=화, ..., 7=일
   
-  const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
   
   if (nth === -1) {

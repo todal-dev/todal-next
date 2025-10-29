@@ -15,10 +15,10 @@ export async function middleware(request: NextRequest) {
         get(name: string) {
           return request.cookies.get(name)?.value
         },
-        set(name: string, value: string, options: any) {
+        set(_name: string, _value: string, _options: any) {
           // Cookie setting handled by updateSession
         },
-        remove(name: string, options: any) {
+        remove(_name: string, _options: any) {
           // Cookie removal handled by updateSession
         },
       },

@@ -47,7 +47,7 @@ class Logger {
   }
   
   warn(message: string, context?: LogContext): void {
-    console.warn(this.formatMessage('warn', message, this.sanitize(context)));
+    console.warn(this.formatMessage('warn', message, this.sanitize(context) as LogContext));
   }
   
   error(message: string, error?: unknown, context?: LogContext): void {
@@ -59,7 +59,7 @@ class Logger {
       } : error,
     };
     
-    console.error(this.formatMessage('error', message, this.sanitize(errorContext)));
+    console.error(this.formatMessage('error', message, this.sanitize(errorContext) as LogContext));
     
     // 프로덕션에서는 여기에 Sentry 등 에러 트래킹 서비스로 전송
     if (!this.isDevelopment && typeof window === 'undefined') {
