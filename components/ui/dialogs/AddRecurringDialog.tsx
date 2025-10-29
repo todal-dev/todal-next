@@ -7,11 +7,19 @@ import { CategorySelect } from '../forms/CategorySelect';
 import { CustomSelect, SelectOption } from '../forms/CustomSelect';
 
 interface RecurrenceRule {
-  frequency: 'daily' | 'weekly' | 'monthly';
+  frequency: 'daily' | 'weekly' | 'monthly' | 'yearly';
   interval: number;
   startDate?: Date;
   endDate?: Date;
+  count?: number;
   daysOfWeek?: number[];
+  monthDay?: number;
+  month?: number;
+  nthWeekday?: {
+    nth: number;
+    weekday: number;
+  };
+  exceptions?: string[];
 }
 
 interface Category {
@@ -54,12 +62,20 @@ export function AddRecurringDialog({
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('10:00');
   const [categoryId, setCategoryId] = useState('cat-etc');
-  const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [frequency, setFrequency] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('daily');
   const [interval, setInterval] = useState(1);
   const [daysOfWeek, setDaysOfWeek] = useState<number[]>([1, 2, 3, 4, 5]); // 월-금
   const [startDate, setStartDate] = useState<Date>(selectedDate);
-  const [hasEndDate, setHasEndDate] = useState(false);
+  const [endType, setEndType] = useState<'never' | 'date' | 'count'>('never');
   const [endDate, setEndDate] = useState<Date>(new Date());
+  const [count, setCount] = useState(10);
+  
+  // 월간/연간 고급 옵션
+  const [monthlyMode, setMonthlyMode] = useState<'date' | 'weekday'>('date');
+  const [nthWeek, setNthWeek] = useState(1); // 1=첫째, 2=둘째, 3=셋째, 4=넷째, -1=마지막
+  const [nthWeekday, setNthWeekday] = useState(1); // 1=월, 2=화, ..., 7=일
+  const [monthDay, setMonthDay] = useState(1);
+  const [yearMonth, setYearMonth] = useState(1);
 
   // 편집 모드일 때 초기값 설정
   useEffect(() => {
@@ -78,11 +94,25 @@ export function AddRecurringDialog({
           setStartDate(selectedDate);
         }
         if (editingTodo.recurrenceRule.endDate) {
-          setHasEndDate(true);
+          setEndType('date');
           setEndDate(new Date(editingTodo.recurrenceRule.endDate));
+        } else if (editingTodo.recurrenceRule.count) {
+          setEndType('count');
+          setCount(editingTodo.recurrenceRule.count);
         } else {
-          setEndDate(new Date());
+          setEndType('never');
         }
+        
+        // 월간/연간 고급 옵션
+        if (editingTodo.recurrenceRule.nthWeekday) {
+          setMonthlyMode('weekday');
+          setNthWeek(editingTodo.recurrenceRule.nthWeekday.nth);
+          setNthWeekday(editingTodo.recurrenceRule.nthWeekday.weekday);
+        } else {
+          setMonthlyMode('date');
+        }
+        setMonthDay(editingTodo.recurrenceRule.monthDay || selectedDate.getDate());
+        setYearMonth(editingTodo.recurrenceRule.month || (selectedDate.getMonth() + 1));
       }
     } else {
       setText('');
@@ -93,8 +123,14 @@ export function AddRecurringDialog({
       setInterval(1);
       setDaysOfWeek([1, 2, 3, 4, 5]);
       setStartDate(selectedDate);
-      setHasEndDate(false);
+      setEndType('never');
       setEndDate(new Date());
+      setCount(10);
+      setMonthlyMode('date');
+      setNthWeek(1);
+      setNthWeekday(1);
+      setMonthDay(selectedDate.getDate());
+      setYearMonth(selectedDate.getMonth() + 1);
     }
   }, [editingTodo, isOpen, selectedDate]);
 
@@ -107,9 +143,15 @@ export function AddRecurringDialog({
     const recurrenceRule: RecurrenceRule = {
       frequency,
       interval,
-      daysOfWeek: frequency === 'weekly' ? daysOfWeek : undefined,
       startDate,
-      endDate: hasEndDate ? endDate : undefined,
+      endDate: endType === 'date' ? endDate : undefined,
+      count: endType === 'count' ? count : undefined,
+      daysOfWeek: frequency === 'weekly' ? daysOfWeek : undefined,
+      monthDay: (frequency === 'monthly' && monthlyMode === 'date') || frequency === 'yearly' ? monthDay : undefined,
+      month: frequency === 'yearly' ? yearMonth : undefined,
+      nthWeekday: (frequency === 'monthly' || frequency === 'yearly') && monthlyMode === 'weekday' 
+        ? { nth: nthWeek, weekday: nthWeekday }
+        : undefined,
     };
 
     onConfirm(text.trim(), startTime, endTime, recurrenceRule, categoryId);
@@ -220,10 +262,11 @@ export function AddRecurringDialog({
             options={[
               { value: 'daily', label: '매일' },
               { value: 'weekly', label: '매주' },
-              { value: 'monthly', label: '매월' }
-            ] as SelectOption<'daily' | 'weekly' | 'monthly'>[]}
+              { value: 'monthly', label: '매월' },
+              { value: 'yearly', label: '매년' }
+            ] as SelectOption<'daily' | 'weekly' | 'monthly' | 'yearly'>[]}
             value={frequency}
-            onChange={(value) => setFrequency(value as 'daily' | 'weekly' | 'monthly')}
+            onChange={(value) => setFrequency(value as 'daily' | 'weekly' | 'monthly' | 'yearly')}
           />
         </div>
 
@@ -245,6 +288,7 @@ export function AddRecurringDialog({
               {frequency === 'daily' && '일마다'}
               {frequency === 'weekly' && '주마다'}
               {frequency === 'monthly' && '개월마다'}
+              {frequency === 'yearly' && '년마다'}
             </span>
           </div>
         </div>
@@ -277,6 +321,107 @@ export function AddRecurringDialog({
           </div>
         )}
 
+        {/* 월간 반복 고급 옵션 */}
+        {frequency === 'monthly' && (
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-neutral-text-secondary">
+              반복 방식
+            </label>
+            
+            <div className="space-y-2">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  checked={monthlyMode === 'date'}
+                  onChange={() => setMonthlyMode('date')}
+                  className="text-primary-500 focus:ring-primary-500"
+                />
+                <span className="text-sm">매월</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={monthDay}
+                  onChange={(e) => setMonthDay(parseInt(e.target.value) || 1)}
+                  disabled={monthlyMode !== 'date'}
+                  className="w-16 px-2 py-1 border border-neutral-gray-300 rounded-md text-sm disabled:bg-gray-100"
+                />
+                <span className="text-sm">일</span>
+              </label>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  checked={monthlyMode === 'weekday'}
+                  onChange={() => setMonthlyMode('weekday')}
+                  className="text-primary-500 focus:ring-primary-500"
+                />
+                <span className="text-sm">매월</span>
+                <select
+                  value={nthWeek}
+                  onChange={(e) => setNthWeek(parseInt(e.target.value))}
+                  disabled={monthlyMode !== 'weekday'}
+                  className="px-2 py-1 border border-neutral-gray-300 rounded-md text-sm disabled:bg-gray-100"
+                >
+                  <option value={1}>첫째주</option>
+                  <option value={2}>둘째주</option>
+                  <option value={3}>셋째주</option>
+                  <option value={4}>넷째주</option>
+                  <option value={-1}>마지막주</option>
+                </select>
+                <select
+                  value={nthWeekday}
+                  onChange={(e) => setNthWeekday(parseInt(e.target.value))}
+                  disabled={monthlyMode !== 'weekday'}
+                  className="px-2 py-1 border border-neutral-gray-300 rounded-md text-sm disabled:bg-gray-100"
+                >
+                  {dayNames.map((day, index) => (
+                    <option key={index + 1} value={index + 1}>{day}요일</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </div>
+        )}
+
+        {/* 연간 반복 옵션 */}
+        {frequency === 'yearly' && (
+          <div className="space-y-3">
+            <label className="block text-sm font-medium text-neutral-text-secondary">
+              반복 날짜
+            </label>
+            
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs text-neutral-text-secondary mb-1">월</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="12"
+                  value={yearMonth}
+                  onChange={(e) => setYearMonth(parseInt(e.target.value) || 1)}
+                  className="w-full px-3 py-2 border border-neutral-gray-300 rounded-md text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-neutral-text-secondary mb-1">일</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={monthDay}
+                  onChange={(e) => setMonthDay(parseInt(e.target.value) || 1)}
+                  className="w-full px-3 py-2 border border-neutral-gray-300 rounded-md text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="text-xs text-neutral-text-secondary">
+              예: 매년 {yearMonth}월 {monthDay}일
+            </div>
+          </div>
+        )}
+
         {/* 시작 날짜 */}
         <div>
           <label className="block text-sm font-medium text-neutral-text-secondary mb-2">
@@ -288,26 +433,61 @@ export function AddRecurringDialog({
           />
         </div>
 
-        {/* 종료 날짜 */}
+        {/* 종료 조건 */}
         <div>
-          <label className="flex items-center gap-2 mb-2">
-            <input
-              type="checkbox"
-              checked={hasEndDate}
-              onChange={(e) => setHasEndDate(e.target.checked)}
-              className="rounded border-neutral-gray-300 text-primary-500 focus:ring-primary-500"
-            />
-            <span className="text-sm font-medium text-neutral-text-secondary">
-              종료 날짜 설정
-            </span>
+          <label className="block text-sm font-medium text-neutral-text-secondary mb-2">
+            종료 조건
           </label>
-          {hasEndDate && (
-            <DatePickerInput
-              value={endDate}
-              onChange={setEndDate}
-              minDate={startDate}
-            />
-          )}
+          
+          <div className="space-y-2">
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                checked={endType === 'never'}
+                onChange={() => setEndType('never')}
+                className="text-primary-500 focus:ring-primary-500"
+              />
+              <span className="text-sm">종료 안함</span>
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                checked={endType === 'date'}
+                onChange={() => setEndType('date')}
+                className="text-primary-500 focus:ring-primary-500"
+              />
+              <span className="text-sm">날짜 지정</span>
+              {endType === 'date' && (
+                <div className="ml-2">
+                  <DatePickerInput
+                    value={endDate}
+                    onChange={setEndDate}
+                    minDate={startDate}
+                  />
+                </div>
+              )}
+            </label>
+
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                checked={endType === 'count'}
+                onChange={() => setEndType('count')}
+                className="text-primary-500 focus:ring-primary-500"
+              />
+              <input
+                type="number"
+                min="1"
+                max="100"
+                value={count}
+                onChange={(e) => setCount(parseInt(e.target.value) || 1)}
+                disabled={endType !== 'count'}
+                className="w-16 px-2 py-1 border border-neutral-gray-300 rounded-md text-sm disabled:bg-gray-100 mx-2"
+              />
+              <span className="text-sm">회 반복 후 종료</span>
+            </label>
+          </div>
         </div>
       </div>
     </BaseDialog>
