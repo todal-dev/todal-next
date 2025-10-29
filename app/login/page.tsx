@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { signIn } from '@/lib/auth/actions'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
@@ -16,6 +16,7 @@ const ERROR_MESSAGES: Record<string, string> = {
 }
 
 export default function LoginPage() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -78,8 +79,10 @@ export default function LoginPage() {
           setError(result.error)
         }
         setLoading(false)
+      } else if (result?.success) {
+        // 성공하면 홈으로 리다이렉트
+        router.push('/')
       }
-      // 성공하면 자동으로 리다이렉트됨
     } catch (err) {
       const message = err instanceof Error 
         ? err.message 

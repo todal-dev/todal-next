@@ -42,9 +42,9 @@ const nextConfig = {
             value: [
               "default-src 'self'",
               "script-src 'self' 'unsafe-eval' 'unsafe-inline'", // Next.js requires unsafe-eval and unsafe-inline
-              "style-src 'self' 'unsafe-inline'", // Tailwind requires unsafe-inline
+              "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net", // Tailwind requires unsafe-inline, Pretendard font from CDN
               "img-src 'self' data: https:",
-              "font-src 'self' data:",
+              "font-src 'self' data: https://cdn.jsdelivr.net", // Pretendard font from CDN
               "connect-src 'self' https://*.supabase.co https://www.googleapis.com",
               "frame-ancestors 'self'",
             ].join('; ')

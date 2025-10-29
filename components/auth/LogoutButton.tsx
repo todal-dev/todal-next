@@ -1,15 +1,24 @@
 'use client'
 
 import { signOut } from '@/lib/auth/actions'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export function LogoutButton() {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
 
   const handleLogout = async () => {
     setLoading(true)
     try {
-      await signOut()
+      const result = await signOut()
+      if (result?.error) {
+        console.error('Logout error:', result.error)
+        setLoading(false)
+      } else if (result?.success) {
+        // 로그아웃 성공 시 로그인 페이지로 이동
+        router.push('/login')
+      }
     } catch (error) {
       console.error('Logout error:', error)
       setLoading(false)
