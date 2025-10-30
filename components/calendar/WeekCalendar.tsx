@@ -83,16 +83,29 @@ export function BigCalendar() {
   // Hour height with localStorage and zoom functionality
   const hourHeight = useHourHeight();
 
-  // Current time tracking
+  // Current time tracking (업데이트 최적화 - 현재 시간 라인이 표시될 때만)
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isCurrentWeek, setIsCurrentWeek] = useState(false);
 
   useEffect(() => {
+    // 현재 주인지 확인
+    const today = new Date();
+    const weekStart = new Date(currentWeekStart);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+    
+    const isCurrent = today >= weekStart && today < weekEnd;
+    setIsCurrentWeek(isCurrent);
+    
+    // 현재 주일 때만 타이머 시작
+    if (!isCurrent) return;
+    
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 60000); // Update every minute
 
     return () => clearInterval(timer);
-  }, []);
+  }, [currentWeekStart]); // currentWeekStart 변경 시 재확인
 
   // Dialog states
   const {
@@ -478,7 +491,7 @@ export function BigCalendar() {
         hourHeight={hourHeight}
         hours={hours}
         dayNames={dayNames}
-        currentTime={currentTime}
+        currentTime={isCurrentWeek ? currentTime : undefined}
         gridScrollRef={gridScrollRef}
         creatingEvent={creatingEvent}
         editingEventText={editingEventText}

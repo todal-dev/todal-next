@@ -9,7 +9,7 @@ interface TodoBlockProps {
   date: Date;
   hourHeight: number;
   layout: { width: number; left: number };
-  currentTime: Date;
+  currentTime?: Date; // optional로 변경
   editingTodoId: string | null;
   editingText: string;
   setEditingText: (text: string) => void;
@@ -74,12 +74,12 @@ const TodoBlockComponent = ({
   }
 
   // Check if event is in the past (end time is before current time)
-  const isPastEvent = (() => {
+  const isPastEvent = currentTime ? (() => {
     const [endHour, endMinute] = displayEndTime.split(':').map(Number);
     const eventEndDate = new Date(todo.date);
     eventEndDate.setHours(endHour, endMinute, 0, 0);
     return eventEndDate < currentTime;
-  })();
+  })() : false;
 
   const style = getTodoBlockStyle(displayStartTime, displayEndTime, hourHeight, layout.width, layout.left);
   // 반복 이벤트인지 확인 (ID 패턴: recurring-timestamp-ISODate)
@@ -128,27 +128,27 @@ const TodoBlockComponent = ({
            }
          }
        }}
-      className={`absolute py-1.5 sm:py-1 px-1.5 sm:pr-2 sm:pl-1.5 rounded text-xs overflow-visible cursor-move hover:brightness-95 active:brightness-90 group select-none touch-manipulation ${
+      className={`absolute py-1 px-1.5 sm:py-1.5 sm:px-2 rounded-sm sm:rounded text-xs overflow-visible cursor-move hover:brightness-95 active:brightness-90 group select-none touch-manipulation ${
         todo.completed ? 'opacity-60' : ''
       }`}
       style={{
         ...style,
         backgroundColor: category?.color || '#3B82F6',
-        borderLeft: `3px solid rgba(255, 255, 255, 0.6)`,
+        borderLeft: `2px solid rgba(255, 255, 255, 0.7)`,
         color: 'white',
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06)',
+        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
         zIndex: isResizing ? 20 : 10,
         opacity: isDraggingThis ? 0.3 : (isPastEvent && !todo.completed) ? 0.5 : 1,
-        minHeight: '32px', // Minimum touch target size on mobile
+        minHeight: '28px', // Minimum touch target size on mobile (Google Calendar style)
         textDecoration: todo.completed ? 'line-through' : 'none',
       }}
       title={`${todo.text} (${formatTimeWithoutSeconds(displayStartTime)} - ${formatTimeWithoutSeconds(displayEndTime)})`}
     >
       {/* Top resize handle */}
       <div
-        className="absolute top-0 left-0 right-0 h-3 sm:h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation"
+        className="absolute top-0 left-0 right-0 h-2 sm:h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation"
         style={{
-          background: 'linear-gradient(to top, transparent, rgba(0,0,0,0.2))',
+          background: 'linear-gradient(to top, transparent, rgba(0,0,0,0.15))',
         }}
         onMouseDown={(e) => handleResizeStart(e, todo.id, 'top', todo.startTime!, todo.endTime!)}
         onTouchStart={(e) => {
@@ -165,7 +165,7 @@ const TodoBlockComponent = ({
 
       {/* Checkbox - Desktop only (Top Right) */}
       <div
-        className="absolute top-1 right-1 z-10 hidden sm:block"
+        className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 z-10 hidden sm:block"
         onClick={(e) => {
           e.stopPropagation();
           handleToggleCompletion(todo.id);
@@ -174,21 +174,21 @@ const TodoBlockComponent = ({
         onTouchStart={(e) => e.stopPropagation()}
       >
         <div
-          className="w-4 h-4 rounded border-2 border-white flex items-center justify-center cursor-pointer hover:bg-white/20 active:bg-white/30 transition-colors touch-manipulation"
+          className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border border-white sm:border-2 flex items-center justify-center cursor-pointer hover:bg-white/20 active:bg-white/30 transition-colors touch-manipulation"
           style={{
             backgroundColor: todo.completed ? 'rgba(255, 255, 255, 0.9)' : 'transparent',
           }}
         >
           {todo.completed && (
-            <Check size={12} style={{ color: category?.color || '#3B82F6' }} strokeWidth={3} />
+            <Check size={10} className="sm:w-3 sm:h-3" style={{ color: category?.color || '#3B82F6' }} strokeWidth={3} />
           )}
         </div>
       </div>
 
       {/* Content */}
       <div className="relative">
-        <div className="flex items-center gap-0.5 sm:gap-1 pr-0 sm:pr-6">
-          {isRecurring && <Repeat size={10} className="flex-shrink-0 sm:w-3 sm:h-3" />}
+        <div className="flex items-center gap-0.5 pr-0 sm:pr-5">
+          {isRecurring && <Repeat size={9} className="flex-shrink-0 sm:w-3 sm:h-3" />}
           {editingTodoId === todo.id ? (
             <input
               type="text"
@@ -207,12 +207,12 @@ const TodoBlockComponent = ({
                 backgroundColor: 'rgba(255, 255, 255, 0.2)',
                 borderColor: 'rgba(255, 255, 255, 0.5)',
               }}
-              className="flex-1 rounded px-1 sm:px-2 py-0.5 text-[10px] sm:text-xs font-semibold outline-none border-2 min-w-0 placeholder-white/70"
+              className="flex-1 rounded px-1 sm:px-2 py-0.5 text-[9px] sm:text-xs font-medium sm:font-semibold outline-none border min-w-0 placeholder-white/70"
               autoFocus
             />
           ) : (
             <div
-              className="text-[10px] sm:text-xs font-semibold cursor-text break-words line-clamp-2 leading-tight"
+              className="text-[9px] sm:text-xs font-medium sm:font-semibold cursor-text break-words line-clamp-2 leading-snug"
               onDoubleClick={(e) => {
                 e.stopPropagation();
                 startEdit(todo.id, todo.text);
@@ -223,14 +223,14 @@ const TodoBlockComponent = ({
           )}
         </div>
         {/* 시간 표시 - 데스크톱만 */}
-        <div className="text-[10px] sm:text-xs opacity-90 hidden sm:block mt-0.5">
+        <div className="text-[9px] sm:text-[10px] opacity-80 hidden sm:block mt-0.5">
           {formatTimeWithoutSeconds(displayStartTime)} - {formatTimeWithoutSeconds(displayEndTime)}
         </div>
-        {/* 하위 항목 뱃지 - 더 작게 */}
+        {/* 하위 항목 뱃지 - 데스크톱만 */}
         {hasSubtasks && (
-          <div className="text-[9px] sm:text-[10px] opacity-90 mt-0.5 hidden sm:block">
+          <div className="text-[8px] sm:text-[9px] opacity-80 mt-0.5 hidden sm:block">
             <span className="flex items-center gap-0.5 bg-white/20 px-1 py-0.5 rounded inline-flex">
-              <ListTodo size={8} className="sm:w-2.5 sm:h-2.5" />
+              <ListTodo size={7} className="sm:w-2.5 sm:h-2.5" />
               <span className="font-medium">{subtaskCount}</span>
             </span>
           </div>
@@ -239,9 +239,9 @@ const TodoBlockComponent = ({
 
       {/* Bottom resize handle */}
       <div
-        className="absolute bottom-0 left-0 right-0 h-3 sm:h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation"
+        className="absolute bottom-0 left-0 right-0 h-2 sm:h-2 cursor-ns-resize opacity-0 group-hover:opacity-100 transition-opacity touch-manipulation"
         style={{
-          background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.2))',
+          background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.15))',
         }}
         onMouseDown={(e) => handleResizeStart(e, todo.id, 'bottom', todo.startTime!, todo.endTime!)}
         onTouchStart={(e) => {
@@ -259,7 +259,7 @@ const TodoBlockComponent = ({
       {/* 하위 항목 툴팁 */}
       {showSubtasks && hasSubtasks && (
         <div
-          className="absolute left-0 top-full mt-1 z-50 bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-600 p-2 min-w-[200px] max-w-[300px] animate-slide-up"
+          className="absolute left-0 top-full mt-1 z-50 bg-white dark:bg-gray-700 shadow-lg rounded-md border border-gray-200 dark:border-gray-600 p-2 min-w-[200px] max-w-[300px] animate-slide-up transition-colors"
           onMouseDown={(e) => e.stopPropagation()}
         >
           <div className="text-caption font-semibold text-gray-400 dark:text-gray-500 mb-1 px-1">

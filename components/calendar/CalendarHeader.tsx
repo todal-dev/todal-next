@@ -80,7 +80,7 @@ const CalendarHeaderComponent = ({
           </button>
 
           {showCategoryFilter && (
-            <div className="absolute top-full mt-1 right-0 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 min-w-[180px] sm:min-w-[200px] max-w-[90vw] animate-slide-up">
+            <div className="absolute top-full mt-1 right-0 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 min-w-[180px] sm:min-w-[200px] max-w-[90vw] animate-slide-up transition-colors">
               <div className="py-1 max-h-[60vh] overflow-y-auto">
                 {categories.filter(cat => cat.id !== 'cat-recurring' && cat.name !== 'Google Calendar').map((category) => (
                   <button
@@ -123,7 +123,7 @@ const CalendarHeaderComponent = ({
           </button>
 
           {showCompletionFilter && (
-            <div className="absolute top-full mt-1 right-0 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 min-w-[100px] sm:min-w-[120px] animate-slide-up">
+            <div className="absolute top-full mt-1 right-0 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 min-w-[100px] sm:min-w-[120px] animate-slide-up transition-colors">
               <div className="py-1">
                 <button
                   onClick={() => handleCompletionFilterChange('all')}

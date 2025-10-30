@@ -305,14 +305,14 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
                     {todos.byCategory?.map((category, idx) => (
                       <div
                         key={idx}
-                        className={`w-1 h-1 rounded-full transition-colors ring-1 ${selected ? 'ring-white' : 'ring-white'}`}
+                        className={`w-1.5 h-1.5 rounded-full transition-colors ring-1 ${selected ? 'ring-white' : 'ring-white'}`}
                         style={{ backgroundColor: category.color }}
                       />
                     ))}
                   </div>
 
                   {/* Completed/Total Count */}
-                  <div className={`text-[10px] ${selected ? 'text-white' : 'text-gray-600 dark:text-gray-400'}`}>
+                  <div className={`text-[9px] font-medium ${selected ? 'text-white' : 'text-gray-600 dark:text-gray-400'}`}>
                     {todos.completed}/{todos.total}
                   </div>
                 </div>
