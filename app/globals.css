@@ -39,6 +39,16 @@
   --color-dark-text: #F9FAFB;
   --color-dark-border: #4B5563;
   --color-dark-primary: #34D399;
+  
+  /* Primary with opacity variants */
+  --color-primary-400: #3db87a;
+  --color-primary-800: #1a6540;
+  --color-primary-900: #134d2f;
+  
+  /* Animation timing functions - 수달의 부드러운 움직임 */
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
 }
 
 @theme reference {
@@ -111,15 +121,81 @@
     transition: all 150ms ease;
   }
 
+  /* 모든 요소에 부드러운 다크모드 전환 효과 */
+  * {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 200ms;
+  }
+
+  /* 애니메이션이 필요 없는 요소들 제외 */
+  *:where([class*="transition-none"], [class*="duration-0"]) {
+    transition: none !important;
+  }
+
   :focus:not(:focus-visible) {
     outline: none;
   }
 }
 
 @layer utilities {
+  /* 수달 애니메이션 키프레임 */
+  @keyframes bounce-subtle {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-4px); }
+  }
+  
+  @keyframes bounce-check {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+  
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slide-up {
+    from { 
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to { 
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+  
+  /* 애니메이션 유틸리티 클래스 */
+  .animate-bounce-subtle {
+    animation: bounce-subtle 0.6s ease-in-out;
+  }
+  
+  .animate-bounce-check {
+    animation: bounce-check 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+  
+  .animate-slide-up {
+    animation: slide-up 0.4s ease-out;
+  }
+  
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
   }
 
   ::-webkit-scrollbar-track {
@@ -128,7 +204,7 @@
 
   ::-webkit-scrollbar-thumb {
     background: #d1d5db;
-    border-radius: 4px;
+    border-radius: 6px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
@@ -169,14 +245,11 @@
 
   /* Mobile-friendly minimum touch targets */
   @media (max-width: 768px) {
-    /* Increase touch target sizes on mobile */
-    button,
-    a,
-    [role="button"],
-    input[type="checkbox"],
-    input[type="radio"] {
+    /* Increase touch target sizes on mobile (Google Calendar standard) */
+    button:not(.calendar-day-column *),
+    a:not(.calendar-day-column *),
+    [role="button"]:not(.calendar-day-column *) {
       min-height: 44px;
-      min-width: 44px;
     }
 
     /* Better scrolling on iOS */
@@ -184,6 +257,28 @@
     .overflow-auto,
     .overflow-y-auto {
       -webkit-overflow-scrolling: touch;
+    }
+
+    /* Optimize calendar grid for mobile */
+    .calendar-grid {
+      overflow-x: hidden; /* Prevent horizontal scroll */
+    }
+
+    /* Ensure week days fit in viewport */
+    .calendar-day-column {
+      min-width: 0 !important;
+    }
+
+    /* Better text readability on mobile */
+    body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* Improve tap precision */
+    * {
+      -webkit-tap-highlight-color: rgba(45, 159, 107, 0.1);
     }
   }
 
