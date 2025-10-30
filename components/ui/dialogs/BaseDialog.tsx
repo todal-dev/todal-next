@@ -116,7 +116,7 @@ export function DialogFooter({
     <>
       <button
         onClick={onCancel}
-        className="px-5 py-3 text-body font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600 rounded-xl transition-all cursor-pointer min-h-[48px] touch-manipulation hover:scale-[1.02] active:scale-[0.98]"
+        className="px-5 py-3 text-body font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 active:bg-gray-300 dark:active:bg-gray-500 rounded-xl transition-all cursor-pointer min-h-[48px] touch-manipulation hover:scale-[1.02] active:scale-[0.98] border-2 border-gray-200 dark:border-gray-600"
       >
         {cancelText}
       </button>

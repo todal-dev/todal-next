@@ -307,10 +307,10 @@ export function AddRecurringDialog({
                   <button
                     key={dayValue}
                     onClick={() => toggleDayOfWeek(dayValue)}
-                    className={`flex-1 h-12 rounded-xl text-body font-semibold transition-all cursor-pointer ${
+                    className={`flex-1 h-12 rounded-xl text-body font-semibold transition-all cursor-pointer border-2 ${
                       isSelected
-                        ? 'bg-primary dark:bg-primary-600 text-white shadow-md scale-105'
-                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:scale-102'
+                        ? 'bg-primary dark:bg-primary-600 text-white shadow-md scale-105 border-primary dark:border-primary-600'
+                        : 'bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 hover:border-gray-400 dark:hover:border-gray-500 hover:scale-102'
                     }`}
                   >
                     {day}
@@ -329,7 +329,11 @@ export function AddRecurringDialog({
             </label>
             
             <div className="space-y-3">
-              <label className="flex items-center gap-3 p-3 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-colors cursor-pointer">
+              <label className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer border-2 ${
+                monthlyMode === 'date' 
+                  ? 'bg-white dark:bg-gray-700 border-primary dark:border-primary-600' 
+                  : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-750 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}>
                 <input
                   type="radio"
                   checked={monthlyMode === 'date'}
@@ -349,7 +353,11 @@ export function AddRecurringDialog({
                 <span className="text-body text-gray-900 dark:text-gray-50">일</span>
               </label>
 
-              <label className="flex items-center gap-3 p-3 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-colors cursor-pointer">
+              <label className={`flex items-center gap-3 p-3 rounded-lg transition-colors cursor-pointer border-2 ${
+                monthlyMode === 'weekday' 
+                  ? 'bg-white dark:bg-gray-700 border-primary dark:border-primary-600' 
+                  : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-750 hover:border-gray-300 dark:hover:border-gray-600'
+              }`}>
                 <input
                   type="radio"
                   checked={monthlyMode === 'weekday'}
@@ -440,7 +448,11 @@ export function AddRecurringDialog({
           </label>
           
           <div className="space-y-3">
-            <label className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+            <label className={`flex items-center gap-3 p-3 rounded-xl transition-colors cursor-pointer border-2 ${
+              endType === 'never' 
+                ? 'bg-primary-50 dark:bg-primary-900/30 border-primary dark:border-primary-600' 
+                : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+            }`}>
               <input
                 type="radio"
                 checked={endType === 'never'}
@@ -450,7 +462,11 @@ export function AddRecurringDialog({
               <span className="text-body text-gray-900 dark:text-gray-50 font-medium">종료 안함 ♾️</span>
             </label>
 
-            <label className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+            <label className={`flex items-center gap-3 p-3 rounded-xl transition-colors cursor-pointer border-2 ${
+              endType === 'date' 
+                ? 'bg-primary-50 dark:bg-primary-900/30 border-primary dark:border-primary-600' 
+                : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+            }`}>
               <input
                 type="radio"
                 checked={endType === 'date'}
@@ -469,7 +485,11 @@ export function AddRecurringDialog({
               )}
             </label>
 
-            <label className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer">
+            <label className={`flex items-center gap-3 p-3 rounded-xl transition-colors cursor-pointer border-2 ${
+              endType === 'count' 
+                ? 'bg-primary-50 dark:bg-primary-900/30 border-primary dark:border-primary-600' 
+                : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+            }`}>
               <input
                 type="radio"
                 checked={endType === 'count'}

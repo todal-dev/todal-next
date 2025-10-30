@@ -10,13 +10,17 @@ interface SearchBarProps {
   onSelectTodo: (todo: Todo) => void;
 }
 
+// 검색 결과 캐시 (메모리 캐시)
+const searchCache = new Map<string, { results: Todo[], timestamp: number }>();
+const CACHE_DURATION = 60000; // 1분
+
 export function SearchBar({ categories, onSelectTodo }: SearchBarProps) {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [results, setResults] = useState<Todo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 검색 실행 (디바운스 포함)
+  // 검색 실행 (디바운스 + 캐싱)
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
@@ -25,9 +29,27 @@ export function SearchBar({ categories, onSelectTodo }: SearchBarProps) {
     }
 
     const timeoutId = setTimeout(async () => {
+      // 캐시 확인
+      const cached = searchCache.get(query);
+      if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        setResults(cached.results);
+        setIsOpen(true);
+        return;
+      }
+
       setIsLoading(true);
       try {
         const searchResults = await searchTodos(query);
+        
+        // 캐시에 저장
+        searchCache.set(query, { results: searchResults, timestamp: Date.now() });
+        
+        // 캐시 크기 제한 (최근 20개만 유지)
+        if (searchCache.size > 20) {
+          const firstKey = searchCache.keys().next().value;
+          if (firstKey) searchCache.delete(firstKey);
+        }
+        
         setResults(searchResults);
         setIsOpen(true);
       } catch (error) {
