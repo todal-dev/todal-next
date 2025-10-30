@@ -36,20 +36,76 @@ const DEFAULT_HOLIDAYS: Record<number, string[]> = {
   ],
 };
 
+// 로컬 스토리지 캐시 키
+const CACHE_KEY = 'holidays_cache';
+const CACHE_EXPIRY_KEY = 'holidays_cache_expiry';
+const CACHE_DURATION = 7 * 24 * 60 * 60 * 1000; // 7일
+
+// 싱글톤 패턴으로 공휴일 데이터 관리 (중복 로드 방지)
+let globalHolidays: Set<string> | null = null;
+let loadingPromise: Promise<Set<string>> | null = null;
+
 /**
- * 공휴일 데이터를 로드하고 관리하는 커스텀 훅
- * @returns holidays - 공휴일 Set (YYYY-MM-DD 형식)
- * @returns isHoliday - 특정 날짜가 공휴일인지 확인하는 함수
+ * 로컬 스토리지에서 캐시된 공휴일 데이터 로드
  */
-export function useHolidays() {
-  const [holidays, setHolidays] = useState<Set<string>>(new Set());
-  const [isLoading, setIsLoading] = useState(true);
+function loadFromCache(): Set<string> | null {
+  if (typeof window === 'undefined') return null;
+  
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    const expiry = localStorage.getItem(CACHE_EXPIRY_KEY);
+    
+    if (cached && expiry) {
+      const expiryTime = parseInt(expiry, 10);
+      if (Date.now() < expiryTime) {
+        const holidays = JSON.parse(cached);
+        return new Set(holidays);
+      }
+    }
+  } catch (error) {
+    console.error('캐시 로드 실패:', error);
+  }
+  
+  return null;
+}
 
-  useEffect(() => {
-    loadHolidays();
-  }, []);
+/**
+ * 로컬 스토리지에 공휴일 데이터 저장
+ */
+function saveToCache(holidays: Set<string>): void {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify([...holidays]));
+    localStorage.setItem(CACHE_EXPIRY_KEY, (Date.now() + CACHE_DURATION).toString());
+  } catch (error) {
+    console.error('캐시 저장 실패:', error);
+  }
+}
 
-  const loadHolidays = async () => {
+/**
+ * 공휴일 데이터를 서버에서 로드 (싱글톤)
+ */
+async function loadHolidaysData(): Promise<Set<string>> {
+  // 이미 로딩 중이면 기존 Promise 반환
+  if (loadingPromise) {
+    return loadingPromise;
+  }
+
+  // 이미 로드된 데이터가 있으면 반환
+  if (globalHolidays) {
+    return globalHolidays;
+  }
+
+  // 캐시에서 먼저 로드 시도
+  const cached = loadFromCache();
+  if (cached) {
+    globalHolidays = cached;
+    return cached;
+  }
+
+  // 새로 로드
+  loadingPromise = (async () => {
     try {
       const currentYear = new Date().getFullYear();
       const holidaySet = new Set<string>();
@@ -64,13 +120,12 @@ export function useHolidays() {
         }
       });
 
-      setHolidays(new Set(holidaySet));
-      setIsLoading(false);
-
       // 여러 연도의 공휴일을 병렬로 로드 (서버 API Route 사용)
       try {
         const fetchPromises = yearsToLoad.map(year => 
-          fetch(`/api/holidays?year=${year}`)
+          fetch(`/api/holidays?year=${year}`, {
+            next: { revalidate: 86400 } // 1일 캐시
+          })
         );
 
         const responses = await Promise.all(fetchPromises);
@@ -101,18 +156,63 @@ export function useHolidays() {
           }
         }
 
-        // API에서 로드한 데이터로 업데이트
-        setHolidays(new Set(holidaySet));
-        console.log(`공휴일 ${holidaySet.size}개 로드 완료`);
+        console.log(`✅ 공휴일 ${holidaySet.size}개 로드 완료`);
       } catch (error) {
         // API 실패 시 기본 데이터 유지
-        console.warn('공휴일 API 로드 실패, 기본 데이터를 사용합니다:', error);
+        console.warn('⚠️ 공휴일 API 로드 실패, 기본 데이터를 사용합니다:', error);
       }
+
+      // 캐시에 저장
+      saveToCache(holidaySet);
+      globalHolidays = holidaySet;
+      loadingPromise = null;
+      
+      return holidaySet;
     } catch (error) {
       console.error('공휴일 로드 중 오류:', error);
-      setIsLoading(false);
+      loadingPromise = null;
+      
+      // 에러 시 기본 데이터만 반환
+      const fallbackSet = new Set<string>();
+      const currentYear = new Date().getFullYear();
+      [currentYear - 1, currentYear, currentYear + 1].forEach(year => {
+        if (DEFAULT_HOLIDAYS[year]) {
+          DEFAULT_HOLIDAYS[year].forEach((date) => {
+            fallbackSet.add(`${year}-${date}`);
+          });
+        }
+      });
+      
+      return fallbackSet;
     }
-  };
+  })();
+
+  return loadingPromise;
+}
+
+/**
+ * 공휴일 데이터를 로드하고 관리하는 커스텀 훅 (최적화됨)
+ * @returns holidays - 공휴일 Set (YYYY-MM-DD 형식)
+ * @returns isHoliday - 특정 날짜가 공휴일인지 확인하는 함수
+ */
+export function useHolidays() {
+  const [holidays, setHolidays] = useState<Set<string>>(() => globalHolidays || new Set());
+  const [isLoading, setIsLoading] = useState(!globalHolidays);
+
+  useEffect(() => {
+    // 이미 로드되어 있으면 스킵
+    if (globalHolidays) {
+      setHolidays(globalHolidays);
+      setIsLoading(false);
+      return;
+    }
+
+    // 비동기로 로드
+    loadHolidaysData().then(data => {
+      setHolidays(data);
+      setIsLoading(false);
+    });
+  }, []);
 
   /**
    * 특정 날짜가 공휴일인지 확인

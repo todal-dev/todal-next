@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Todo, RecurrenceRule } from '@/types/calendar';
 import { formatDateKey } from '@/utils/calendarUtils';
 import {
@@ -21,13 +21,15 @@ import {
 
 export function useTodos(initialTodos: Todo[] = []) {
   const [todos, setTodos] = useState<Todo[]>(initialTodos);
+  const initializedRef = useRef(false);
 
-  // initialTodos가 변경되면 todos 상태 업데이트
+  // initialTodos가 변경되면 todos 상태 업데이트 (최초 1회만)
   useEffect(() => {
-    if (initialTodos.length > 0) {
+    if (!initializedRef.current && initialTodos.length > 0) {
       setTodos(initialTodos);
+      initializedRef.current = true;
     }
-  }, [initialTodos]);
+  }, [initialTodos.length]); // length만 체크하여 불필요한 리렌더링 방지
 
   // Add a new todo (Optimistic Update)
   const handleAddTodo = useCallback(async (
@@ -241,14 +243,14 @@ export function useTodos(initialTodos: Todo[] = []) {
       return null;
     };
 
-    const currentTodo = findTodo(todos, todoId);
-    if (!currentTodo) return;
-
-    // Determine final categoryId
-    const shouldKeepCategoryId = currentTodo.recurrenceRule && newCategoryId === 'cat-recurring';
-    const finalCategoryId = shouldKeepCategoryId ? currentTodo.categoryId : newCategoryId;
-    
     setTodos(prevTodos => {
+      const currentTodo = findTodo(prevTodos, todoId);
+      if (!currentTodo) return prevTodos;
+
+      // Determine final categoryId
+      const shouldKeepCategoryId = currentTodo.recurrenceRule && newCategoryId === 'cat-recurring';
+      const finalCategoryId = shouldKeepCategoryId ? currentTodo.categoryId : newCategoryId;
+      
       let movedTodo: Todo | null = null;
       
       // Find and remove the todo
@@ -278,11 +280,22 @@ export function useTodos(initialTodos: Todo[] = []) {
     });
 
     // DB 업데이트 (비동기, setTodos 이후)
-    await updateTodoDB(todoId, {
-      categoryId: finalCategoryId,
-      parentId: newParentId
+    // finalCategoryId를 계산하기 위해 setTodos의 결과를 기다릴 필요 없이
+    // prevTodos에서 직접 계산한 값을 사용
+    setTodos(prevTodos => {
+      const currentTodo = findTodo(prevTodos, todoId);
+      if (currentTodo) {
+        const shouldKeepCategoryId = currentTodo.recurrenceRule && newCategoryId === 'cat-recurring';
+        const finalCategoryId = shouldKeepCategoryId ? currentTodo.categoryId : newCategoryId;
+        
+        updateTodoDB(todoId, {
+          categoryId: finalCategoryId,
+          parentId: newParentId
+        });
+      }
+      return prevTodos;
     });
-  }, [todos]);
+  }, []); // 의존성 배열 제거
 
   // Move todo to a different date (Optimistic Update)
   const handleMoveTodoToDate = useCallback(async (id: string, newDate: Date) => {
@@ -554,7 +567,13 @@ export function useTodos(initialTodos: Todo[] = []) {
     date: Date,
     categoryId: string
   ) => {
-    const recurringTodo = todos.find(t => t.id === recurringId);
+    let recurringTodo: Todo | undefined;
+    
+    setTodos(prevTodos => {
+      recurringTodo = prevTodos.find(t => t.id === recurringId);
+      return prevTodos;
+    });
+    
     if (!recurringTodo || !recurringTodo.recurrenceRule) return;
 
     const dateString = formatDateKey(date);
@@ -609,7 +628,7 @@ export function useTodos(initialTodos: Todo[] = []) {
       console.error('Failed to create regular todo:', result.error);
       setTodos(prevTodos => prevTodos.filter(t => t.id !== tempId));
     }
-  }, [todos]);
+  }, []); // 의존성 배열 제거
 
   // Convert regular to recurring (Optimistic Update)
   const handleConvertRegularToRecurring = useCallback(async (
@@ -620,7 +639,15 @@ export function useTodos(initialTodos: Todo[] = []) {
     recurrenceRule: RecurrenceRule,
     categoryId: string
   ) => {
-    const todo = todos.find(t => t.id === todoId);
+    let todo: Todo | undefined;
+    let backupTodos: Todo[] = [];
+    
+    setTodos(prevTodos => {
+      todo = prevTodos.find(t => t.id === todoId);
+      backupTodos = prevTodos;
+      return prevTodos;
+    });
+    
     if (!todo || todo.recurrenceRule) return;
 
     // 임시 ID 생성
@@ -642,7 +669,7 @@ export function useTodos(initialTodos: Todo[] = []) {
     };
 
     // 백업 (롤백용)
-    const backupTodos = todos;
+    backupTodos = todos;
 
     // 1. 즉시 로컬 상태 업데이트
     setTodos(prevTodos => {
@@ -680,7 +707,7 @@ export function useTodos(initialTodos: Todo[] = []) {
       console.error('Failed to create recurring todo:', result.error);
       setTodos(backupTodos);
     }
-  }, [todos]);
+  }, []); // 의존성 배열 제거
 
   // Convert recurring to regular all (Optimistic Update)
   const handleConvertRecurringToRegularAll = useCallback(async (
@@ -688,7 +715,15 @@ export function useTodos(initialTodos: Todo[] = []) {
     date: Date,
     categoryId: string
   ) => {
-    const recurringTodo = todos.find(t => t.id === recurringId);
+    let recurringTodo: Todo | undefined;
+    let backupTodos: Todo[] = [];
+    
+    setTodos(prevTodos => {
+      recurringTodo = prevTodos.find(t => t.id === recurringId);
+      backupTodos = prevTodos;
+      return prevTodos;
+    });
+    
     if (!recurringTodo || !recurringTodo.recurrenceRule) return;
 
     // 임시 ID 생성
@@ -707,7 +742,7 @@ export function useTodos(initialTodos: Todo[] = []) {
     };
 
     // 백업 (롤백용)
-    const backupTodos = todos;
+    backupTodos = todos;
 
     // 1. 즉시 로컬 상태 업데이트
     setTodos(prevTodos => {
@@ -745,7 +780,7 @@ export function useTodos(initialTodos: Todo[] = []) {
       console.error('Failed to create regular todo:', result.error);
       setTodos(backupTodos);
     }
-  }, [todos]);
+  }, []); // 의존성 배열 제거
 
   return {
     todos,

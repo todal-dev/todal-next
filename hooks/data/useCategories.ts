@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { Category, Todo } from '@/types/calendar';
 import {
   createCategory as createCategoryDB,
@@ -19,10 +19,11 @@ export function useCategories(
   todos: Todo[] = []
 ) {
   const [categories, setCategories] = useState<Category[]>(DEFAULT_CATEGORIES);
+  const initializedRef = useRef(false);
 
-  // DB에서 가져온 카테고리가 있으면 기본 카테고리와 병합
+  // DB에서 가져온 카테고리가 있으면 기본 카테고리와 병합 (최초 1회만)
   useEffect(() => {
-    if (initialCategories && initialCategories.length > 0) {
+    if (!initializedRef.current && initialCategories && initialCategories.length > 0) {
       const mergedCategories = [
         ...DEFAULT_CATEGORIES, 
         ...initialCategories.filter(cat => 
@@ -36,8 +37,9 @@ export function useCategories(
         categories: mergedCategories.map(c => c.name)
       });
       setCategories(mergedCategories);
+      initializedRef.current = true;
     }
-  }, [initialCategories]);
+  }, [initialCategories?.length]); // length만 체크하여 불필요한 리렌더링 방지
 
   // Add a new category (Optimistic Update)
   const handleAddCategory = useCallback(async (name: string, color: string) => {
@@ -144,7 +146,7 @@ export function useCategories(
       console.error('Failed to delete category:', result.error);
       setCategories(backupCategories);
     }
-  }, [todos]);
+  }, [todos]); // todos는 체크를 위해 필요하므로 유지
 
   // Move category to new position (cannot move 'cat-recurring', 'cat-etc', or 'Google Calendar')
   const handleMoveCategory = useCallback((categoryId: string, newIndex: number) => {
