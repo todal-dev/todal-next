@@ -37,18 +37,18 @@ export function CategorySidebar({
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {/* 전체 보기 */}
         <motion.button
-          whileHover={{ scale: 1.02 }}
+          whileHover={{ scale: 1.02, y: -2 }}
           whileTap={{ scale: 0.98 }}
           onClick={() => onSelectCategory(null)}
-          className={`w-full text-left p-4 rounded-md transition-all ${
+          className={`w-full text-left p-4 rounded-lg transition-all ${
             selectedCategoryId === null
-              ? 'bg-primary-50 dark:bg-primary-900/30 border-2 border-primary dark:border-primary-600'
-              : 'bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600'
+              ? 'bg-primary-50 dark:bg-primary-900/30 border-2 border-primary dark:border-primary-600 shadow-md'
+              : 'bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm'
           }`}
         >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"></div>
+              <div className="w-4 h-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 shadow-sm"></div>
               <span className={`font-medium ${
                 selectedCategoryId === null ? 'text-gray-900 dark:text-gray-50' : 'text-gray-600 dark:text-gray-400'
               }`}>
@@ -78,19 +78,19 @@ export function CategorySidebar({
           return (
             <motion.button
               key={category.id}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => onSelectCategory(category.id)}
-              className={`w-full text-left p-4 rounded-md transition-all ${
+              className={`w-full text-left p-4 rounded-lg transition-all ${
                 isSelected
-                  ? 'bg-primary-50 dark:bg-primary-900/30 border-2 border-primary dark:border-primary-600'
-                  : 'bg-warm-white dark:bg-dark-ocean-card border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600'
+                  ? 'bg-primary-50 dark:bg-primary-900/30 border-2 border-primary dark:border-primary-600 shadow-md'
+                  : 'bg-warm-white dark:bg-dark-ocean-card border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 hover:shadow-sm'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
                   <div 
-                    className="w-3 h-3 rounded-full" 
+                    className="w-4 h-4 rounded-full shadow-sm" 
                     style={{ backgroundColor: category.color }}
                   ></div>
                   <span className={`font-medium ${
@@ -107,14 +107,16 @@ export function CategorySidebar({
               {/* Progress Bar */}
               {count.total > 0 && (
                 <div className="mb-2">
-                  <div className="h-1.5 bg-gray-100 dark:bg-gray-600 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all"
+                  <div className="h-2 bg-gray-100 dark:bg-gray-600 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(count.completed / count.total) * 100}%` }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                      className="h-full rounded-full"
                       style={{
-                        width: `${(count.completed / count.total) * 100}%`,
                         backgroundColor: category.color,
                       }}
-                    ></div>
+                    ></motion.div>
                   </div>
                 </div>
               )}

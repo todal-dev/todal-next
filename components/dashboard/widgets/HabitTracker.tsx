@@ -14,12 +14,13 @@ export function HabitTracker({ habits }: HabitTrackerProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.5 }}
-        className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 transition-colors p-5"
+        className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 transition-colors p-6"
       >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-4">🔥 습관 트래커</h3>
-        <div className="flex flex-col items-center justify-center py-8 text-gray-600 dark:text-gray-400">
-          <Flame size={48} className="mb-3 opacity-30" />
-          <p className="text-sm">반복 일정이 없습니다</p>
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <div className="text-6xl mb-4">🦦</div>
+          <p className="text-body text-gray-600 dark:text-gray-400 mb-2">습관을 만들어볼까요?</p>
+          <p className="text-body-small text-gray-400 dark:text-gray-500">반복 일정이 아직 없어요</p>
         </div>
       </motion.div>
     );
@@ -30,7 +31,7 @@ export function HabitTracker({ habits }: HabitTrackerProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.5 }}
-      className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 transition-colors p-5"
+      className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 transition-colors p-6"
     >
       <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-4">🔥 습관 트래커</h3>
 
@@ -58,9 +59,9 @@ export function HabitTracker({ habits }: HabitTrackerProps) {
               {habit.heatmap.map((day, dayIndex) => (
                 <div
                   key={dayIndex}
-                  className={`w-full h-6 rounded transition-all ${
+                  className={`w-full h-6 rounded-md transition-all ${
                     day.completed 
-                      ? 'bg-green-500 hover:bg-green-600' 
+                      ? 'bg-primary dark:bg-primary-400 hover:bg-primary-600' 
                       : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'
                   }`}
                   title={`${format(new Date(day.date), 'M월 d일')}: ${day.completed ? '완료' : '미완료'}`}
@@ -79,12 +80,12 @@ export function HabitTracker({ habits }: HabitTrackerProps) {
 
       <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
         <div className="flex items-center gap-3 text-xs">
-          <div className="flex items-center gap-1">
-            <div className="w-4 h-4 rounded bg-green-500"></div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded bg-primary dark:bg-primary-400 shadow-sm"></div>
             <span className="text-gray-600 dark:text-gray-400">완료</span>
           </div>
-          <div className="flex items-center gap-1">
-            <div className="w-4 h-4 rounded bg-gray-200 dark:bg-gray-700"></div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded bg-gray-200 dark:bg-gray-700 shadow-sm"></div>
             <span className="text-gray-600 dark:text-gray-400">미완료</span>
           </div>
         </div>

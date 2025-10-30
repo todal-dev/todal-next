@@ -17,7 +17,7 @@ export function WeeklyProductivityChart({ data }: WeeklyProductivityChartProps) 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.1 }}
-      className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 transition-colors p-5"
+      className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 transition-colors p-6"
     >
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-1">📊 주간 생산성</h3>
@@ -28,30 +28,40 @@ export function WeeklyProductivityChart({ data }: WeeklyProductivityChartProps) 
 
       <ResponsiveContainer width="100%" height={250}>
         <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <CartesianGrid 
+            strokeDasharray="3 3" 
+            className="stroke-gray-200 dark:stroke-gray-600"
+          />
           <XAxis 
             dataKey="day" 
-            tick={{ fill: '#6b7280', fontSize: 12 }}
-            axisLine={{ stroke: '#e5e7eb' }}
+            className="fill-gray-600 dark:fill-gray-400"
+            tick={{ fontSize: 12 }}
+            stroke="currentColor"
+            strokeOpacity={0.2}
           />
           <YAxis 
-            tick={{ fill: '#6b7280', fontSize: 12 }}
-            axisLine={{ stroke: '#e5e7eb' }}
+            className="fill-gray-600 dark:fill-gray-400"
+            tick={{ fontSize: 12 }}
+            stroke="currentColor"
+            strokeOpacity={0.2}
             tickFormatter={(value) => `${value}%`}
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: 'white',
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              padding: '8px 12px',
+              backgroundColor: 'var(--color-neutral-white)',
+              border: '1px solid var(--color-neutral-gray-200)',
+              borderRadius: '12px',
+              padding: '10px 14px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
             }}
+            wrapperClassName="dark:[&_.recharts-tooltip-wrapper]:![color-scheme:dark]"
+            cursor={{ fill: 'rgba(45, 159, 107, 0.1)' }}
             formatter={(value: any, name: string) => {
               if (name === 'percentage') return [`${value.toFixed(1)}%`, '완료율'];
               return [value, name];
             }}
           />
-          <Bar dataKey="percentage" radius={[8, 8, 0, 0]}>
+          <Bar dataKey="percentage" radius={[12, 12, 0, 0]}>
             {data.map((entry, index) => (
               <Cell 
                 key={`cell-${index}`} 
@@ -62,17 +72,17 @@ export function WeeklyProductivityChart({ data }: WeeklyProductivityChartProps) 
         </BarChart>
       </ResponsiveContainer>
 
-      <div className="mt-4 flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400">
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full bg-green-500"></div>
+      <div className="mt-4 flex items-center gap-4 text-xs text-gray-600 dark:text-gray-400 flex-wrap">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-green-500 shadow-sm"></div>
           <span>70% 이상</span>
         </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-blue-500 shadow-sm"></div>
           <span>50-69%</span>
         </div>
-        <div className="flex items-center gap-1">
-          <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded-full bg-orange-500 shadow-sm"></div>
           <span>50% 미만</span>
         </div>
       </div>

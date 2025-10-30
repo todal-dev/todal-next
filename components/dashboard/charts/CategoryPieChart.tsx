@@ -17,11 +17,13 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
-        className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 transition-colors p-5"
+        className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 transition-colors p-6"
       >
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-4">🎯 카테고리별 시간 분석</h3>
-        <div className="flex items-center justify-center h-64 text-gray-600 dark:text-gray-400">
-          시간이 기록된 일정이 없습니다
+        <div className="flex flex-col items-center justify-center h-64 text-center">
+          <div className="text-6xl mb-4">🦦</div>
+          <p className="text-body text-gray-600 dark:text-gray-400 mb-2">오늘은 여유롭게~</p>
+          <p className="text-body-small text-gray-400 dark:text-gray-500">시간이 기록된 일정이 아직 없어요</p>
         </div>
       </motion.div>
     );
@@ -32,7 +34,7 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.2 }}
-      className="bg-white dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 transition-colors p-5"
+      className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 transition-colors p-6"
     >
       <div className="mb-4">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-50 mb-1">🎯 카테고리별 시간 분석</h3>
@@ -57,11 +59,14 @@ export function CategoryPieChart({ data }: CategoryPieChartProps) {
           </Pie>
           <Tooltip
             contentStyle={{
-              backgroundColor: 'white',
-              border: '1px solid #e5e7eb',
-              borderRadius: '8px',
-              padding: '8px 12px',
+              backgroundColor: 'var(--color-neutral-white)',
+              border: '1px solid var(--color-neutral-gray-200)',
+              borderRadius: '12px',
+              padding: '10px 14px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
             }}
+            wrapperClassName="dark:[&_.recharts-tooltip-wrapper]:![color-scheme:dark]"
+            cursor={{ fill: 'rgba(45, 159, 107, 0.1)' }}
             formatter={(value: any) => `${value.toFixed(1)}시간`}
           />
         </PieChart>

@@ -71,13 +71,27 @@ export function DashboardLayout({ categories, todos }: DashboardLayoutProps) {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-7xl mx-auto p-6 space-y-6">
           {/* Page Header */}
-          <div>
-            <h1 className="text-h1 text-gray-900 dark:text-gray-50">
-              {selectedCategory.name}
-            </h1>
-            <p className="text-body-small text-gray-400 dark:text-gray-500 mt-1">
-              {filteredTodos.length}개의 할일
-            </p>
+          <div className="flex items-center gap-4">
+            <div 
+              className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110"
+              style={{ 
+                backgroundColor: `${selectedCategory.color}20`,
+                border: `2px solid ${selectedCategory.color}`
+              }}
+            >
+              <div 
+                className="w-6 h-6 rounded-full"
+                style={{ backgroundColor: selectedCategory.color }}
+              />
+            </div>
+            <div>
+              <h1 className="text-h1 text-gray-900 dark:text-gray-50">
+                {selectedCategory.name}
+              </h1>
+              <p className="text-body-small text-gray-400 dark:text-gray-500 mt-1">
+                {filteredTodos.length}개의 할일
+              </p>
+            </div>
           </div>
 
           {/* Analytics */}

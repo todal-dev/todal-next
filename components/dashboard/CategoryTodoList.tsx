@@ -28,21 +28,23 @@ export function CategoryTodoList({ todos, categoryName, categoryColor }: Categor
 
   if (todos.length === 0) {
     return (
-      <div className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 p-8 transition-colors">
-        <div className="text-center text-gray-400 dark:text-gray-500">
-          <p className="text-body-small">할일이 없습니다</p>
+      <div className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 p-8 transition-colors">
+        <div className="flex flex-col items-center justify-center text-center py-8">
+          <div className="text-6xl mb-4">🦦</div>
+          <p className="text-body text-gray-600 dark:text-gray-400 mb-2">모든 할일을 완료했어요!</p>
+          <p className="text-body-small text-gray-400 dark:text-gray-500">새로운 할일을 추가해보세요</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 transition-colors">
+    <div className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 transition-colors">
       {/* Header */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-600">
         <div className="flex items-center gap-3">
           <div 
-            className="w-4 h-4 rounded-full" 
+            className="w-5 h-5 rounded-full shadow-sm" 
             style={{ backgroundColor: categoryColor }}
           ></div>
           <h3 className="text-h3 text-gray-900 dark:text-gray-50">{categoryName}</h3>
@@ -90,19 +92,20 @@ export function CategoryTodoList({ todos, categoryName, categoryColor }: Categor
                       key={todo.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
+                      whileHover={{ x: 4 }}
                       transition={{ delay: index * 0.05 }}
-                      className={`flex items-center gap-3 p-3 rounded-md transition-all ${
+                      className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
                         todo.completed 
                           ? 'bg-gray-50 dark:bg-gray-800' 
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                          : 'hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer'
                       }`}
                     >
                       {/* Checkbox */}
                       <div className="flex-shrink-0">
                         {todo.completed ? (
-                          <CheckCircle2 className="w-5 h-5 text-primary dark:text-primary-100" />
+                          <CheckCircle2 className="w-6 h-6 text-primary dark:text-primary-100" />
                         ) : (
-                          <Circle className="w-5 h-5 text-gray-200 dark:text-gray-600" />
+                          <Circle className="w-6 h-6 text-gray-300 dark:text-gray-600 hover:text-primary dark:hover:text-primary-400 transition-colors" />
                         )}
                       </div>
 

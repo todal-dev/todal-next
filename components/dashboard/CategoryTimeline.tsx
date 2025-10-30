@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Circle } from 'lucide-react';
 import type { Todo } from '@/types/calendar';
@@ -10,48 +11,60 @@ interface CategoryTimelineProps {
 }
 
 export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps) {
-  // 시간이 있는 할일만 필터링
-  const timedTodos = todos.filter(t => t.startTime && t.endTime);
+  // 시간이 있는 할일만 필터링하고 그룹화 (useMemo로 최적화)
+  const timelineData = useMemo(() => {
+    const timedTodos = todos.filter(t => t.startTime && t.endTime);
 
-  if (timedTodos.length === 0) {
+    if (timedTodos.length === 0) {
+      return null;
+    }
+
+    // 시간대별로 그룹화 (시작 시간 기준)
+    const todosByHour = timedTodos.reduce((acc, todo) => {
+      if (!todo.startTime) return acc;
+      const hour = parseInt(todo.startTime.split(':')[0]);
+      if (!acc[hour]) {
+        acc[hour] = [];
+      }
+      acc[hour].push(todo);
+      return acc;
+    }, {} as Record<number, Todo[]>);
+
+    // 시간대 정렬
+    const sortedHours = Object.keys(todosByHour)
+      .map(Number)
+      .sort((a, b) => a - b);
+
+    // 최소/최대 시간
+    const minHour = Math.min(...sortedHours);
+    const maxHour = Math.max(...sortedHours);
+
+    // 표시할 시간 범위 (최소 8시간)
+    const displayMinHour = Math.max(0, minHour - 1);
+    const displayMaxHour = Math.min(23, Math.max(maxHour + 1, displayMinHour + 8));
+
+    return { todosByHour, displayMinHour, displayMaxHour };
+  }, [todos]);
+
+  if (!timelineData) {
     return (
-      <div className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 p-8 transition-colors">
-        <div className="text-center text-gray-400 dark:text-gray-500">
-          <p className="text-body-small">시간이 지정된 할일이 없습니다</p>
+      <div className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 p-8 transition-colors">
+        <div className="flex flex-col items-center justify-center text-center py-8">
+          <div className="text-6xl mb-4">🦦</div>
+          <p className="text-body text-gray-600 dark:text-gray-400 mb-2">시간을 정해볼까요?</p>
+          <p className="text-body-small text-gray-400 dark:text-gray-500">시간이 지정된 할일이 없어요</p>
         </div>
       </div>
     );
   }
 
-  // 시간대별로 그룹화 (시작 시간 기준)
-  const todosByHour = timedTodos.reduce((acc, todo) => {
-    if (!todo.startTime) return acc;
-    const hour = parseInt(todo.startTime.split(':')[0]);
-    if (!acc[hour]) {
-      acc[hour] = [];
-    }
-    acc[hour].push(todo);
-    return acc;
-  }, {} as Record<number, Todo[]>);
-
-  // 시간대 정렬
-  const sortedHours = Object.keys(todosByHour)
-    .map(Number)
-    .sort((a, b) => a - b);
-
-  // 최소/최대 시간
-  const minHour = Math.min(...sortedHours);
-  const maxHour = Math.max(...sortedHours);
-
-  // 표시할 시간 범위 (최소 8시간)
-  const displayMinHour = Math.max(0, minHour - 1);
-  const displayMaxHour = Math.min(23, Math.max(maxHour + 1, displayMinHour + 8));
+  const { todosByHour, displayMinHour, displayMaxHour } = timelineData;
 
   return (
-    <div className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 transition-colors">
+    <div className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 transition-colors">
       {/* Header */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-600">
-        <h3 className="text-h3 text-gray-900 dark:text-gray-50">시간대별 타임라인</h3>
+        <h3 className="text-h3 text-gray-900 dark:text-gray-50">⏰ 시간대별 타임라인</h3>
         <p className="text-body-small text-gray-400 dark:text-gray-500 mt-1">
           {timedTodos.length}개의 일정
         </p>
@@ -105,7 +118,7 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
 
                                 {/* Todo Card */}
                                 <div 
-                                  className={`p-3 rounded-md border-l-4 transition-colors ${
+                                  className={`p-3 rounded-lg border-l-4 transition-all hover:shadow-sm ${
                                     todo.completed ? 'bg-gray-50 dark:bg-gray-800 opacity-60' : 'bg-warm-white dark:bg-dark-ocean-card'
                                   }`}
                                   style={{ 
@@ -117,9 +130,9 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
                                   <div className="flex items-start gap-3">
                                     <div className="flex-shrink-0 mt-0.5">
                                       {todo.completed ? (
-                                        <CheckCircle2 className="w-4 h-4 text-primary dark:text-primary-100" />
+                                        <CheckCircle2 className="w-5 h-5 text-primary dark:text-primary-100" />
                                       ) : (
-                                        <Circle className="w-4 h-4 text-gray-200 dark:text-gray-600" />
+                                        <Circle className="w-5 h-5 text-gray-300 dark:text-gray-600" />
                                       )}
                                     </div>
                                     <div className="flex-1 min-w-0">

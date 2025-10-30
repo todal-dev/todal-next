@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { Clock, CheckCircle2, TrendingUp } from 'lucide-react';
@@ -11,25 +12,14 @@ interface CategoryAnalyticsProps {
 }
 
 export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsProps) {
-  // 통계 계산
-  const totalTodos = todos.length;
-  const completedTodos = todos.filter(t => t.completed).length;
-  const completionRate = totalTodos > 0 ? (completedTodos / totalTodos) * 100 : 0;
+  // 통계 계산 (useMemo로 최적화)
+  const { totalTodos, completedTodos, completionRate, totalHours, completedHours } = useMemo(() => {
+    const total = todos.length;
+    const completed = todos.filter(t => t.completed).length;
+    const rate = total > 0 ? (completed / total) * 100 : 0;
 
-  // 총 시간 계산
-  const totalHours = todos.reduce((sum, todo) => {
-    if (todo.startTime && todo.endTime) {
-      const [startHour, startMin] = todo.startTime.split(':').map(Number);
-      const [endHour, endMin] = todo.endTime.split(':').map(Number);
-      const duration = ((endHour * 60 + endMin) - (startHour * 60 + startMin)) / 60;
-      return sum + duration;
-    }
-    return sum;
-  }, 0);
-
-  const completedHours = todos
-    .filter(t => t.completed)
-    .reduce((sum, todo) => {
+    // 총 시간 계산
+    const hours = todos.reduce((sum, todo) => {
       if (todo.startTime && todo.endTime) {
         const [startHour, startMin] = todo.startTime.split(':').map(Number);
         const [endHour, endMin] = todo.endTime.split(':').map(Number);
@@ -39,42 +29,67 @@ export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsPro
       return sum;
     }, 0);
 
-  // 시간대별 생산성 (완료된 할일 수)
-  const hourlyData = Array.from({ length: 24 }, (_, hour) => {
-    const hourTodos = todos.filter(t => {
-      if (!t.startTime) return false;
-      const todoHour = parseInt(t.startTime.split(':')[0]);
-      return todoHour === hour;
-    });
+    const completedHrs = todos
+      .filter(t => t.completed)
+      .reduce((sum, todo) => {
+        if (todo.startTime && todo.endTime) {
+          const [startHour, startMin] = todo.startTime.split(':').map(Number);
+          const [endHour, endMin] = todo.endTime.split(':').map(Number);
+          const duration = ((endHour * 60 + endMin) - (startHour * 60 + startMin)) / 60;
+          return sum + duration;
+        }
+        return sum;
+      }, 0);
 
-    const completed = hourTodos.filter(t => t.completed).length;
-    const total = hourTodos.length;
-
-    return {
-      hour,
-      label: `${hour}h`,
-      completed,
-      total,
-      rate: total > 0 ? (completed / total) * 100 : 0,
+    return { 
+      totalTodos: total, 
+      completedTodos: completed, 
+      completionRate: rate, 
+      totalHours: hours, 
+      completedHours: completedHrs 
     };
-  }).filter(d => d.total > 0); // 할일이 있는 시간대만
+  }, [todos]);
+
+  // 시간대별 생산성 (완료된 할일 수) - useMemo로 최적화
+  const hourlyData = useMemo(() => {
+    return Array.from({ length: 24 }, (_, hour) => {
+      const hourTodos = todos.filter(t => {
+        if (!t.startTime) return false;
+        const todoHour = parseInt(t.startTime.split(':')[0]);
+        return todoHour === hour;
+      });
+
+      const completed = hourTodos.filter(t => t.completed).length;
+      const total = hourTodos.length;
+
+      return {
+        hour,
+        label: `${hour}h`,
+        completed,
+        total,
+        rate: total > 0 ? (completed / total) * 100 : 0,
+      };
+    }).filter(d => d.total > 0); // 할일이 있는 시간대만
+  }, [todos]);
 
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* 완료율 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 p-6 transition-colors"
+          whileHover={{ y: -2, scale: 1.01 }}
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+          className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 p-6 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-500 transition-all cursor-pointer"
         >
           <div className="flex items-center gap-3 mb-3">
             <div 
-              className="w-10 h-10 rounded-md flex items-center justify-center"
+              className="w-12 h-12 rounded-full flex items-center justify-center transition-transform hover:scale-110"
               style={{ backgroundColor: `${categoryColor}20` }}
             >
-              <CheckCircle2 className="w-5 h-5" style={{ color: categoryColor }} />
+              <CheckCircle2 className="w-6 h-6" style={{ color: categoryColor }} />
             </div>
             <div>
               <p className="text-body-small text-gray-400 dark:text-gray-500">완료율</p>
@@ -90,12 +105,13 @@ export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsPro
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 p-6 transition-colors"
+          whileHover={{ y: -2, scale: 1.01 }}
+          transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 20 }}
+          className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 p-6 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-500 transition-all cursor-pointer"
         >
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-md bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
-              <Clock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center transition-transform hover:scale-110">
+              <Clock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <p className="text-body-small text-gray-400 dark:text-gray-500">총 시간</p>
@@ -111,12 +127,13 @@ export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsPro
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 p-6 transition-colors"
+          whileHover={{ y: -2, scale: 1.01 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
+          className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 p-6 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-500 transition-all cursor-pointer"
         >
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-md bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+            <div className="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center transition-transform hover:scale-110">
+              <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
               <p className="text-body-small text-gray-400 dark:text-gray-500">평균 시간</p>
@@ -137,39 +154,49 @@ export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsPro
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-warm-white dark:bg-dark-ocean-card rounded-md border border-gray-200 dark:border-gray-600 p-6 transition-colors"
+          className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 p-6 transition-colors"
         >
           <div className="mb-4">
-            <h3 className="text-h3 text-gray-900 dark:text-gray-50">시간대별 생산성</h3>
+            <h3 className="text-h3 text-gray-900 dark:text-gray-50">⏰ 시간대별 생산성</h3>
             <p className="text-body-small text-gray-400 dark:text-gray-500 mt-1">완료된 할일 수</p>
           </div>
 
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={hourlyData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid 
+                strokeDasharray="3 3" 
+                className="stroke-gray-200 dark:stroke-gray-600"
+              />
               <XAxis 
                 dataKey="label" 
-                tick={{ fill: '#6b7280', fontSize: 12 }}
-                axisLine={{ stroke: '#e5e7eb' }}
+                className="fill-gray-600 dark:fill-gray-400"
+                tick={{ fontSize: 12 }}
+                stroke="currentColor"
+                strokeOpacity={0.2}
               />
               <YAxis 
-                tick={{ fill: '#6b7280', fontSize: 12 }}
-                axisLine={{ stroke: '#e5e7eb' }}
+                className="fill-gray-600 dark:fill-gray-400"
+                tick={{ fontSize: 12 }}
+                stroke="currentColor"
+                strokeOpacity={0.2}
               />
               <Tooltip
                 contentStyle={{
-                  backgroundColor: 'white',
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '8px',
-                  padding: '8px 12px',
+                  backgroundColor: 'var(--color-neutral-white)',
+                  border: '1px solid var(--color-neutral-gray-200)',
+                  borderRadius: '12px',
+                  padding: '10px 14px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                 }}
+                wrapperClassName="dark:[&_.recharts-tooltip-wrapper]:![color-scheme:dark]"
+                cursor={{ fill: 'rgba(45, 159, 107, 0.1)' }}
                 formatter={(value: any, name: string) => {
                   if (name === 'completed') return [`${value}개`, '완료'];
                   if (name === 'total') return [`${value}개`, '전체'];
                   return [value, name];
                 }}
               />
-              <Bar dataKey="completed" radius={[8, 8, 0, 0]}>
+              <Bar dataKey="completed" radius={[12, 12, 0, 0]}>
                 {hourlyData.map((_entry, index) => (
                   <Cell key={`cell-${index}`} fill={categoryColor} />
                 ))}
