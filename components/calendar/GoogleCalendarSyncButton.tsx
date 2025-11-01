@@ -4,7 +4,11 @@ import { useState, useEffect, useRef } from 'react'
 import { Calendar, Download, Upload } from 'lucide-react'
 import { syncGoogleCalendarToTodal, exportTodosToGoogleCalendar } from '@/lib/google/calendar'
 
-export function GoogleCalendarSyncButton() {
+interface GoogleCalendarSyncButtonProps {
+  onSyncComplete?: () => void;
+}
+
+export function GoogleCalendarSyncButton({ onSyncComplete }: GoogleCalendarSyncButtonProps) {
   const [syncing, setSyncing] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -37,9 +41,17 @@ export function GoogleCalendarSyncButton() {
         setMessage({ type: 'error', text: result.error })
       } else if (result.success > 0) {
         setMessage({ type: 'success', text: `${result.success}개의 일정을 가져왔습니다!` })
-        setTimeout(() => {
-          window.location.reload()
-        }, 1500)
+        // 콜백 함수 호출하여 데이터 새로고침
+        if (onSyncComplete) {
+          setTimeout(() => {
+            onSyncComplete()
+          }, 500)
+        } else {
+          // 콜백이 없으면 기존처럼 새로고침
+          setTimeout(() => {
+            window.location.reload()
+          }, 1500)
+        }
       } else {
         setMessage({ type: 'success', text: '새로운 일정이 없습니다.' })
       }
@@ -63,9 +75,17 @@ export function GoogleCalendarSyncButton() {
         setMessage({ type: 'error', text: result.error })
       } else if (result.success > 0) {
         setMessage({ type: 'success', text: `${result.success}개의 할일을 내보냈습니다!` })
-        setTimeout(() => {
-          window.location.reload()
-        }, 1500)
+        // 콜백 함수 호출하여 데이터 새로고침
+        if (onSyncComplete) {
+          setTimeout(() => {
+            onSyncComplete()
+          }, 500)
+        } else {
+          // 콜백이 없으면 기존처럼 새로고침
+          setTimeout(() => {
+            window.location.reload()
+          }, 1500)
+        }
       } else {
         setMessage({ type: 'success', text: '내보낼 할일이 없습니다.' })
       }

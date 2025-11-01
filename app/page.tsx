@@ -70,30 +70,29 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   // Supabase에서 데이터 로드
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [todosData, categoriesData] = await Promise.all([
-          fetchTodos(),
-          fetchCategories(),
-        ]);
+  const loadData = useCallback(async () => {
+    try {
+      const [todosData, categoriesData] = await Promise.all([
+        fetchTodos(),
+        fetchCategories(),
+      ]);
 
-        if (todosData.length > 0) {
-          setInitialTodos(todosData);
-        }
-        
-        if (categoriesData.length > 0) {
-          setInitialCategories(categoriesData);
-        }
-      } catch (error) {
-        // logger는 이미 lib/supabase/queries.ts에서 에러 로깅
-      } finally {
-        setLoading(false);
+      // 데이터가 있든 없든 항상 업데이트 (빈 배열도 유효한 상태)
+      setInitialTodos(todosData);
+      
+      if (categoriesData.length > 0) {
+        setInitialCategories(categoriesData);
       }
+    } catch (error) {
+      // logger는 이미 lib/supabase/queries.ts에서 에러 로깅
+    } finally {
+      setLoading(false);
     }
-
-    loadData();
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Todo state and handlers
   const {
@@ -233,6 +232,11 @@ export default function Home() {
     console.log('Selected todo from search:', todo);
   }, []);
 
+  // 구글 캘린더 동기화 완료 후 데이터 새로고침
+  const handleSyncComplete = useCallback(() => {
+    loadData();
+  }, [loadData]);
+
   // Create context values - handlers are memoized with useCallback, so we only need todos and selectedDate
   const todoContextValue = useMemo(
     () => ({
@@ -321,7 +325,7 @@ export default function Home() {
         <div className="flex flex-col h-screen bg-cream dark:bg-dark-ocean overflow-hidden transition-colors">
           {/* Header */}
           <div className="flex-shrink-0">
-            <Header categories={categories} onSelectTodo={handleSelectSearchResult} />
+            <Header categories={categories} onSelectTodo={handleSelectSearchResult} onSyncComplete={handleSyncComplete} />
           </div>
 
           {/* Main Content */}

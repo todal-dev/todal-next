@@ -22,12 +22,19 @@ import {
 export function useTodos(initialTodos: Todo[] = []) {
   const [todos, setTodos] = useState<Todo[]>(initialTodos);
   const initializedRef = useRef(false);
+  const prevLengthRef = useRef(initialTodos.length);
 
-  // initialTodos가 변경되면 todos 상태 업데이트 (최초 1회만)
+  // initialTodos가 변경되면 todos 상태 업데이트
   useEffect(() => {
+    // 최초 로딩 시 또는 length가 실제로 변경되었을 때만 업데이트
     if (!initializedRef.current && initialTodos.length > 0) {
       setTodos(initialTodos);
       initializedRef.current = true;
+      prevLengthRef.current = initialTodos.length;
+    } else if (initializedRef.current && initialTodos.length !== prevLengthRef.current) {
+      // 이미 초기화된 상태에서 length가 변경되면 업데이트 (구글 캘린더 가져오기 등)
+      setTodos(initialTodos);
+      prevLengthRef.current = initialTodos.length;
     }
   }, [initialTodos.length]); // length만 체크하여 불필요한 리렌더링 방지
 

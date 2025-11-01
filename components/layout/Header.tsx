@@ -14,9 +14,10 @@ import type { Category, Todo } from '@/types/calendar';
 interface HeaderProps {
   categories: Category[];
   onSelectTodo?: (todo: Todo) => void;
+  onSyncComplete?: () => void;
 }
 
-export function Header({ categories, onSelectTodo }: HeaderProps) {
+export function Header({ categories, onSelectTodo, onSyncComplete }: HeaderProps) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -81,7 +82,7 @@ export function Header({ categories, onSelectTodo }: HeaderProps) {
         {/* Desktop Actions */}
         <div className="hidden sm:flex gap-2 items-center">
           <ThemeToggle />
-          <GoogleCalendarSyncButton />
+          <GoogleCalendarSyncButton onSyncComplete={onSyncComplete} />
           <LogoutButton />
         </div>
 
@@ -142,7 +143,7 @@ export function Header({ categories, onSelectTodo }: HeaderProps) {
               <div className="flex justify-center py-2">
                 <ThemeToggle />
               </div>
-              <GoogleCalendarSyncButton />
+              <GoogleCalendarSyncButton onSyncComplete={onSyncComplete} />
               <LogoutButton />
             </div>
           </nav>
