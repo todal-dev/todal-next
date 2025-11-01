@@ -97,6 +97,8 @@ const CategorySectionComponent = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   // Make category draggable (except "반복" and "기타")
+  const isDraggable = category.id !== 'cat-recurring' && category.id !== 'cat-etc';
+  
   const {
     attributes,
     listeners,
@@ -111,10 +113,10 @@ const CategorySectionComponent = ({
       id: category.id,
       index: categoryIndex,
     },
-    disabled: category.id === 'cat-recurring' || category.id === 'cat-etc',
+    disabled: !isDraggable,
   });
 
-  const style = getDraggableStyle(transform, transition, isDragging);
+  const style = isDraggable ? getDraggableStyle(transform, transition, isDragging) : {};
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -135,7 +137,7 @@ const CategorySectionComponent = ({
   const todoIds = category.items.map(item => item.id);
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div ref={isDraggable ? setNodeRef : undefined} style={style}>
       <div className="mb-4">
         <div
           {...attributes}
