@@ -67,19 +67,10 @@ export function useHolidays() {
       setHolidays(new Set(holidaySet));
       setIsLoading(false);
 
-      // 공공데이터포털 API로 공휴일 정보 로드
-      const apiKey = process.env.NEXT_PUBLIC_HOLIDAY_API_KEY;
-      if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
-        console.log('공휴일 API 키가 설정되지 않았습니다. 기본 데이터를 사용합니다.');
-        return;
-      }
-
-      // 여러 연도의 공휴일을 병렬로 로드
+      // 서버 API 라우트를 통해 공휴일 정보 로드 (CSP 안전)
       try {
         const fetchPromises = yearsToLoad.map(year => 
-          fetch(
-            `https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getHoliDeInfo?solYear=${year}&_type=json&numOfRows=100&serviceKey=${encodeURIComponent(apiKey)}`
-          )
+          fetch(`/api/holidays?year=${year}`)
         );
 
         const responses = await Promise.all(fetchPromises);
@@ -88,34 +79,30 @@ export function useHolidays() {
           if (response.ok) {
             const data = await response.json();
             
-            // API 에러 체크
-            if (data.response?.header?.resultCode !== '00') {
-              console.warn('공휴일 API 응답 오류:', data.response?.header?.resultMsg);
-              continue;
+            if (data.holidays && Array.isArray(data.holidays)) {
+              data.holidays.forEach((holiday: string) => {
+                holidaySet.add(holiday);
+              });
             }
 
-            if (data.response?.body?.items?.item) {
-              const items = Array.isArray(data.response.body.items.item) 
-                ? data.response.body.items.item 
-                : [data.response.body.items.item];
-              
-              items.forEach((item: any) => {
-                if (item.locdate) {
-                  const dateStr = item.locdate.toString();
-                  const formatted = `${dateStr.substring(0, 4)}-${dateStr.substring(4, 6)}-${dateStr.substring(6, 8)}`;
-                  holidaySet.add(formatted);
-                }
-              });
+            // 로그 출력 (개발 환경에서만)
+            if (data.source === 'api') {
+              console.log(`공휴일 ${data.holidays?.length || 0}개 로드 완료 (API)`);
+            } else if (data.source === 'default') {
+              console.log(`공휴일 ${data.holidays?.length || 0}개 로드 완료 (기본 데이터)`);
+            }
+
+            if (data.warning) {
+              console.warn('공휴일 API 경고:', data.warning);
             }
           }
         }
 
         // API에서 로드한 데이터로 업데이트
         setHolidays(new Set(holidaySet));
-        console.log(`공휴일 ${holidaySet.size}개 로드 완료`);
       } catch (error) {
         // API 실패 시 기본 데이터 유지
-        console.warn('공휴일 API 로드 실패, 기본 데이터를 사용합니다:', error);
+        console.warn('공휴일 로드 실패, 기본 데이터를 사용합니다:', error);
       }
     } catch (error) {
       console.error('공휴일 로드 중 오류:', error);
@@ -130,7 +117,14 @@ export function useHolidays() {
    */
   const isHoliday = (date: Date): boolean => {
     const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    return holidays.has(dateKey);
+    const result = holidays.has(dateKey);
+    
+    // 디버깅 (개발 환경에서만, 그리고 간헐적으로)
+    if (result && Math.random() < 0.1) {
+      console.log(`🎊 isHoliday 체크: ${dateKey} = ${result}`);
+    }
+    
+    return result;
   };
 
   return { holidays, isHoliday, isLoading };

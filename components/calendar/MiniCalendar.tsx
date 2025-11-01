@@ -29,7 +29,14 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // 공휴일 데이터 로드
-  const { isHoliday } = useHolidays();
+  const { holidays, isHoliday, isLoading: holidaysLoading } = useHolidays();
+
+  // 디버깅: 공휴일 데이터 확인
+  useEffect(() => {
+    if (!holidaysLoading && holidays.size > 0) {
+      console.log('✅ 공휴일 데이터 로드 완료:', Array.from(holidays).slice(0, 5), `(총 ${holidays.size}개)`);
+    }
+  }, [holidays, holidaysLoading]);
 
   // 드롭다운 외부 클릭 시 닫기
   useEffect(() => {
@@ -90,7 +97,15 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
 
   const checkIsHoliday = (day: number) => {
     const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
-    return isHoliday(date);
+    const result = isHoliday(date);
+    
+    // 디버깅: 공휴일 체크 (첫 5일만 로그)
+    if (day <= 5 && result) {
+      const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      console.log(`🎉 공휴일 감지: ${dateKey}`);
+    }
+    
+    return result;
   };
 
   const daysInMonth = getDaysInMonth(currentDate);

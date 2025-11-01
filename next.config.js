@@ -45,7 +45,7 @@ const nextConfig = {
               "style-src 'self' 'unsafe-inline'", // Tailwind requires unsafe-inline
               "img-src 'self' data: https:",
               "font-src 'self' data:",
-              "connect-src 'self' https://*.supabase.co https://www.googleapis.com",
+              "connect-src 'self' https://*.supabase.co https://www.googleapis.com", // 외부 API는 /api/holidays 라우트를 통해 프록시
               "frame-ancestors 'self'",
             ].join('; ')
           },

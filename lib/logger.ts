@@ -51,12 +51,33 @@ class Logger {
   }
   
   error(message: string, error?: unknown, context?: LogContext): void {
-    const errorContext = {
-      ...context,
-      error: error instanceof Error ? {
+    // Error 객체를 직렬화 가능한 형태로 변환
+    let errorInfo: unknown;
+    
+    if (error instanceof Error) {
+      errorInfo = {
         message: error.message,
         stack: this.isDevelopment ? error.stack : undefined,
-      } : error,
+        name: error.name,
+      };
+    } else if (error && typeof error === 'object') {
+      // Event 객체나 다른 객체의 경우
+      try {
+        errorInfo = {
+          type: error.constructor?.name || 'Unknown',
+          message: String(error),
+          ...(error as Record<string, unknown>),
+        };
+      } catch {
+        errorInfo = String(error);
+      }
+    } else {
+      errorInfo = error;
+    }
+    
+    const errorContext = {
+      ...context,
+      error: errorInfo,
     };
     
     console.error(this.formatMessage('error', message, this.sanitize(errorContext)));
