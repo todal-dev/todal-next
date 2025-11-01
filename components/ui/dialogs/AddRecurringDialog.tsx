@@ -217,13 +217,13 @@ export function AddRecurringDialog({
           />
         </div>
 
-        {/* 카테고리 (반복 카테고리, Google Calendar 제외) */}
+        {/* 카테고리 (반복 카테고리 제외) */}
         <div>
           <label className="block text-body-small font-medium text-gray-600 dark:text-gray-400 mb-2">
             카테고리
           </label>
           <CategorySelect
-            categories={categories.filter(cat => cat.id !== 'cat-recurring' && cat.name !== 'Google Calendar')}
+            categories={categories.filter(cat => cat.id !== 'cat-recurring')}
             value={categoryId}
             onChange={setCategoryId}
           />

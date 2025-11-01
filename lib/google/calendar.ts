@@ -108,7 +108,7 @@ export async function importGoogleEventsToSupabase(
           user_id: user.id,
           name: 'Google Calendar',
           color: '#4285F4', // Google Blue
-          order: 999,
+          order: 1, // 반복 카테고리 바로 아래 배치
         })
         .select('id')
         .single()

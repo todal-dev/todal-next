@@ -177,8 +177,8 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
       });
   }, [categories, filteredTodos]);
 
-  // 카테고리 ID 목록
-  const categoryIds = categories.map(c => c.id);
+  // 카테고리 ID 목록 (정렬된 순서 사용)
+  const categoryIds = todosByCategory.map(c => c.id);
 
   // 드래그 중인 todo의 카테고리 찾기
   const draggedTodoCategoryId = activeDragId
@@ -344,26 +344,28 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
     // Case 1: 카테고리 정렬
     if (activeData?.type === 'category' && overData?.type === 'category') {
       if (onMoveCategory) {
-        const oldIndex = categories.findIndex(c => c.id === activeId);
-        const newIndex = categories.findIndex(c => c.id === overId);
-        const recurringIndex = categories.findIndex(c => c.id === 'cat-recurring');
-        const etcIndex = categories.findIndex(c => c.id === 'cat-etc');
-        const googleCalendarIndex = categories.findIndex(c => c.name === 'Google Calendar');
+        // 정렬된 todosByCategory의 인덱스 사용
+        const sortedOldIndex = todosByCategory.findIndex(c => c.id === activeId);
+        const sortedNewIndex = todosByCategory.findIndex(c => c.id === overId);
+        const sortedRecurringIndex = todosByCategory.findIndex(c => c.id === 'cat-recurring');
+        const sortedEtcIndex = todosByCategory.findIndex(c => c.id === 'cat-etc');
 
-        if (oldIndex !== -1 && newIndex !== -1) {
+        if (sortedOldIndex !== -1 && sortedNewIndex !== -1) {
           // "반복" 카테고리 위로는 이동 불가
-          if (recurringIndex !== -1 && newIndex <= recurringIndex) {
+          if (sortedRecurringIndex !== -1 && sortedNewIndex <= sortedRecurringIndex) {
             return;
           }
           // "기타" 카테고리 아래로는 이동 불가
-          if (etcIndex !== -1 && newIndex >= etcIndex) {
+          if (sortedEtcIndex !== -1 && sortedNewIndex >= sortedEtcIndex) {
             return;
           }
-          // "Google Calendar" 카테고리 아래로는 이동 불가
-          if (googleCalendarIndex !== -1 && newIndex >= googleCalendarIndex) {
-            return;
+          
+          // 드롭 대상 카테고리의 원본 배열 인덱스 찾기
+          const targetOriginalIndex = categories.findIndex(c => c.id === overId);
+          
+          if (targetOriginalIndex !== -1) {
+            onMoveCategory(activeId, targetOriginalIndex);
           }
-          onMoveCategory(activeId, newIndex);
         }
       }
       return;

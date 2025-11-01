@@ -96,7 +96,7 @@ const CategorySectionComponent = ({
   const [isAddingTodo, setIsAddingTodo] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  // Make category draggable (except "반복", "기타", "Google Calendar")
+  // Make category draggable (except "반복", "기타")
   const {
     attributes,
     listeners,
@@ -111,7 +111,7 @@ const CategorySectionComponent = ({
       id: category.id,
       index: categoryIndex,
     },
-    disabled: category.id === 'cat-recurring' || category.id === 'cat-etc' || category.name === 'Google Calendar',
+    disabled: category.id === 'cat-recurring' || category.id === 'cat-etc',
   });
 
   const style = getDraggableStyle(transform, transition, isDragging);
@@ -141,7 +141,7 @@ const CategorySectionComponent = ({
           {...attributes}
           {...listeners}
           className={`flex items-center gap-2 px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700 group relative mb-1 transition-colors ${
-            category.id !== 'cat-recurring' && category.id !== 'cat-etc' && category.name !== 'Google Calendar' ? 'cursor-grab active:cursor-grabbing' : ''
+            category.id !== 'cat-recurring' && category.id !== 'cat-etc' ? 'cursor-grab active:cursor-grabbing' : ''
           }`}
           suppressHydrationWarning
         >

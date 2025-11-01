@@ -53,7 +53,7 @@ export function CategoryChangeDialog({
       }
     >
       <div className="space-y-2 max-h-[400px] overflow-y-auto">
-        {categories.filter(cat => cat.id !== 'cat-recurring' && cat.name !== 'Google Calendar').map((category) => (
+        {categories.filter(cat => cat.id !== 'cat-recurring').map((category) => (
           <button
             key={category.id}
             onClick={() => setSelectedCategoryId(category.id)}

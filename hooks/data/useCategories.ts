@@ -148,32 +148,28 @@ export function useCategories(
     }
   }, [todos]); // todos는 체크를 위해 필요하므로 유지
 
-  // Move category to new position (cannot move 'cat-recurring', 'cat-etc', or 'Google Calendar')
+  // Move category to new position (cannot move 'cat-recurring', 'cat-etc')
   const handleMoveCategory = useCallback((categoryId: string, newIndex: number) => {
     setCategories(prev => {
       const movingCategory = prev.find(cat => cat.id === categoryId);
       
-      // Cannot move fixed categories or Google Calendar
+      // Cannot move fixed categories
       if (!movingCategory || 
           movingCategory.id === 'cat-recurring' || 
-          movingCategory.id === 'cat-etc' || 
-          movingCategory.name === 'Google Calendar') {
+          movingCategory.id === 'cat-etc') {
         return prev;
       }
 
       const oldIndex = prev.findIndex(cat => cat.id === categoryId);
       if (oldIndex === -1) return prev;
 
-      // Ensure 'cat-recurring' stays at index 0, 'cat-etc' stays at the end, and 'Google Calendar' position is protected
+      // Ensure 'cat-recurring' stays at index 0, 'cat-etc' stays at the end
       const recurringIndex = prev.findIndex(cat => cat.id === 'cat-recurring');
       const etcIndex = prev.findIndex(cat => cat.id === 'cat-etc');
-      const googleCalendarIndex = prev.findIndex(cat => cat.name === 'Google Calendar');
 
       // Prevent moving to fixed category positions
       if (recurringIndex !== -1 && newIndex === recurringIndex) return prev;
       if (etcIndex !== -1 && newIndex === etcIndex) return prev;
-      // Prevent moving below Google Calendar
-      if (googleCalendarIndex !== -1 && newIndex >= googleCalendarIndex) return prev;
 
       const newCategories = [...prev];
       const [movedCategory] = newCategories.splice(oldIndex, 1);
