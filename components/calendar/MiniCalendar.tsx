@@ -244,11 +244,11 @@ export function MiniCalendar({ onDateSelect, todosByDate = {} }: MiniCalendarPro
       </div>
 
       {/* Day Headers */}
-      <div className="grid grid-cols-7 gap-0.5 mb-0.5">
+      <div className="grid grid-cols-7 gap-1 mb-1">
         {['일', '월', '화', '수', '목', '금', '토'].map((day, index) => (
           <div
             key={day}
-            className={`text-caption font-semibold text-center h-3.5 ${
+            className={`text-caption font-semibold text-center py-1 ${
               index === 0 ? 'text-status-error dark:text-red-400' : index === 6 ? 'text-status-info dark:text-blue-400' : 'text-gray-600 dark:text-gray-400'
             }`}
           >
