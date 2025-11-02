@@ -302,15 +302,20 @@ export function BigCalendar() {
 
   // 처음 렌더링 시 스크롤을 맨 아래로 이동
   useEffect(() => {
+    let timer: NodeJS.Timeout | undefined;
     if (gridScrollRef.current) {
       // 약간의 지연을 두어 DOM이 완전히 렌더링된 후 실행
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         if (gridScrollRef.current) {
           gridScrollRef.current.scrollTop = gridScrollRef.current.scrollHeight - gridScrollRef.current.clientHeight;
         }
       }, 100);
-      return () => clearTimeout(timer);
     }
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
   }, []); // 빈 의존성 배열로 처음 마운트 시에만 실행
 
   // Resize functionality
