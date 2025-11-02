@@ -126,43 +126,60 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
 
   // 선택된 날짜의 할일 필터링 (반복 TODO 포함) - useMemo로 최적화
   const filteredTodos = useMemo(() => {
-    return todos.filter(todo => {
-      // 반복 TODO는 날짜 범위 및 건너뛴 날짜 체크
-      if (todo.recurrenceRule) {
+    const todayString = formatDateKey(selectedDate);
+    
+    return todos
+      .filter(todo => {
+        // 반복 TODO는 날짜 범위 및 건너뛴 날짜 체크
+        if (todo.recurrenceRule) {
+          const selected = new Date(selectedDate);
+          selected.setHours(0, 0, 0, 0);
+
+          // 시작일 체크
+          if (todo.recurrenceRule.startDate) {
+            const startDate = new Date(todo.recurrenceRule.startDate);
+            startDate.setHours(0, 0, 0, 0);
+            if (selected < startDate) return false;
+          }
+
+          // 종료일 체크
+          if (todo.recurrenceRule.endDate) {
+            const endDate = new Date(todo.recurrenceRule.endDate);
+            endDate.setHours(0, 0, 0, 0);
+            if (selected > endDate) return false;
+          }
+
+          // 건너뛴 날짜 체크
+          if (todo.skippedDates?.includes(todayString)) {
+            return false;
+          }
+
+          return true;
+        }
+
+        // 일반 TODO는 날짜 일치 체크 (시간 무시)
+        const todoDate = new Date(todo.date);
+        todoDate.setHours(0, 0, 0, 0);
         const selected = new Date(selectedDate);
         selected.setHours(0, 0, 0, 0);
-
-        // 시작일 체크
-        if (todo.recurrenceRule.startDate) {
-          const startDate = new Date(todo.recurrenceRule.startDate);
-          startDate.setHours(0, 0, 0, 0);
-          if (selected < startDate) return false;
+        
+        return todoDate.getTime() === selected.getTime();
+      })
+      .map(todo => {
+        // 반복 일정이고 현재 날짜에 수정된 인스턴스가 있는 경우 시간 적용
+        if (todo.recurrenceRule && todo.modifiedInstances) {
+          const modifiedInstance = todo.modifiedInstances[todayString];
+          if (modifiedInstance) {
+            // 수정된 인스턴스의 시간이 있으면 적용
+            return {
+              ...todo,
+              startTime: modifiedInstance.startTime ?? todo.startTime,
+              endTime: modifiedInstance.endTime ?? todo.endTime,
+            };
+          }
         }
-
-        // 종료일 체크
-        if (todo.recurrenceRule.endDate) {
-          const endDate = new Date(todo.recurrenceRule.endDate);
-          endDate.setHours(0, 0, 0, 0);
-          if (selected > endDate) return false;
-        }
-
-        // 건너뛴 날짜 체크
-        const todayString = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
-        if (todo.skippedDates?.includes(todayString)) {
-          return false;
-        }
-
-        return true;
-      }
-
-      // 일반 TODO는 날짜 일치 체크 (시간 무시)
-      const todoDate = new Date(todo.date);
-      todoDate.setHours(0, 0, 0, 0);
-      const selected = new Date(selectedDate);
-      selected.setHours(0, 0, 0, 0);
-      
-      return todoDate.getTime() === selected.getTime();
-    });
+        return todo;
+      });
   }, [todos, selectedDate]);
 
   // 카테고리별로 그룹화 (반복 TODO는 cat-recurring에 자동 배치) - useMemo로 최적화
@@ -638,7 +655,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
         onEditThis={() => {
           if (!pendingRecurringEdit) return;
           
-          const { id, text, startTime, endTime, recurrenceRule, categoryId } = pendingRecurringEdit;
+          const { id, text, startTime, endTime } = pendingRecurringEdit;
           const originalTodo = todos.find(t => t.id === id);
           
           if (originalTodo && onUpdateTodo) {

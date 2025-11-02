@@ -188,37 +188,52 @@ export function RecurringSection({
   };
 
   // 반복 일정만 필터링하고 날짜 범위 체크
-  const recurringTodos = todos.filter(todo => {
-    if (!todo.recurrenceRule) return false;
+  const todayString = formatDateKey(selectedDate);
+  const recurringTodos = todos
+    .filter(todo => {
+      if (!todo.recurrenceRule) return false;
 
-    const selected = new Date(selectedDate);
-    selected.setHours(0, 0, 0, 0);
+      const selected = new Date(selectedDate);
+      selected.setHours(0, 0, 0, 0);
 
-    // 시작일 체크
-    if (todo.recurrenceRule.startDate) {
-      const startDate = new Date(todo.recurrenceRule.startDate);
-      startDate.setHours(0, 0, 0, 0);
-      if (selected < startDate) return false;
-    }
+      // 시작일 체크
+      if (todo.recurrenceRule.startDate) {
+        const startDate = new Date(todo.recurrenceRule.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        if (selected < startDate) return false;
+      }
 
-    // 종료일 체크
-    if (todo.recurrenceRule.endDate) {
-      const endDate = new Date(todo.recurrenceRule.endDate);
-      endDate.setHours(0, 0, 0, 0);
-      if (selected > endDate) return false;
-    }
+      // 종료일 체크
+      if (todo.recurrenceRule.endDate) {
+        const endDate = new Date(todo.recurrenceRule.endDate);
+        endDate.setHours(0, 0, 0, 0);
+        if (selected > endDate) return false;
+      }
 
-    // skippedDates 체크 - 건너뛴 날짜는 표시하지 않음
-    const todayString = formatDateKey(selectedDate);
-    if (todo.skippedDates?.includes(todayString)) {
-      return false;
-    }
+      // skippedDates 체크 - 건너뛴 날짜는 표시하지 않음
+      if (todo.skippedDates?.includes(todayString)) {
+        return false;
+      }
 
-    return true;
-  });
+      return true;
+    })
+    .map(todo => {
+      // 현재 날짜에 수정된 인스턴스가 있는 경우 시간 적용
+      if (todo.modifiedInstances) {
+        const modifiedInstance = todo.modifiedInstances[todayString];
+        if (modifiedInstance) {
+          // 수정된 인스턴스의 시간이 있으면 적용
+          return {
+            ...todo,
+            startTime: modifiedInstance.startTime ?? todo.startTime,
+            endTime: modifiedInstance.endTime ?? todo.endTime,
+          };
+        }
+      }
+      return todo;
+    });
 
   // 완료 카운트 계산: completedDates에 오늘 날짜가 포함된 것
-  const todayString = formatDateKey(selectedDate);
   const completedCount = recurringTodos.filter(todo =>
     todo.completedDates?.includes(todayString)
   ).length;
