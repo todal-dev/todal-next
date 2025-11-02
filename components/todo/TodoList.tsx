@@ -509,7 +509,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
         )}
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto space-y-2">
+        <div className="flex-1 overflow-y-auto space-y-2 todo-list-scroll">
           {/* Categories (반복 카테고리 포함) */}
           <SortableContext items={categoryIds} strategy={verticalListSortingStrategy}>
             {todosByCategory.map((category, index) => (

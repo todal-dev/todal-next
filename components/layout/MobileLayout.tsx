@@ -147,7 +147,7 @@ const MobileLayoutComponent = ({ todosByDate }: MobileLayoutProps) => {
             {/* Todo List with Scroll Detection */}
             <div 
               ref={todoListRef}
-              className="flex-1 overflow-y-auto -webkit-overflow-scrolling-touch"
+              className="flex-1 overflow-y-auto -webkit-overflow-scrolling-touch todo-list-scroll"
             >
               <TodoList />
             </div>

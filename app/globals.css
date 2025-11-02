@@ -301,6 +301,16 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+
+    /* 모바일에서 할일 리스트 스크롤바 숨기기 */
+    .todo-list-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .todo-list-scroll {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
   }
 
   /* Mobile Touch Optimizations */
