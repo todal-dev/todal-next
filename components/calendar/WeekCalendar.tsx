@@ -742,22 +742,45 @@ export function BigCalendar() {
           if (selectedRecurringTodoId) {
             const todo = todos.find(t => t.id === selectedRecurringTodoId);
             if (todo) {
-              // 모달을 먼저 띄움
-              setPendingRecurringEdit({
-                todoId: selectedRecurringTodoId,
-                date: todo.date,
-                startTime,
-                endTime,
-                recurrenceRule,
-                categoryId,
-                text,
-                originalDate: todo.recurrenceRule?.startDate || todo.date,
-                originalStartTime: todo.startTime || '09:00',
-                originalEndTime: todo.endTime || '10:00',
-                type: 'dialog-edit',
-              });
-              setEditRecurringDialogOpen(false);
-              setRecurringEditModalOpen(true);
+              // 값이 변경되었는지 확인
+              const editDate = selectedRecurringDate || selectedDate;
+              const editDateKey = formatDateKey(editDate);
+              const modifiedInstance = todo.modifiedInstances?.[editDateKey];
+              const currentStartTime = modifiedInstance?.startTime ?? todo.startTime;
+              const currentEndTime = modifiedInstance?.endTime ?? todo.endTime;
+              
+              const textChanged = text !== todo.text;
+              const timeChanged = startTime !== currentStartTime || endTime !== currentEndTime;
+              const categoryChanged = categoryId !== todo.categoryId;
+              
+              // recurrenceRule 비교 (간단한 비교)
+              const recurrenceChanged = JSON.stringify(recurrenceRule) !== JSON.stringify(todo.recurrenceRule);
+              
+              const hasChanges = textChanged || timeChanged || categoryChanged || recurrenceChanged;
+              
+              // 값이 변경된 경우에만 모달 표시
+              if (hasChanges) {
+                setPendingRecurringEdit({
+                  todoId: selectedRecurringTodoId,
+                  date: todo.date,
+                  startTime,
+                  endTime,
+                  recurrenceRule,
+                  categoryId,
+                  text,
+                  originalDate: todo.recurrenceRule?.startDate || todo.date,
+                  originalStartTime: currentStartTime || '09:00',
+                  originalEndTime: currentEndTime || '10:00',
+                  type: 'dialog-edit',
+                });
+                setEditRecurringDialogOpen(false);
+                setRecurringEditModalOpen(true);
+              } else {
+                // 값이 변경되지 않았으면 모달을 띄우지 않고 다이얼로그만 닫기
+                setEditRecurringDialogOpen(false);
+                setSelectedRecurringTodoId('');
+                setSelectedRecurringDate(null);
+              }
             } else {
               // 할일을 찾을 수 없으면 바로 업데이트 (fallback)
               onEditRecurring?.(selectedRecurringTodoId, text, startTime, endTime, recurrenceRule, categoryId);
@@ -838,6 +861,9 @@ export function BigCalendar() {
           const todo = todos.find(t => t.id === timeEditTodoId);
           if (!todo) return;
 
+          // 값이 변경되었는지 확인
+          const timeChanged = startTime !== todo.startTime || endTime !== todo.endTime;
+
           // 반복 일정인지 확인
           if (isRecurringInstance(timeEditTodoId)) {
             const recurringId = extractRecurringId(timeEditTodoId);
@@ -848,26 +874,34 @@ export function BigCalendar() {
             const originalTodo = todos.find(t => t.id === recurringId);
             if (!originalTodo) return;
             
-            // 모달 표시
-            setPendingRecurringEdit({
-              todoId: timeEditTodoId,
-              date: todo.date,
-              startTime,
-              endTime,
-              recurrenceRule: originalTodo.recurrenceRule,
-              categoryId: originalTodo.categoryId,
-              text: originalTodo.text,
-              originalDate: eventDate,
-              originalStartTime: todo.startTime || '09:00',
-              originalEndTime: todo.endTime || '10:00',
-              type: 'time-edit',
-            });
-            setTimeEditDialogOpen(false);
-            setTimeEditTodoId(null);
-            setRecurringEditModalOpen(true);
+            // 값이 변경된 경우에만 모달 표시
+            if (timeChanged) {
+              setPendingRecurringEdit({
+                todoId: timeEditTodoId,
+                date: todo.date,
+                startTime,
+                endTime,
+                recurrenceRule: originalTodo.recurrenceRule,
+                categoryId: originalTodo.categoryId,
+                text: originalTodo.text,
+                originalDate: eventDate,
+                originalStartTime: todo.startTime || '09:00',
+                originalEndTime: todo.endTime || '10:00',
+                type: 'time-edit',
+              });
+              setTimeEditDialogOpen(false);
+              setTimeEditTodoId(null);
+              setRecurringEditModalOpen(true);
+            } else {
+              // 값이 변경되지 않았으면 모달을 띄우지 않고 다이얼로그만 닫기
+              setTimeEditDialogOpen(false);
+              setTimeEditTodoId(null);
+            }
           } else {
-            // 일반 할일은 바로 업데이트
-            onEditTodo?.(timeEditTodoId, { startTime, endTime });
+            // 일반 할일은 변경사항이 있을 때만 업데이트
+            if (timeChanged) {
+              onEditTodo?.(timeEditTodoId, { startTime, endTime });
+            }
             setTimeEditDialogOpen(false);
             setTimeEditTodoId(null);
           }
@@ -942,9 +976,9 @@ export function BigCalendar() {
             ? todoId 
             : extractRecurringId(todoId);
           
-          // 이 일정 및 향후 일정 수정: 원본 반복 일정의 시작 날짜와 시간 업데이트
+          // 이 일정 및 향후 일정 수정: 과거 일정은 유지하고 미래 일정만 수정
           const originalTodo = todos.find(t => t.id === recurringId);
-          if (originalTodo && originalTodo.recurrenceRule && onEditRecurring) {
+          if (originalTodo && originalTodo.recurrenceRule && onEditTodo) {
             // dialog-edit 타입일 때는 selectedDate를 사용
             const eventDate = pendingRecurringEdit.type === 'dialog-edit' 
               ? selectedDate 
@@ -959,12 +993,47 @@ export function BigCalendar() {
               ? date 
               : eventDate;
             
+            // 기존 modifiedInstances 보존 (과거 일정 유지)
+            const existingModifiedInstances = originalTodo.modifiedInstances || {};
+            
+            // 현재 날짜 이전의 modifiedInstances만 필터링하여 보존
+            const newStartDateKey = formatDateKey(newStartDate);
+            const preservedModifiedInstances: Record<string, { date?: Date; startTime?: string; endTime?: string }> = {};
+            
+            Object.entries(existingModifiedInstances).forEach(([dateKey, instance]) => {
+              // 현재 날짜 이전의 modifiedInstances만 보존
+              if (dateKey < newStartDateKey) {
+                preservedModifiedInstances[dateKey] = instance;
+              }
+            });
+            
+            // 새로운 반복 규칙 생성 (시작 날짜 변경)
+            const cleanedRecurrenceRule = { ...recurrenceRule };
+            delete (cleanedRecurrenceRule as any).modifiedInstances;
+            
             const newRecurrenceRule = {
               ...originalTodo.recurrenceRule,
-              ...recurrenceRule, // recurrenceRule도 업데이트
+              ...cleanedRecurrenceRule, // recurrenceRule도 업데이트
               startDate: newStartDate,
             };
-            onEditRecurring(recurringId, text || originalTodo.text, startTime, endTime, newRecurrenceRule, categoryId || originalTodo.categoryId);
+            
+            // onEditTodo를 사용하여 modifiedInstances 보존하면서 업데이트
+            const updates: Partial<Todo> = {
+              startTime,
+              endTime,
+              recurrenceRule: newRecurrenceRule,
+              modifiedInstances: preservedModifiedInstances, // 과거 일정 보존
+            };
+            
+            // 텍스트나 카테고리도 업데이트 가능
+            if (text && text !== originalTodo.text) {
+              updates.text = text;
+            }
+            if (categoryId && categoryId !== originalTodo.categoryId) {
+              updates.categoryId = categoryId;
+            }
+            
+            onEditTodo(recurringId, updates);
           }
           
           setRecurringEditModalOpen(false);

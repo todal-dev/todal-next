@@ -168,11 +168,16 @@ export function useTodoDrag({
         cancelAnimationFrame(animationFrameId);
       }
 
+      // 값이 변경되었는지 확인
+      const dateChanged = currentDate.toDateString() !== todoDate.toDateString();
+      const timeChanged = currentStartTime !== startTime || currentEndTime !== endTime;
+      const hasChanges = dateChanged || timeChanged;
+
       // Check if this is a recurring instance
       const isRecurring = isRecurringInstance(todoId);
       
-      if (isRecurring && onPendingRecurringEdit) {
-        // Show modal for recurring events - 상태를 유지하여 모달이 열려있을 때도 새 위치 표시
+      if (isRecurring && onPendingRecurringEdit && hasChanges) {
+        // 값이 변경된 경우에만 모달 표시
         onPendingRecurringEdit(
           todoId,
           currentDate,
@@ -185,17 +190,22 @@ export function useTodoDrag({
         );
         // 모달이 열려있을 때는 상태를 유지 (모달에서 취소/저장 시 초기화)
         // setDraggingTodo(null) 호출하지 않음
+      } else if (isRecurring && !hasChanges) {
+        // 값이 변경되지 않았으면 모달을 띄우지 않고 상태만 초기화
+        setDraggingTodo(null);
       } else {
-        // Apply the move using local variables
-        if (currentDate.toDateString() !== todoDate.toDateString()) {
-          // Date changed, use onUpdateTodoDateTime to update both date and time
-          onUpdateTodoDateTime?.(todoId, currentDate, currentStartTime, currentEndTime);
-        } else {
-          // Same date, just update time
-          onEditTodo?.(todoId, {
-            startTime: currentStartTime,
-            endTime: currentEndTime,
-          });
+        // 일반 할일은 변경사항이 있을 때만 업데이트
+        if (hasChanges) {
+          if (dateChanged) {
+            // Date changed, use onUpdateTodoDateTime to update both date and time
+            onUpdateTodoDateTime?.(todoId, currentDate, currentStartTime, currentEndTime);
+          } else {
+            // Same date, just update time
+            onEditTodo?.(todoId, {
+              startTime: currentStartTime,
+              endTime: currentEndTime,
+            });
+          }
         }
         setDraggingTodo(null);
       }
