@@ -46,17 +46,46 @@ export function convertGoogleEventToTodo(
   }
 
   // 시간 형식 추출 (HH:mm, 초 제외)
+  // dateTime을 한국 시간대(Asia/Seoul)로 변환
   let startTime: string | undefined
   let endTime: string | undefined
 
   if (event.start.dateTime) {
+    // dateTime을 Date 객체로 파싱 (타임존 자동 변환)
     const startDate = new Date(event.start.dateTime)
-    startTime = `${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`
+    
+    // dateTime의 타임존 정보를 확인하여 한국 시간대로 변환
+    // timeZone 필드가 있으면 그 타임존의 시간을, 없으면 한국 시간대로 변환
+    const targetTimezone = event.start.timeZone || 'Asia/Seoul'
+    
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: targetTimezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+    
+    const parts = formatter.formatToParts(startDate)
+    const hour = parts.find(p => p.type === 'hour')?.value || '00'
+    const minute = parts.find(p => p.type === 'minute')?.value || '00'
+    startTime = `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
   }
 
   if (event.end.dateTime) {
     const endDate = new Date(event.end.dateTime)
-    endTime = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`
+    const targetTimezone = event.end.timeZone || 'Asia/Seoul'
+    
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: targetTimezone,
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+    
+    const parts = formatter.formatToParts(endDate)
+    const hour = parts.find(p => p.type === 'hour')?.value || '00'
+    const minute = parts.find(p => p.type === 'minute')?.value || '00'
+    endTime = `${hour.padStart(2, '0')}:${minute.padStart(2, '0')}`
   }
 
   return {

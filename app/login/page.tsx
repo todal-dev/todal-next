@@ -113,7 +113,7 @@ function LoginForm() {
         {/* Google Login - Main */}
         <button
           onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center gap-3 px-6 py-3 border-2 border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] active:scale-[0.98] mb-6 bg-warm-white dark:bg-dark-ocean-card"
+          className="w-full flex items-center justify-center gap-3 px-6 py-3 border-2 border-gray-200 dark:border-gray-500 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-all hover:scale-[1.02] active:scale-[0.98] mb-6 bg-warm-white dark:bg-dark-ocean-card cursor-pointer"
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
             <path d="M19.6 10.227c0-.709-.064-1.39-.182-2.045H10v3.868h5.382a4.6 4.6 0 01-1.996 3.018v2.51h3.232c1.891-1.742 2.982-4.305 2.982-7.35z" fill="#4285F4"/>
@@ -128,12 +128,12 @@ function LoginForm() {
         {!showEmailLogin && (
           <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200 dark:border-gray-600"></div>
+              <div className="w-full border-t border-gray-200 dark:border-gray-500"></div>
             </div>
             <div className="relative flex justify-center text-body-small">
               <button
                 onClick={() => setShowEmailLogin(true)}
-                className="px-4 bg-cream dark:bg-dark-ocean text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-50 transition-colors"
+                className="px-4 bg-cream dark:bg-dark-ocean text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-50 transition-colors cursor-pointer"
               >
                 이메일로 로그인
               </button>
@@ -146,10 +146,10 @@ function LoginForm() {
           <>
             <div className="relative my-8">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200 dark:border-gray-600"></div>
+                <div className="w-full border-t border-gray-200 dark:border-gray-500"></div>
               </div>
               <div className="relative flex justify-center text-caption">
-                <span className="px-4 bg-cream dark:bg-dark-ocean text-gray-400 dark:text-gray-500">또는</span>
+                <span className="px-4 bg-cream dark:bg-dark-ocean text-gray-500 dark:text-gray-400">또는</span>
               </div>
             </div>
 
@@ -161,7 +161,7 @@ function LoginForm() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full h-10 px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 focus:border-primary dark:focus:border-primary-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  className="w-full h-10 px-4 py-3 border border-gray-200 dark:border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 focus:border-primary dark:focus:border-primary-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   placeholder="이메일"
                   disabled={loading}
                 />
@@ -174,7 +174,7 @@ function LoginForm() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full h-10 px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 focus:border-primary dark:focus:border-primary-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 placeholder:text-gray-400 dark:placeholder:text-gray-500"
+                  className="w-full h-10 px-4 py-3 border border-gray-200 dark:border-gray-500 rounded-md focus:outline-none focus:ring-2 focus:ring-primary dark:focus:ring-primary-600 focus:border-primary dark:focus:border-primary-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-50 placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   placeholder="비밀번호"
                   disabled={loading}
                 />
@@ -183,7 +183,7 @@ function LoginForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-primary dark:bg-primary-600 text-white py-3 rounded-md hover:bg-primary-dark dark:hover:bg-primary-700 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 dark:disabled:text-gray-500 disabled:cursor-not-allowed font-medium"
+                className="w-full bg-primary dark:bg-primary-600 text-white py-3 rounded-md hover:bg-primary-dark dark:hover:bg-primary-700 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:bg-gray-200 dark:disabled:bg-gray-700 disabled:text-gray-400 dark:disabled:text-gray-500 disabled:cursor-not-allowed font-medium cursor-pointer"
               >
                 {loading ? '로그인 중...' : '이메일로 로그인'}
               </button>
@@ -195,7 +195,7 @@ function LoginForm() {
         <div className="mt-8 text-center">
           <p className="text-body-small text-gray-600 dark:text-gray-400">
             계정이 없으신가요?{' '}
-            <Link href="/signup" className="text-primary dark:text-primary-light hover:text-primary-dark dark:hover:text-primary font-medium transition-colors">
+            <Link href="/signup" className="text-primary dark:text-primary-light hover:text-primary-dark dark:hover:text-primary font-medium transition-colors cursor-pointer">
               회원가입
             </Link>
           </p>
