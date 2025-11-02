@@ -133,7 +133,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
           // modifiedInstances에서 날짜가 변경된 경우 확인
           // 다른 날짜에서 현재 날짜로 이동된 일정이 있는지 확인
           if (todo.modifiedInstances) {
-            for (const [dateKey, instance] of Object.entries(todo.modifiedInstances)) {
+            for (const [, instance] of Object.entries(todo.modifiedInstances)) {
               // 날짜가 변경된 경우 (date 필드가 있음)
               if (instance.date) {
                 const modifiedDateKey = formatDateKey(instance.date);
@@ -202,7 +202,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
         // 반복 일정이고 현재 날짜에 수정된 인스턴스가 있는 경우 시간 적용
         if (todo.recurrenceRule && todo.modifiedInstances) {
           // 먼저 다른 날짜에서 이동된 인스턴스 확인
-          for (const [dateKey, instance] of Object.entries(todo.modifiedInstances)) {
+          for (const [, instance] of Object.entries(todo.modifiedInstances)) {
             if (instance.date) {
               const modifiedDateKey = formatDateKey(instance.date);
               if (modifiedDateKey === todayString) {
