@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Calendar } from 'lucide-react';
 import { DatePicker } from './DatePicker';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface DatePickerInputProps {
   value: Date;
@@ -15,6 +16,7 @@ interface DatePickerInputProps {
 }
 
 export function DatePickerInput({ value, onChange, minDate, maxDate, placeholder, size = 'sm' }: DatePickerInputProps) {
+  const { theme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -76,7 +78,8 @@ export function DatePickerInput({ value, onChange, minDate, maxDate, placeholder
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="absolute top-full left-0 mt-2 z-50 bg-warm-white dark:bg-dark-ocean-card rounded-md shadow-xl border border-gray-200 dark:border-gray-600 p-4"
+            className="absolute top-full left-0 mt-2 z-50 bg-white dark:bg-dark-ocean-card rounded-md shadow-xl border border-gray-200 dark:border-gray-600 p-4"
+            style={{ backgroundColor: theme === 'dark' ? '#374151' : undefined }}
           >
             <DatePicker
               value={value}

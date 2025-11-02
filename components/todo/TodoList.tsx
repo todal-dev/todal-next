@@ -240,11 +240,19 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
   const handleEditRecurringClick = (id: string) => {
     const todo = todos.find(t => t.id === id);
     if (todo) {
+      // 현재 날짜에 수정된 인스턴스가 있는지 확인
+      const todayString = formatDateKey(selectedDate);
+      const modifiedInstance = todo.modifiedInstances?.[todayString];
+      
+      // 수정된 인스턴스가 있으면 그 시간을 사용, 없으면 원본 시간 사용
+      const startTime = modifiedInstance?.startTime ?? todo.startTime;
+      const endTime = modifiedInstance?.endTime ?? todo.endTime;
+      
       setEditingRecurring({
         id: todo.id,
         text: todo.text,
-        startTime: todo.startTime,
-        endTime: todo.endTime,
+        startTime,
+        endTime,
         recurrenceRule: todo.recurrenceRule as any,
         categoryId: todo.categoryId,
       });

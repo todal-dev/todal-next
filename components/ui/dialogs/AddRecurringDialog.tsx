@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BaseDialog, DialogFooter } from './BaseDialog';
 import { DatePickerInput } from '../calendar/DatePickerInput';
 import { TimeInput } from '../calendar/TimeInput';
@@ -80,12 +80,91 @@ export function AddRecurringDialog({
   const [monthDay, setMonthDay] = useState(1);
   const [yearMonth, setYearMonth] = useState(1);
 
+  // 경고 모달 상태
+  const [warningModalOpen, setWarningModalOpen] = useState(false);
+  const [warningMessage, setWarningMessage] = useState('');
+  
+  // 이전 시간 값 저장 (복원용)
+  const prevStartTimeRef = useRef<string>('09:00');
+  const prevEndTimeRef = useRef<string>('10:00');
+
+  // 시간을 분 단위로 변환하는 헬퍼 함수
+  const timeToMinutes = (time: string): number => {
+    const parts = time.split(':');
+    if (parts.length >= 2) {
+      const hours = parseInt(parts[0]) || 0;
+      const minutes = parseInt(parts[1]) || 0;
+      return hours * 60 + minutes;
+    }
+    return 0;
+  };
+
+  // 분을 시간 문자열로 변환하는 헬퍼 함수
+  const minutesToTime = (minutes: number): string => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+  };
+
+  // 시작 시간 변경 핸들러
+  const handleStartTimeChange = (newStartTime: string) => {
+    const startMinutes = timeToMinutes(newStartTime);
+    const endMinutes = timeToMinutes(endTime);
+    
+    // 종료 시간이 시작 시간보다 전이면 경고하고 원래 값으로 복원
+    if (endMinutes <= startMinutes) {
+      setWarningMessage('종료 시간은 시작 시간보다 이후여야 합니다.');
+      setWarningModalOpen(true);
+      setStartTime(prevStartTimeRef.current); // 원래 값으로 복원
+      return;
+    }
+    
+    prevStartTimeRef.current = startTime; // 이전 값 저장
+    setStartTime(newStartTime);
+  };
+
+  // 종료 시간 변경 핸들러
+  const handleEndTimeChange = (newEndTime: string) => {
+    const startMinutes = timeToMinutes(startTime);
+    const endMinutes = timeToMinutes(newEndTime);
+    
+    // 종료 시간이 시작 시간보다 전이면 경고하고 원래 값으로 복원
+    if (endMinutes <= startMinutes) {
+      setWarningMessage('종료 시간은 시작 시간보다 이후여야 합니다.');
+      setWarningModalOpen(true);
+      setEndTime(prevEndTimeRef.current); // 원래 값으로 복원
+      return;
+    }
+    
+    prevEndTimeRef.current = endTime; // 이전 값 저장
+    setEndTime(newEndTime);
+  };
+
   // 편집 모드일 때 초기값 설정
   useEffect(() => {
     if (editingTodo) {
       setText(editingTodo.text);
-      setStartTime(editingTodo.startTime || '09:00');
-      setEndTime(editingTodo.endTime || '10:00');
+      const initialStartTime = editingTodo.startTime || '09:00';
+      const initialEndTime = editingTodo.endTime || '10:00';
+      
+      // 시간 검증: 종료 시간이 시작 시간보다 전이면 조정
+      const startMinutes = timeToMinutes(initialStartTime);
+      const endMinutes = timeToMinutes(initialEndTime);
+      
+      if (endMinutes <= startMinutes) {
+        // 종료 시간을 시작 시간 + 1시간으로 조정
+        const newEndMinutes = startMinutes + 60;
+        setStartTime(initialStartTime);
+        setEndTime(minutesToTime(newEndMinutes));
+        prevStartTimeRef.current = initialStartTime;
+        prevEndTimeRef.current = minutesToTime(newEndMinutes);
+      } else {
+        setStartTime(initialStartTime);
+        setEndTime(initialEndTime);
+        prevStartTimeRef.current = initialStartTime;
+        prevEndTimeRef.current = initialEndTime;
+      }
+      
       setCategoryId(editingTodo.categoryId || 'cat-etc');
       if (editingTodo.recurrenceRule) {
         setFrequency(editingTodo.recurrenceRule.frequency);
@@ -134,12 +213,27 @@ export function AddRecurringDialog({
       setNthWeekday(1);
       setMonthDay(selectedDate.getDate());
       setYearMonth(selectedDate.getMonth() + 1);
+      
+      // 초기값을 ref에 저장
+      prevStartTimeRef.current = '09:00';
+      prevEndTimeRef.current = '10:00';
     }
   }, [editingTodo, isOpen, selectedDate]);
 
   const handleConfirm = () => {
     if (!text.trim()) {
-      alert('할일 제목을 입력해주세요.');
+      setWarningMessage('할일 제목을 입력해주세요.');
+      setWarningModalOpen(true);
+      return;
+    }
+
+    // 시간 검증: 종료 시간이 시작 시간보다 전이면 경고
+    const startMinutes = timeToMinutes(startTime);
+    const endMinutes = timeToMinutes(endTime);
+    
+    if (endMinutes <= startMinutes) {
+      setWarningMessage('종료 시간은 시작 시간보다 이후여야 합니다.');
+      setWarningModalOpen(true);
       return;
     }
 
@@ -240,7 +334,7 @@ export function AddRecurringDialog({
             </label>
             <TimeInput
               value={startTime}
-              onChange={setStartTime}
+              onChange={handleStartTimeChange}
               placeholder="09:00"
             />
           </div>
@@ -250,7 +344,7 @@ export function AddRecurringDialog({
             </label>
             <TimeInput
               value={endTime}
-              onChange={setEndTime}
+              onChange={handleEndTimeChange}
               placeholder="10:00"
             />
           </div>
@@ -514,6 +608,33 @@ export function AddRecurringDialog({
           </div>
         </div>
       </div>
+
+      {/* 경고 모달 */}
+      <BaseDialog
+        isOpen={warningModalOpen}
+        onClose={() => setWarningModalOpen(false)}
+        title=""
+        size="sm"
+        zIndex={60}
+        showHeaderBorder={false}
+        showFooterBorder={false}
+        footer={
+          <div className="flex items-center justify-center px-6 pb-4">
+            <button
+              onClick={() => setWarningModalOpen(false)}
+              className="px-8 py-2.5 text-body font-medium text-white bg-primary-700 dark:bg-primary-600 hover:bg-primary-800 dark:hover:bg-primary-700 active:bg-primary-900 dark:active:bg-primary-800 rounded-lg transition-colors cursor-pointer"
+            >
+              확인
+            </button>
+          </div>
+        }
+      >
+        <div className="py-8 px-6">
+          <p className="text-body text-gray-900 dark:text-gray-50 text-center">
+            {warningMessage}
+          </p>
+        </div>
+      </BaseDialog>
     </BaseDialog>
   );
 }

@@ -250,7 +250,12 @@ export function BigCalendar() {
     // Extract original recurring ID from UUID-timestamp format
     if (isRecurringInstance(todoId)) {
       const recurringId = extractRecurringId(todoId);
+      // Extract date from timestamp part (after UUID and hyphen)
+      const timestampPart = todoId.substring(recurringId.length + 1);
+      const eventDate = new Date(timestampPart);
+      
       setSelectedRecurringTodoId(recurringId);
+      setSelectedRecurringDate(eventDate); // 편집하려는 날짜 저장
       setEditRecurringDialogOpen(true);
       closeRecurringContextMenu();
     }
@@ -366,7 +371,7 @@ export function BigCalendar() {
   }, []);
 
   // Resize functionality
-  const { resizingTodo, handleResizeStart, clearResizingState } = useResizeTodo({
+  const { resizingTodo, handleResizeStart } = useResizeTodo({
     hourHeight,
     gridScrollRef,
     onEditTodo,
@@ -374,7 +379,7 @@ export function BigCalendar() {
   });
 
   // Todo drag functionality
-  const { draggingTodo, handleTodoDragStart, clearDraggingState } = useTodoDrag({
+  const { draggingTodo, handleTodoDragStart } = useTodoDrag({
     hourHeight,
     gridScrollRef,
     weekDays,
@@ -723,6 +728,7 @@ export function BigCalendar() {
         onClose={() => {
           setEditRecurringDialogOpen(false);
           setSelectedRecurringTodoId('');
+          setSelectedRecurringDate(null);
         }}
         onConfirm={(text, startTime, endTime, recurrenceRule, categoryId) => {
           if (selectedRecurringTodoId) {
@@ -757,11 +763,20 @@ export function BigCalendar() {
         editingTodo={selectedRecurringTodoId ? (() => {
           const todo = todos.find(t => t.id === selectedRecurringTodoId);
           if (todo) {
+            // 편집하려는 날짜 결정: selectedRecurringDate가 있으면 그것 사용, 없으면 selectedDate 사용
+            const editDate = selectedRecurringDate || selectedDate;
+            const editDateKey = formatDateKey(editDate);
+            const modifiedInstance = todo.modifiedInstances?.[editDateKey];
+            
+            // 수정된 인스턴스가 있으면 그 시간을 사용, 없으면 원본 시간 사용
+            const startTime = modifiedInstance?.startTime ?? todo.startTime;
+            const endTime = modifiedInstance?.endTime ?? todo.endTime;
+            
             return {
               id: todo.id,
               text: todo.text,
-              startTime: todo.startTime,
-              endTime: todo.endTime,
+              startTime,
+              endTime,
               recurrenceRule: todo.recurrenceRule,
               categoryId: todo.categoryId,
             };
@@ -852,9 +867,6 @@ export function BigCalendar() {
         onClose={() => {
           setRecurringEditModalOpen(false);
           setPendingRecurringEdit(null);
-          // 모달 취소 시 드래그/리사이즈 상태 초기화하여 원래 위치로 복원
-          clearDraggingState();
-          clearResizingState();
         }}
         onEditThis={() => {
           if (!pendingRecurringEdit) return;
@@ -897,11 +909,6 @@ export function BigCalendar() {
             }
             onEditTodo(recurringId, updates);
           }
-          
-          // 상태 초기화
-          setPendingRecurringEdit(null);
-          clearDraggingState();
-          clearResizingState();
         }}
         onEditThisAndFuture={() => {
           if (!pendingRecurringEdit) return;
@@ -937,11 +944,6 @@ export function BigCalendar() {
             };
             onEditRecurring(recurringId, text || originalTodo.text, startTime, endTime, newRecurrenceRule, categoryId || originalTodo.categoryId);
           }
-          
-          // 상태 초기화
-          setPendingRecurringEdit(null);
-          clearDraggingState();
-          clearResizingState();
         }}
         onEditAll={() => {
           if (!pendingRecurringEdit) return;
@@ -977,11 +979,6 @@ export function BigCalendar() {
             };
             onEditRecurring(recurringId, text || originalTodo.text, startTime, endTime, newRecurrenceRule, categoryId || originalTodo.categoryId);
           }
-          
-          // 상태 초기화
-          setPendingRecurringEdit(null);
-          clearDraggingState();
-          clearResizingState();
         }}
       />
 

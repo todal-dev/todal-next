@@ -387,20 +387,37 @@ export function useTodos(initialTodos: Todo[] = []) {
     // 1. 즉시 로컬 상태 업데이트
     setTodos(prevTodos => prevTodos.map(todo => {
       if (todo.id === id) {
+        // recurrenceRule에서 modifiedInstances 제거 (있을 경우)
+        const cleanedRecurrenceRule = { ...recurrenceRule };
+        delete (cleanedRecurrenceRule as any).modifiedInstances;
+        
         return {
           ...todo,
           text,
           startTime,
           endTime,
-          recurrenceRule,
+          recurrenceRule: cleanedRecurrenceRule,
           categoryId,
+          modifiedInstances: {}, // 모든 일정 수정 시 개별 수정 내역 초기화
         };
       }
       return todo;
     }));
     
     // 2. 백그라운드에서 DB 업데이트
-    const result = await updateTodoDB(id, { text, startTime, endTime, categoryId });
+    // recurrenceRule에서 modifiedInstances 제거
+    const cleanedRecurrenceRule = { ...recurrenceRule };
+    delete (cleanedRecurrenceRule as any).modifiedInstances;
+    
+    // modifiedInstances를 빈 객체로 초기화하여 모든 개별 수정 내역 제거
+    const result = await updateTodoDB(id, { 
+      text, 
+      startTime, 
+      endTime, 
+      categoryId, 
+      recurrenceRule: cleanedRecurrenceRule,
+      modifiedInstances: {} // 모든 일정 수정 시 개별 수정 내역 초기화
+    });
     
     // 3. 실패시 로그
     if (!result.success) {
