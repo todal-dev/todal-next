@@ -100,6 +100,58 @@
   }
 }
 
+@layer utilities {
+  /* 다크 모드에서 이모지 흑백 처리 */
+  html.dark .emoji-filter,
+  html.dark .emoji-filter *,
+  html.dark span.emoji-filter,
+  html.dark .emoji-filter span {
+    filter: grayscale(100%) !important;
+    -webkit-filter: grayscale(100%) !important;
+    opacity: 0.85;
+  }
+  
+  /* CustomSelect 내부의 이모지도 처리 */
+  html.dark button .emoji-filter,
+  html.dark button span.emoji-filter {
+    filter: grayscale(100%) !important;
+    -webkit-filter: grayscale(100%) !important;
+    opacity: 0.85;
+  }
+  
+  /* 인라인 블록 요소로 처리 */
+  .emoji-filter {
+    display: inline-block;
+  }
+  
+  /* 다크 모드에서 select option 스타일 */
+  html.dark select option {
+    background-color: #374151 !important;
+    color: #F9FAFB !important;
+  }
+  
+  /* 다크 모드에서 모달 배경 강제 적용 */
+  html.dark [class*="fixed"][class*="translate"] {
+    background-color: #374151 !important;
+  }
+  
+  html.dark .fixed.top-1\/2.left-1\/2 {
+    background-color: #374151 !important;
+  }
+  
+  /* 다크 모드에서 입력 필드 배경 강제 적용 */
+  html.dark input[type="text"],
+  html.dark input[type="number"] {
+    background-color: #2D3748 !important;
+    color: #F9FAFB !important;
+  }
+  
+  html.dark input[type="text"]::placeholder,
+  html.dark input[type="number"]::placeholder {
+    color: #9CA3AF !important;
+  }
+}
+
 @layer components {
   :focus-visible {
     outline: 2px solid #2d9f6b;

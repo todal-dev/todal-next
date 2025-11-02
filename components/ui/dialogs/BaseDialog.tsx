@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { ReactNode } from 'react';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface BaseDialogProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export function BaseDialog({
   showHeaderBorder = true,
   showFooterBorder = true,
 }: BaseDialogProps) {
+  const { theme } = useTheme();
   const sizeClasses = {
     sm: 'max-w-[calc(100%-2rem)] sm:max-w-sm',
     md: 'max-w-[calc(100%-2rem)] sm:max-w-md',
@@ -61,7 +63,10 @@ export function BaseDialog({
               ease: [0.4, 0, 0.2, 1] // cubic-bezier from design guide
             }}
             className={`fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-dark-ocean-card rounded-2xl shadow-2xl w-full mx-4 max-h-[90vh] overflow-y-auto ${sizeClasses[size]} ${className}`}
-            style={{ zIndex: zIndex + 10 }}
+            style={{ 
+              zIndex: zIndex + 10,
+              backgroundColor: theme === 'dark' ? '#374151' : undefined
+            }}
           >
             {/* Header */}
             <div className={`flex items-center justify-between px-5 sm:px-7 py-4 sm:py-5 ${showHeaderBorder ? 'border-b border-gray-200 dark:border-gray-600' : ''}`}>
@@ -123,7 +128,7 @@ export function DialogFooter({
       <button
         onClick={onConfirm}
         disabled={confirmDisabled}
-        className="px-6 py-3 text-body font-semibold text-white bg-primary dark:bg-primary-600 hover:bg-primary-700 dark:hover:bg-primary-700 active:bg-primary-700 dark:active:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer min-h-[48px] touch-manipulation shadow-md hover:shadow-lg"
+        className="px-6 py-3 text-body font-semibold text-white bg-primary-700 dark:bg-primary-600 hover:bg-primary-700 dark:hover:bg-primary-700 active:bg-primary-800 dark:active:bg-primary-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer min-h-[48px] touch-manipulation shadow-md hover:shadow-lg"
       >
         {confirmText}
       </button>
