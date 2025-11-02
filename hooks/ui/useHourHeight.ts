@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 
 const MIN_HOUR_HEIGHT = 33;
 const MAX_HOUR_HEIGHT = 200;
-const DEFAULT_HOUR_HEIGHT = 40;
+const DEFAULT_HOUR_HEIGHT = 41;
 const STORAGE_KEY = 'calendar-hour-height';
 const SAVE_DEBOUNCE_MS = 500;
 const ZOOM_STEP = 8; // Fixed pixel step for faster, more responsive zooming
