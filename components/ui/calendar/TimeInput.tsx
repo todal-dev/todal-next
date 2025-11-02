@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Clock } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface TimeInputProps {
   value: string;
@@ -14,6 +15,7 @@ export function TimeInput({ value, onChange, placeholder = '00:00' }: TimeInputP
   const [inputValue, setInputValue] = useState(value);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { theme } = useTheme();
 
   // value가 변경되면 inputValue 업데이트
   useEffect(() => {
@@ -81,7 +83,12 @@ export function TimeInput({ value, onChange, placeholder = '00:00' }: TimeInputP
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-warm-white dark:bg-dark-ocean-card border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 overflow-hidden animate-slide-up">
+        <div 
+          className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-dark-ocean-card border border-gray-200 dark:border-gray-600 rounded-md shadow-lg z-50 overflow-hidden animate-slide-up"
+          style={{
+            backgroundColor: theme === 'dark' ? '#374151' : undefined
+          }}
+        >
           <div className="grid grid-cols-2">
             {/* Hours */}
             <div className="border-r border-gray-200 dark:border-gray-600">
