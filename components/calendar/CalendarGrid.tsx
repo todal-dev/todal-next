@@ -198,12 +198,6 @@ const CalendarGridComponent = ({
               date.getMonth() === currentTime.getMonth() &&
               date.getFullYear() === currentTime.getFullYear();
 
-            const isSelected =
-              selectedDate &&
-              date.getDate() === selectedDate.getDate() &&
-              date.getMonth() === selectedDate.getMonth() &&
-              date.getFullYear() === selectedDate.getFullYear();
-
             const isDraggingOverThisDay = draggingTodo &&
               draggingTodo.currentDate.toDateString() === date.toDateString();
 
