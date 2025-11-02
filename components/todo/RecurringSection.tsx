@@ -60,6 +60,17 @@ function RecurringTodoItem({
 
   const hasTime = todo.startTime && todo.endTime;
 
+  // 시간에서 초를 제거하는 헬퍼 함수 (HH:mm:ss -> HH:mm)
+  const formatTimeWithoutSeconds = (time?: string): string => {
+    if (!time) return '';
+    // HH:mm:ss 또는 HH:mm 형식을 HH:mm으로 변환
+    const parts = time.split(':');
+    if (parts.length >= 2) {
+      return `${parts[0]}:${parts[1]}`;
+    }
+    return time;
+  };
+
   return (
     <div
       ref={setNodeRef}
@@ -106,7 +117,7 @@ function RecurringTodoItem({
         <div className="flex items-center gap-1 mt-0.5">
           {todo.startTime && todo.endTime && (
             <div className="text-caption text-gray-400 dark:text-gray-500">
-              {todo.startTime} - {todo.endTime}
+              {formatTimeWithoutSeconds(todo.startTime)} - {formatTimeWithoutSeconds(todo.endTime)}
             </div>
           )}
 
