@@ -499,10 +499,10 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.15 }}
                 onClick={() => setAddingNewCategory(true)}
-                className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 cursor-pointer"
+                className="flex items-center gap-1 md:gap-2 px-1.5 py-0.5 md:px-2 md:py-1 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 cursor-pointer"
               >
-                <Plus size={16} />
-                <span className="text-body-small font-medium">카테고리 추가</span>
+                <Plus size={12} className="md:w-4 md:h-4" />
+                <span className="text-xs md:text-body-small font-medium">카테고리 추가</span>
               </motion.button>
             )}
           </div>

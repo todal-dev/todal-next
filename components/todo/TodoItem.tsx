@@ -118,17 +118,17 @@ const TodoItemComponent = ({
         style={style}
         {...attributes}
         {...listeners}
-        className="flex items-center gap-2 px-4 py-2.5 sm:py-2 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 transition-all duration-normal group cursor-grab active:cursor-grabbing touch-manipulation min-h-[44px]"
+        className="flex items-center gap-1.5 md:gap-2 px-2 py-0 md:px-4 md:py-2.5 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 active:bg-gray-100 dark:active:bg-gray-600 transition-all duration-normal group cursor-grab active:cursor-grabbing touch-manipulation min-h-[28px] md:min-h-[44px]"
       >
         <div
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
-          className="cursor-default"
+          className="cursor-default flex items-center"
         >
           <Checkbox
             checked={todo.completed}
             onChange={() => onToggle(todo.id)}
-            className="flex-shrink-0"
+            className="flex-shrink-0 leading-none"
           />
         </div>
 
@@ -138,7 +138,7 @@ const TodoItemComponent = ({
           placeholder="할일 입력..."
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
-          className={`text-body bg-transparent focus:outline-none border-0 focus:ring-0 cursor-text w-full min-w-[100px] max-w-full sm:max-w-[400px] overflow-hidden text-ellipsis transition-all ${
+          className={`text-sm md:text-body bg-transparent focus:outline-none border-0 focus:ring-0 cursor-text w-full min-w-[100px] max-w-full sm:max-w-[400px] overflow-hidden text-ellipsis transition-all leading-none ${
             todo.completed
               ? 'line-through text-gray-400 dark:text-gray-500'
               : 'text-gray-900 dark:text-gray-50'
@@ -232,19 +232,19 @@ const TodoItemComponent = ({
           }}
         />
 
-        <div className="ml-auto flex items-center gap-2 flex-shrink-0">
+        <div className="ml-auto flex items-center gap-1 md:gap-2 flex-shrink-0">
           {/* 반복 카테고리일 때는 시간과 카테고리 이름 표시 */}
           {isRecurringCategory && originalCategory ? (
             <>
               {/* 시간 표시 */}
               {hasTime && (
-                <span className="text-caption text-gray-400 dark:text-gray-500">
+                <span className="text-[9px] md:text-caption text-gray-400 dark:text-gray-500">
                   {formatTimeWithoutSeconds(todo.startTime)}-{formatTimeWithoutSeconds(todo.endTime)}
                 </span>
               )}
               {/* 카테고리 이름 */}
               <span
-                className="text-xs px-2 py-0.5 rounded"
+                className="text-[9px] md:text-xs px-1 md:px-2 py-0.5 rounded"
                 style={{
                   backgroundColor: `${originalCategory.color}20`,
                   color: originalCategory.color,
@@ -291,9 +291,9 @@ const TodoItemComponent = ({
                   onClick={() => setEditingTime(true)}
                   onMouseDown={(e) => e.stopPropagation()}
                   onTouchStart={(e) => e.stopPropagation()}
-                  className="text-caption text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 flex items-center gap-1 cursor-pointer transition-colors"
+                  className="text-[9px] md:text-caption text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 flex items-center gap-0.5 md:gap-1 cursor-pointer transition-colors"
                 >
-                  <Clock size={12} />
+                  <Clock size={9} className="md:w-3 md:h-3" />
                   <span>
                     {formatTimeWithoutSeconds(todo.startTime)}-{formatTimeWithoutSeconds(todo.endTime)}
                   </span>
@@ -307,9 +307,9 @@ const TodoItemComponent = ({
                     }}
                     onMouseDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
-                    className="text-caption text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
+                    className="text-[9px] md:text-caption text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 flex items-center gap-0.5 md:gap-1 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
                   >
-                    <Clock size={12} />
+                    <Clock size={9} className="md:w-3 md:h-3" />
                     <span>시간 설정</span>
                   </button>
 
@@ -330,10 +330,10 @@ const TodoItemComponent = ({
                     }}
                     onMouseDown={(e) => e.stopPropagation()}
                     onTouchStart={(e) => e.stopPropagation()}
-                    className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all cursor-move text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 p-1"
+                    className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-all cursor-move text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 p-0.5 md:p-1"
                     title="캘린더로 드래그"
                   >
-                    <Calendar size={14} />
+                    <Calendar size={11} className="md:w-3.5 md:h-3.5" />
                   </div>
                 </>
               )}
@@ -349,10 +349,10 @@ const TodoItemComponent = ({
                 e.stopPropagation();
                 onEdit(todo.id, todo.text);
               }}
-              className="p-1 hover:bg-primary-50 dark:hover:bg-primary-700 rounded transition-colors text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 opacity-0 group-hover:opacity-100 cursor-pointer"
+              className="p-0.5 md:p-1 hover:bg-primary-50 dark:hover:bg-primary-700 rounded transition-colors text-gray-400 dark:text-gray-500 hover:text-primary dark:hover:text-primary-100 opacity-0 group-hover:opacity-100 cursor-pointer"
               title="반복 일정 편집"
             >
-              <Edit2 size={14} />
+              <Edit2 size={11} className="md:w-3.5 md:h-3.5" />
             </button>
           )}
 
@@ -363,10 +363,10 @@ const TodoItemComponent = ({
               e.stopPropagation();
               onDelete(todo.id);
             }}
-            className="p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 cursor-pointer"
+            className="p-0.5 md:p-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded transition-colors text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 cursor-pointer"
             title="Delete"
           >
-            <Trash2 size={14} />
+            <Trash2 size={11} className="md:w-3.5 md:h-3.5" />
           </button>
         </div>
       </div>

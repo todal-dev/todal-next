@@ -8,7 +8,7 @@ interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>
 
 export function Checkbox({ label, className = '', disabled = false, ...props }: CheckboxProps) {
   return (
-    <label className={`inline-flex items-center gap-3 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
+    <label className={`inline-flex items-center gap-3 ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'} ${className}`}>
       <div className="relative">
         <input
           type="checkbox"
