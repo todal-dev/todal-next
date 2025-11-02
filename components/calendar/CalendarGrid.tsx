@@ -85,11 +85,11 @@ const CalendarGridComponent = ({
   }, [weekDays, weekTodos]);
 
   return (
-    <div ref={gridScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden calendar-grid touch-pan-y">
+    <div ref={gridScrollRef} className="flex-1 overflow-y-auto overflow-x-hidden calendar-grid touch-pan-y scrollbar-hide-mobile">
       {/* Week Days Header - Fixed at top */}
       <div className="sticky top-0 z-20 bg-warm-white dark:bg-dark-ocean-panel border-b border-gray-200 dark:border-gray-600 transition-colors">
         <div className="flex w-full">
-          <div className="w-10 sm:w-12 md:w-16 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-600 shrink-0 sticky left-0 z-30" />
+          <div className="w-12 sm:w-14 md:w-18 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-600 shrink-0 sticky left-0 z-30" />
           <div className="flex flex-1">
             {weekDays.map((date, index) => {
               const isToday =
@@ -160,24 +160,25 @@ const CalendarGridComponent = ({
       {/* Time Grid */}
       <div className="flex w-full" style={{ height: `${hourHeight * 24}px` }}>
         {/* Time Column */}
-        <div className="w-10 sm:w-12 md:w-16 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-600 shrink-0 sticky left-0 z-10 transition-colors">
+        <div className="w-12 sm:w-14 md:w-18 bg-gray-50 dark:bg-gray-900 border-r border-gray-200 dark:border-gray-600 shrink-0 sticky left-0 z-10 transition-colors">
           {hours.map((hour) => {
-            // 모바일: 간소화된 시간 표시
-            const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
-            const displayTime = isMobile 
-              ? hour === 0 ? '12a'
-                : hour < 12 ? `${hour}a`
-                : hour === 12 ? '12p'
-                : `${hour - 12}p`
-              : `${String(hour).padStart(2, '0')}:00`;
+            // 모든 화면 크기에서 "오전/오후" 형식 사용 (0시는 제외)
+            const displayTime = hour === 0 ? ''
+              : hour < 12 ? `오전 ${hour}시`
+              : hour === 12 ? '오후 12시'
+              : `오후 ${hour - 12}시`;
+
+            // 현재 시간이 있는 시간대의 구분선 숨기기 (구글 캘린더 스타일)
+            const isCurrentTimeHour = currentTime && currentTime.getHours() === hour;
+            const shouldHideBorder = isCurrentTimeHour;
 
             return (
               <div
                 key={hour}
-                className="border-b border-gray-200 dark:border-gray-700 text-[8px] sm:text-[10px] md:text-caption text-gray-600 dark:text-gray-400 pt-1 px-0.5 text-center font-medium bg-gray-50 dark:bg-gray-900 leading-tight"
+                className={`text-[8px] sm:text-[10px] md:text-caption text-gray-600 dark:text-gray-400 px-0.5 text-center font-medium bg-gray-50 dark:bg-gray-900 leading-none flex items-start justify-center relative ${shouldHideBorder ? '' : 'border-b border-gray-200 dark:border-gray-700'}`}
                 style={{ height: `${hourHeight}px` }}
               >
-                {displayTime}
+                <span className="relative z-10 bg-gray-50 dark:bg-gray-900 px-0.5" style={{ marginTop: '-3px', lineHeight: '1', transform: 'translateY(-2px)' }}>{displayTime}</span>
               </div>
             );
           })}
@@ -214,11 +215,16 @@ const CalendarGridComponent = ({
                 }`}
               >
                 {/* Time Grid Background */}
-                {hours.map((hour) => (
+                {hours.map((hour) => {
+                  // 현재 시간이 있는 시간대의 구분선 숨기기 (구글 캘린더 스타일)
+                  const isCurrentTimeHour = isToday && currentTime && currentTime.getHours() === hour;
+                  const shouldHideBorder = isCurrentTimeHour;
+                  
+                  return (
                   <div
                     key={`${dayIndex}-${hour}`}
                     data-hour={hour}
-                    className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
+                    className={`${shouldHideBorder ? '' : 'border-b border-gray-100 dark:border-gray-700'} hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer`}
                     style={{ height: `${hourHeight}px` }}
                     onMouseDown={(e) => handleCalendarDragStart(date, hour, e)}
                     onMouseMove={(e) => handleCalendarDragMove(date, hour, e)}
@@ -272,7 +278,8 @@ const CalendarGridComponent = ({
                       }
                     }}
                   />
-                ))}
+                  );
+                })}
 
                 {/* Current time indicator */}
                 {isToday && currentTime && (() => {

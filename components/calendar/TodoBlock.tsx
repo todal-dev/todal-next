@@ -222,7 +222,7 @@ const TodoBlockComponent = ({
             />
           ) : (
             <div
-              className="text-[9px] sm:text-xs font-medium sm:font-semibold cursor-text break-words line-clamp-2 leading-snug"
+              className="text-[9px] sm:text-xs font-medium sm:font-semibold cursor-text break-words sm:line-clamp-2 leading-snug"
               onDoubleClick={(e) => {
                 e.stopPropagation();
                 startEdit(todo.id, todo.text);

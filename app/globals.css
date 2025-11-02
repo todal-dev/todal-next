@@ -281,6 +281,28 @@
     scrollbar-width: none;
   }
 
+  /* Show scrollbar for specific elements */
+  .scrollbar-show::-webkit-scrollbar {
+    display: block;
+  }
+
+  .scrollbar-show {
+    -ms-overflow-style: auto;
+    scrollbar-width: auto;
+  }
+
+  /* 모바일에서 캘린더 그리드 스크롤바 숨기기 */
+  @media (max-width: 767px) {
+    .calendar-grid.scrollbar-hide-mobile::-webkit-scrollbar {
+      display: none;
+    }
+
+    .calendar-grid.scrollbar-hide-mobile {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+  }
+
   /* Mobile Touch Optimizations */
   .touch-manipulation {
     touch-action: manipulation;
