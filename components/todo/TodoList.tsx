@@ -24,7 +24,9 @@ import { DeleteRecurringModal } from '@/components/ui/dialogs/DeleteRecurringMod
 import { useTodoContext } from '@/contexts/TodoContext';
 import { useCategoryContext } from '@/contexts/CategoryContext';
 import { formatDateKey } from '@/utils/calendarUtils';
+import { handleEditThisInstance, handleEditThisAndFuture, handleEditAllInstances } from '@/utils/recurringEditHandlers';
 import type { Todo } from '@/types/calendar';
+import type { PendingRecurringEdit } from '@/utils/recurringEditHandlers';
 
 interface RecurrenceRuleLocal {
   frequency: 'daily' | 'weekly' | 'monthly';
@@ -100,14 +102,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
   
   // 반복 일정 편집 모달 상태
   const [recurringEditModalOpen, setRecurringEditModalOpen] = useState(false);
-  const [pendingRecurringEdit, setPendingRecurringEdit] = useState<{
-    id: string;
-    text: string;
-    startTime: string;
-    endTime: string;
-    recurrenceRule: any;
-    categoryId: string;
-  } | null>(null);
+  const [pendingRecurringEdit, setPendingRecurringEdit] = useState<PendingRecurringEdit | null>(null);
 
   // DnD sensors
   const sensors = useSensors(
@@ -279,17 +274,47 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
       setConvertingToRecurring(undefined);
       setRecurringDialogOpen(false);
     } else if (editingRecurring) {
-      // 편집 모드일 때는 모달을 먼저 띄움
-      setPendingRecurringEdit({
-        id: editingRecurring.id,
-        text,
-        startTime,
-        endTime,
-        recurrenceRule,
-        categoryId,
-      });
-      setRecurringDialogOpen(false);
-      setRecurringEditModalOpen(true);
+      // 편집 모드일 때는 변경사항 확인 후 모달을 띄움
+      const originalTodo = todos.find(t => t.id === editingRecurring.id);
+      if (originalTodo) {
+        // 값이 변경되었는지 확인
+        const todayString = formatDateKey(selectedDate);
+        const modifiedInstance = originalTodo.modifiedInstances?.[todayString];
+        const currentStartTime = modifiedInstance?.startTime ?? originalTodo.startTime;
+        const currentEndTime = modifiedInstance?.endTime ?? originalTodo.endTime;
+        
+        const textChanged = text !== originalTodo.text;
+        const timeChanged = startTime !== currentStartTime || endTime !== currentEndTime;
+        const categoryChanged = categoryId !== originalTodo.categoryId;
+        
+        // recurrenceRule 비교 (간단한 비교)
+        const recurrenceChanged = JSON.stringify(recurrenceRule) !== JSON.stringify(originalTodo.recurrenceRule);
+        
+        const hasChanges = textChanged || timeChanged || categoryChanged || recurrenceChanged;
+        
+        // 값이 변경된 경우에만 모달 표시
+        if (hasChanges) {
+          setPendingRecurringEdit({
+            todoId: editingRecurring.id,
+            date: selectedDate,
+            startTime,
+            endTime,
+            recurrenceRule,
+            categoryId,
+            text,
+            originalDate: selectedDate,
+            originalStartTime: currentStartTime || '09:00',
+            originalEndTime: currentEndTime || '10:00',
+            type: 'dialog-edit',
+          });
+          setRecurringDialogOpen(false);
+          setRecurringEditModalOpen(true);
+        } else {
+          // 값이 변경되지 않았으면 모달을 띄우지 않고 다이얼로그만 닫기
+          setRecurringDialogOpen(false);
+          setEditingRecurring(undefined);
+        }
+      }
     } else {
       onAddRecurring?.(text, startTime, endTime, recurrenceRule, categoryId);
       setRecurringDialogOpen(false);
@@ -663,29 +688,12 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
         onEditThis={() => {
           if (!pendingRecurringEdit) return;
           
-          const { id, text, startTime, endTime } = pendingRecurringEdit;
-          const originalTodo = todos.find(t => t.id === id);
-          
-          if (originalTodo && onUpdateTodo) {
-            const eventDateKey = formatDateKey(selectedDate);
-            const modifiedInstances = originalTodo.modifiedInstances || {};
-            
-            // modifiedInstances에 예외 날짜 정보 추가
-            const newModifiedInstances = {
-              ...modifiedInstances,
-              [eventDateKey]: {
-                date: undefined, // 날짜는 변경하지 않음 (시간만 변경)
-                startTime: startTime !== originalTodo.startTime ? startTime : undefined,
-                endTime: endTime !== originalTodo.endTime ? endTime : undefined,
-              }
-            };
-            
-            // modifiedInstances 업데이트 (반복 일정은 유지)
-            onUpdateTodo(id, { 
-              modifiedInstances: newModifiedInstances,
-              text, // 텍스트도 업데이트
-            });
-          }
+          handleEditThisInstance({
+            pendingRecurringEdit,
+            todos,
+            selectedDate,
+            onEditTodo: onUpdateTodo,
+          });
           
           setPendingRecurringEdit(null);
           setEditingRecurring(undefined);
@@ -693,16 +701,12 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
         onEditThisAndFuture={() => {
           if (!pendingRecurringEdit) return;
           
-          const { id, text, startTime, endTime, recurrenceRule, categoryId } = pendingRecurringEdit;
-          
-          // 이 일정 및 향후 일정 수정: 원본 반복 일정의 시작 날짜와 시간 업데이트
-          if (onEditRecurring) {
-            const newRecurrenceRule = {
-              ...recurrenceRule,
-              startDate: selectedDate, // 오늘부터 시작
-            };
-            onEditRecurring(id, text, startTime, endTime, newRecurrenceRule, categoryId);
-          }
+          handleEditThisAndFuture({
+            pendingRecurringEdit,
+            todos,
+            selectedDate,
+            onEditTodo: onUpdateTodo,
+          });
           
           setPendingRecurringEdit(null);
           setEditingRecurring(undefined);
@@ -710,12 +714,12 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
         onEditAll={() => {
           if (!pendingRecurringEdit) return;
           
-          const { id, text, startTime, endTime, recurrenceRule, categoryId } = pendingRecurringEdit;
-          
-          // 모든 일정 수정: 원본 반복 일정의 시간 정보 업데이트
-          if (onEditRecurring) {
-            onEditRecurring(id, text, startTime, endTime, recurrenceRule, categoryId);
-          }
+          handleEditAllInstances({
+            pendingRecurringEdit,
+            todos,
+            selectedDate,
+            onEditRecurring,
+          });
           
           setPendingRecurringEdit(null);
           setEditingRecurring(undefined);
