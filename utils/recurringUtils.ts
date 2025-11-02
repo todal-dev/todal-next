@@ -38,6 +38,51 @@ function getNthWeekdayOfMonth(year: number, month: number, nth: number, weekday:
 }
 
 /**
+ * 반복 할일 인스턴스인지 확인
+ * @param id 할일 ID
+ * @returns 반복 할일 인스턴스이면 true
+ * 
+ * 예시:
+ * - "2192e619-b850-45a8-9d64-78c00de3dfe6-2025-11-04T08:33:20.332Z" -> true
+ * - "2192e619-b850-45a8-9d64-78c00de3dfe6" -> false
+ * - "temp-123456789" -> false
+ */
+export function isRecurringInstance(id: string): boolean {
+  // UUID 형식 (36자) + 하이픈 + 추가 문자열이면 반복 인스턴스
+  const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-.+/i;
+  return uuidPattern.test(id);
+}
+
+/**
+ * 반복 할일 인스턴스 ID에서 원본 UUID를 추출
+ * @param id 반복 할일 인스턴스 ID (예: "uuid-timestamp" 형태)
+ * @returns 원본 UUID
+ * 
+ * 예시:
+ * - 입력: "2192e619-b850-45a8-9d64-78c00de3dfe6-2025-11-04T08:33:20.332Z"
+ * - 출력: "2192e619-b850-45a8-9d64-78c00de3dfe6"
+ */
+export function extractRecurringId(id: string): string {
+  // UUID 형식: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx (총 36자)
+  // 정규식으로 UUID 부분만 추출 (첫 번째 하이픈 이후 날짜 부분 제거)
+  const uuidPattern = /^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:-|$)/i;
+  const match = id.match(uuidPattern);
+  
+  if (match && match[1]) {
+    return match[1];
+  }
+  
+  // UUID 패턴이 매칭되지 않으면 UUID 길이(36자)를 기준으로 자르기 시도
+  // 이것은 fallback으로, 일반적인 경우에는 정규식이 작동해야 함
+  if (id.length > 36 && id[36] === '-') {
+    return id.substring(0, 36);
+  }
+  
+  // UUID 패턴이 매칭되지 않으면 원본 ID 반환 (임시 ID 등)
+  return id;
+}
+
+/**
  * 반복 규칙에 따라 주어진 주간에 해당하는 반복 이벤트들을 생성
  * @param todo 반복 규칙이 있는 할일
  * @param weekDays 주간 날짜 배열 (일요일~토요일)

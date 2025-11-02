@@ -1,6 +1,7 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { Todo, RecurrenceRule } from '@/types/calendar';
 import { formatDateKey } from '@/utils/calendarUtils';
+import { extractRecurringId } from '@/utils/recurringUtils';
 import {
   deleteRecursively,
   addSubtaskRecursively,
@@ -21,22 +22,13 @@ import {
 
 export function useTodos(initialTodos: Todo[] = []) {
   const [todos, setTodos] = useState<Todo[]>(initialTodos);
-  const initializedRef = useRef(false);
-  const prevLengthRef = useRef(initialTodos.length);
 
   // initialTodos가 변경되면 todos 상태 업데이트
   useEffect(() => {
-    // 최초 로딩 시 또는 length가 실제로 변경되었을 때만 업데이트
-    if (!initializedRef.current && initialTodos.length > 0) {
+    if (initialTodos.length > 0) {
       setTodos(initialTodos);
-      initializedRef.current = true;
-      prevLengthRef.current = initialTodos.length;
-    } else if (initializedRef.current && initialTodos.length !== prevLengthRef.current) {
-      // 이미 초기화된 상태에서 length가 변경되면 업데이트 (구글 캘린더 가져오기 등)
-      setTodos(initialTodos);
-      prevLengthRef.current = initialTodos.length;
     }
-  }, [initialTodos.length]); // length만 체크하여 불필요한 리렌더링 방지
+  }, [initialTodos]);
 
   // Add a new todo (Optimistic Update)
   const handleAddTodo = useCallback(async (
@@ -117,8 +109,11 @@ export function useTodos(initialTodos: Todo[] = []) {
       return;
     }
 
+    // 반복 할일 인스턴스 ID인 경우 원본 ID 추출
+    const dbId = extractRecurringId(id);
+
     // 2. 백그라운드에서 DB에서 삭제
-    const result = await deleteTodoDB(id);
+    const result = await deleteTodoDB(dbId);
     
     // 3. 실패시 롤백
     if (!result.success) {
@@ -129,24 +124,21 @@ export function useTodos(initialTodos: Todo[] = []) {
 
   // Toggle todo completion (toggles all subtasks, updates parent)
   const handleToggleTodo = useCallback(async (id: string) => {
-    let updatedCompleted: boolean | undefined;
+    // 반복 할일 인스턴스 ID인 경우 원본 ID 추출
+    const dbId = extractRecurringId(id);
     
-    // 1. 먼저 로컬 상태 업데이트
+    // 먼저 로컬 상태 업데이트해서 현재 값 확인
     setTodos(prevTodos => {
       const updatedTodos = toggleRecursively(prevTodos, id);
       const todo = findTodoById(updatedTodos, id);
       
       if (todo) {
-        updatedCompleted = todo.completed;
+        // DB 업데이트
+        updateTodoDB(dbId, { completed: todo.completed });
       }
       
       return updatedTodos;
     });
-    
-    // 2. 렌더링이 완료된 후 DB 업데이트
-    if (updatedCompleted !== undefined) {
-      await updateTodoDB(id, { completed: updatedCompleted });
-    }
   }, []);
 
   // Helper function to find todo by id
@@ -166,8 +158,11 @@ export function useTodos(initialTodos: Todo[] = []) {
     // 1. 즉시 로컬 상태 업데이트 (UI 즉시 반영)
     setTodos(prevTodos => editRecursively(prevTodos, id, text));
     
+    // 반복 할일 인스턴스 ID인 경우 원본 ID 추출
+    const dbId = extractRecurringId(id);
+    
     // 2. 백그라운드에서 DB 업데이트
-    const result = await updateTodoDB(id, { text });
+    const result = await updateTodoDB(dbId, { text });
     
     // 3. 실패시 로그 (롤백은 복잡하므로 생략)
     if (!result.success) {
@@ -180,8 +175,11 @@ export function useTodos(initialTodos: Todo[] = []) {
     // 1. 즉시 로컬 상태 업데이트 (UI 즉시 반영)
     setTodos(prevTodos => updateTimeRecursively(prevTodos, id, startTime, endTime));
     
+    // 반복 할일 인스턴스 ID인 경우 원본 ID 추출
+    const dbId = extractRecurringId(id);
+    
     // 2. 백그라운드에서 DB 업데이트
-    const result = await updateTodoDB(id, { startTime, endTime });
+    const result = await updateTodoDB(dbId, { startTime, endTime });
     
     // 3. 실패시 로그
     if (!result.success) {
@@ -199,8 +197,11 @@ export function useTodos(initialTodos: Todo[] = []) {
     // 1. 즉시 로컬 상태 업데이트 (UI 즉시 반영)
     setTodos(prevTodos => updateDateRecursively(prevTodos, id, date, startTime, endTime));
     
+    // 반복 할일 인스턴스 ID인 경우 원본 ID 추출
+    const dbId = extractRecurringId(id);
+    
     // 2. 백그라운드에서 DB 업데이트
-    const result = await updateTodoDB(id, { date, startTime, endTime });
+    const result = await updateTodoDB(dbId, { date, startTime, endTime });
     
     // 3. 실패시 로그
     if (!result.success) {
@@ -223,11 +224,19 @@ export function useTodos(initialTodos: Todo[] = []) {
     if (updates.endTime !== undefined) dbUpdates.endTime = updates.endTime;
     if (updates.parentId !== undefined) dbUpdates.parentId = updates.parentId;
     
-    const result = await updateTodoDB(id, dbUpdates);
+    // 반복 할일 인스턴스 ID인 경우 원본 ID 추출
+    const dbId = extractRecurringId(id);
+    
+    // 디버깅: ID 추출 확인
+    if (id !== dbId) {
+      console.debug('Extracted recurring ID:', { original: id, extracted: dbId });
+    }
+    
+    const result = await updateTodoDB(dbId, dbUpdates);
     
     // 3. 실패시 로그
     if (!result.success) {
-      console.error('Failed to update todo:', result.error);
+      console.error('Failed to update todo:', result.error, { id, dbId, updates });
     }
   }, []);
 
@@ -250,14 +259,14 @@ export function useTodos(initialTodos: Todo[] = []) {
       return null;
     };
 
-    setTodos(prevTodos => {
-      const currentTodo = findTodo(prevTodos, todoId);
-      if (!currentTodo) return prevTodos;
+    const currentTodo = findTodo(todos, todoId);
+    if (!currentTodo) return;
 
-      // Determine final categoryId
-      const shouldKeepCategoryId = currentTodo.recurrenceRule && newCategoryId === 'cat-recurring';
-      const finalCategoryId = shouldKeepCategoryId ? currentTodo.categoryId : newCategoryId;
-      
+    // Determine final categoryId
+    const shouldKeepCategoryId = currentTodo.recurrenceRule && newCategoryId === 'cat-recurring';
+    const finalCategoryId = shouldKeepCategoryId ? currentTodo.categoryId : newCategoryId;
+    
+    setTodos(prevTodos => {
       let movedTodo: Todo | null = null;
       
       // Find and remove the todo
@@ -286,31 +295,26 @@ export function useTodos(initialTodos: Todo[] = []) {
       }
     });
 
+    // 반복 할일 인스턴스 ID인 경우 원본 ID 추출
+    const dbId = extractRecurringId(todoId);
+
     // DB 업데이트 (비동기, setTodos 이후)
-    // finalCategoryId를 계산하기 위해 setTodos의 결과를 기다릴 필요 없이
-    // prevTodos에서 직접 계산한 값을 사용
-    setTodos(prevTodos => {
-      const currentTodo = findTodo(prevTodos, todoId);
-      if (currentTodo) {
-        const shouldKeepCategoryId = currentTodo.recurrenceRule && newCategoryId === 'cat-recurring';
-        const finalCategoryId = shouldKeepCategoryId ? currentTodo.categoryId : newCategoryId;
-        
-        updateTodoDB(todoId, {
-          categoryId: finalCategoryId,
-          parentId: newParentId
-        });
-      }
-      return prevTodos;
+    await updateTodoDB(dbId, {
+      categoryId: finalCategoryId,
+      parentId: newParentId
     });
-  }, []); // 의존성 배열 제거
+  }, [todos]);
 
   // Move todo to a different date (Optimistic Update)
   const handleMoveTodoToDate = useCallback(async (id: string, newDate: Date) => {
     // 1. 즉시 로컬 상태 업데이트 (UI 즉시 반영)
     setTodos(prevTodos => updateTodoRecursively(prevTodos, id, { date: newDate }));
     
+    // 반복 할일 인스턴스 ID인 경우 원본 ID 추출
+    const dbId = extractRecurringId(id);
+    
     // 2. 백그라운드에서 DB 업데이트
-    const result = await updateTodoDB(id, { date: newDate });
+    const result = await updateTodoDB(dbId, { date: newDate });
     
     // 3. 실패시 로그
     if (!result.success) {
@@ -574,13 +578,7 @@ export function useTodos(initialTodos: Todo[] = []) {
     date: Date,
     categoryId: string
   ) => {
-    let recurringTodo: Todo | undefined;
-    
-    setTodos(prevTodos => {
-      recurringTodo = prevTodos.find(t => t.id === recurringId);
-      return prevTodos;
-    });
-    
+    const recurringTodo = todos.find(t => t.id === recurringId);
     if (!recurringTodo || !recurringTodo.recurrenceRule) return;
 
     const dateString = formatDateKey(date);
@@ -635,7 +633,7 @@ export function useTodos(initialTodos: Todo[] = []) {
       console.error('Failed to create regular todo:', result.error);
       setTodos(prevTodos => prevTodos.filter(t => t.id !== tempId));
     }
-  }, []); // 의존성 배열 제거
+  }, [todos]);
 
   // Convert regular to recurring (Optimistic Update)
   const handleConvertRegularToRecurring = useCallback(async (
@@ -646,15 +644,7 @@ export function useTodos(initialTodos: Todo[] = []) {
     recurrenceRule: RecurrenceRule,
     categoryId: string
   ) => {
-    let todo: Todo | undefined;
-    let backupTodos: Todo[] = [];
-    
-    setTodos(prevTodos => {
-      todo = prevTodos.find(t => t.id === todoId);
-      backupTodos = prevTodos;
-      return prevTodos;
-    });
-    
+    const todo = todos.find(t => t.id === todoId);
     if (!todo || todo.recurrenceRule) return;
 
     // 임시 ID 생성
@@ -676,7 +666,7 @@ export function useTodos(initialTodos: Todo[] = []) {
     };
 
     // 백업 (롤백용)
-    backupTodos = todos;
+    const backupTodos = todos;
 
     // 1. 즉시 로컬 상태 업데이트
     setTodos(prevTodos => {
@@ -714,7 +704,7 @@ export function useTodos(initialTodos: Todo[] = []) {
       console.error('Failed to create recurring todo:', result.error);
       setTodos(backupTodos);
     }
-  }, []); // 의존성 배열 제거
+  }, [todos]);
 
   // Convert recurring to regular all (Optimistic Update)
   const handleConvertRecurringToRegularAll = useCallback(async (
@@ -722,15 +712,7 @@ export function useTodos(initialTodos: Todo[] = []) {
     date: Date,
     categoryId: string
   ) => {
-    let recurringTodo: Todo | undefined;
-    let backupTodos: Todo[] = [];
-    
-    setTodos(prevTodos => {
-      recurringTodo = prevTodos.find(t => t.id === recurringId);
-      backupTodos = prevTodos;
-      return prevTodos;
-    });
-    
+    const recurringTodo = todos.find(t => t.id === recurringId);
     if (!recurringTodo || !recurringTodo.recurrenceRule) return;
 
     // 임시 ID 생성
@@ -749,7 +731,7 @@ export function useTodos(initialTodos: Todo[] = []) {
     };
 
     // 백업 (롤백용)
-    backupTodos = todos;
+    const backupTodos = todos;
 
     // 1. 즉시 로컬 상태 업데이트
     setTodos(prevTodos => {
@@ -787,7 +769,7 @@ export function useTodos(initialTodos: Todo[] = []) {
       console.error('Failed to create regular todo:', result.error);
       setTodos(backupTodos);
     }
-  }, []); // 의존성 배열 제거
+  }, [todos]);
 
   return {
     todos,

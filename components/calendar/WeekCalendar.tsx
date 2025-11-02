@@ -15,7 +15,7 @@ import { FloatingActionButton } from '@/components/ui/FloatingActionButton';
 import { MobileDateHeader } from '@/components/calendar/MobileDateHeader';
 import type { Todo } from '@/types/calendar';
 import { getWeekDays, formatDateKey } from '@/utils/calendarUtils';
-import { generateRecurringEvents } from '@/utils/recurringUtils';
+import { generateRecurringEvents, isRecurringInstance, extractRecurringId } from '@/utils/recurringUtils';
 import { useCalendarDrag } from '@/hooks/drag/useCalendarDrag';
 import { useCalendarFilters } from '@/hooks/ui/useCalendarFilters';
 import { useHourHeight } from '@/hooks/ui/useHourHeight';
@@ -160,8 +160,8 @@ export function BigCalendar() {
 
   // Override handleContextMenu to check for recurring events
   const handleContextMenu = useCallback((e: React.MouseEvent, todoId: string) => {
-    // Check if it's a recurring event (generated ID pattern: recurring-timestamp-ISODate)
-    const isRecurringEvent = todoId.startsWith('recurring-') && todoId.split('-').length > 2;
+    // Check if it's a recurring event (UUID-timestamp format)
+    const isRecurringEvent = isRecurringInstance(todoId);
 
     if (isRecurringEvent) {
       // Open recurring context menu
@@ -188,11 +188,9 @@ export function BigCalendar() {
 
   const handleEditRecurringClick = useCallback(() => {
     const todoId = recurringContextMenu.todoId;
-    // Extract original recurring ID
-    if (todoId.startsWith('recurring-') && todoId.split('-').length > 2) {
-      const parts = todoId.split('-');
-      const recurringId = `${parts[0]}-${parts[1]}`;
-
+    // Extract original recurring ID from UUID-timestamp format
+    if (isRecurringInstance(todoId)) {
+      const recurringId = extractRecurringId(todoId);
       setSelectedRecurringTodoId(recurringId);
       setEditRecurringDialogOpen(true);
       closeRecurringContextMenu();
@@ -201,12 +199,12 @@ export function BigCalendar() {
 
   const handleDeleteRecurringClick = useCallback(() => {
     const todoId = recurringContextMenu.todoId;
-    // Extract original recurring ID and date
-    if (todoId.startsWith('recurring-') && todoId.split('-').length > 2) {
-      const parts = todoId.split('-');
-      const recurringId = `${parts[0]}-${parts[1]}`;
-      const isoDatePart = todoId.substring(recurringId.length + 1);
-      const eventDate = new Date(isoDatePart);
+    // Extract original recurring ID and date from UUID-timestamp format
+    if (isRecurringInstance(todoId)) {
+      const recurringId = extractRecurringId(todoId);
+      // Extract date from timestamp part (after UUID and hyphen)
+      const timestampPart = todoId.substring(recurringId.length + 1);
+      const eventDate = new Date(timestampPart);
 
       setSelectedRecurringTodoId(recurringId);
       setSelectedRecurringDate(eventDate);
@@ -403,19 +401,18 @@ export function BigCalendar() {
 
   // Memoize toggle completion handler
   const handleToggleCompletion = useCallback((todoId: string) => {
-    // 반복 일정에서 생성된 이벤트인지 확인 (ID 패턴: recurring-timestamp-ISODate)
-    if (todoId.startsWith('recurring-') && todoId.split('-').length > 2) {
+    // 반복 일정에서 생성된 이벤트인지 확인 (UUID-timestamp 형식)
+    if (isRecurringInstance(todoId)) {
       // 생성된 반복 이벤트 - 원본 ID 추출
-      const parts = todoId.split('-');
-      const recurringId = `${parts[0]}-${parts[1]}`; // "recurring-timestamp" 형태
+      const recurringId = extractRecurringId(todoId);
 
       // 원본 할일 찾기
       const originalTodo = todos.find(t => t.id === recurringId);
       if (!originalTodo) return;
 
       // 해당 날짜 찾기
-      const isoDatePart = todoId.substring(recurringId.length + 1);
-      const eventDate = new Date(isoDatePart);
+      const timestampPart = todoId.substring(recurringId.length + 1);
+      const eventDate = new Date(timestampPart);
 
       // completedDates 토글
       onToggleRecurringInstance?.(recurringId, eventDate);
@@ -572,9 +569,12 @@ export function BigCalendar() {
         title={recurringDialog.action === 'delete' ? '반복 일정 삭제' : '반복 일정 수정'}
         onClose={closeRecurringDialog}
         onSelectThis={() => {
-          const todo = todos.find((t) => t.id === recurringDialog.todoId);
+          const todoId = recurringDialog.todoId;
+          // 반복 업무 인스턴스인 경우 원본 ID 추출
+          const dbId = isRecurringInstance(todoId) ? extractRecurringId(todoId) : todoId;
+          const todo = todos.find((t) => t.id === dbId);
           if (todo && recurringDialog.action === 'delete') {
-            onDeleteTodo?.(todo.id);
+            onDeleteTodo?.(dbId);
           }
           closeRecurringDialog();
         }}
@@ -582,13 +582,8 @@ export function BigCalendar() {
           const todoId = recurringDialog.todoId;
           if (recurringDialog.action === 'delete') {
             // 생성된 반복 이벤트인 경우 원본 ID 추출
-            if (todoId.startsWith('recurring-') && todoId.split('-').length > 2) {
-              const parts = todoId.split('-');
-              const recurringId = `${parts[0]}-${parts[1]}`;
-              onDeleteTodo?.(recurringId);
-            } else {
-              onDeleteTodo?.(todoId);
-            }
+            const dbId = isRecurringInstance(todoId) ? extractRecurringId(todoId) : todoId;
+            onDeleteTodo?.(dbId);
           }
           closeRecurringDialog();
         }}

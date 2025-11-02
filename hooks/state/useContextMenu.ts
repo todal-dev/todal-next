@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Todo } from '@/types/calendar';
+import { isRecurringInstance } from '@/utils/recurringUtils';
 
 interface UseContextMenuProps {
   todos: Todo[];
@@ -88,8 +89,8 @@ export function useContextMenu({
     const todo = todos.find((t) => t.id === contextMenu.todoId);
     if (!todo) return;
 
-    // 생성된 반복 이벤트인지 확인 (ID 패턴: recurring-timestamp-ISODate)
-    if (todo.id.startsWith('recurring-') && todo.id.split('-').length > 2) {
+    // 생성된 반복 이벤트인지 확인 (UUID-timestamp 형식)
+    if (isRecurringInstance(todo.id)) {
       openRecurringDialog(todo.id, 'delete');
     } else {
       onDeleteTodo?.(todo.id);

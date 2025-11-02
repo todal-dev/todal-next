@@ -2,6 +2,7 @@ import { memo, useState } from 'react';
 import { Repeat, Check, ListTodo } from 'lucide-react';
 import type { Todo, Category } from '@/types/calendar';
 import { getTodoBlockStyle } from '@/utils/calendarUtils';
+import { isRecurringInstance } from '@/utils/recurringUtils';
 
 interface TodoBlockProps {
   todo: Todo;
@@ -82,8 +83,8 @@ const TodoBlockComponent = ({
   })() : false;
 
   const style = getTodoBlockStyle(displayStartTime, displayEndTime, hourHeight, layout.width, layout.left);
-  // 반복 이벤트인지 확인 (ID 패턴: recurring-timestamp-ISODate)
-  const isRecurring = todo.id.startsWith('recurring-') && todo.id.split('-').length > 2;
+  // 반복 이벤트인지 확인 (UUID-timestamp 형식)
+  const isRecurring = isRecurringInstance(todo.id);
 
   // 하위 항목 개수 계산
   const subtaskCount = todo.subtasks?.length || 0;
