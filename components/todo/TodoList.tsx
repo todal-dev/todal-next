@@ -130,11 +130,49 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
           const selected = new Date(selectedDate);
           selected.setHours(0, 0, 0, 0);
 
-          // 시작일 체크
-          if (todo.recurrenceRule.startDate) {
-            const startDate = new Date(todo.recurrenceRule.startDate);
-            startDate.setHours(0, 0, 0, 0);
-            if (selected < startDate) return false;
+          // modifiedInstances에서 날짜가 변경된 경우 확인
+          // 다른 날짜에서 현재 날짜로 이동된 일정이 있는지 확인
+          if (todo.modifiedInstances) {
+            for (const [dateKey, instance] of Object.entries(todo.modifiedInstances)) {
+              // 날짜가 변경된 경우 (date 필드가 있음)
+              if (instance.date) {
+                const modifiedDateKey = formatDateKey(instance.date);
+                // 변경된 날짜가 현재 선택된 날짜와 일치하면 표시
+                if (modifiedDateKey === todayString) {
+                  return true;
+                }
+              }
+            }
+            
+            // 현재 날짜의 modifiedInstance 확인
+            const currentModifiedInstance = todo.modifiedInstances[todayString];
+            // 현재 날짜가 다른 날짜로 이동되었다면 표시하지 않음
+            if (currentModifiedInstance?.date) {
+              const modifiedDateKey = formatDateKey(currentModifiedInstance.date);
+              if (modifiedDateKey !== todayString) {
+                return false;
+              }
+            }
+            
+            // modifiedInstances에 현재 날짜가 있으면 startDate 체크 건너뛰기
+            // (향후 일정 수정 시 과거 일정이 preservedModifiedInstances에 저장되어 있음)
+            const isInModifiedInstances = currentModifiedInstance !== undefined;
+            if (!isInModifiedInstances) {
+              // modifiedInstances에 없으면 일반적인 시작일 체크
+              if (todo.recurrenceRule.startDate) {
+                const startDate = new Date(todo.recurrenceRule.startDate);
+                startDate.setHours(0, 0, 0, 0);
+                if (selected < startDate) return false;
+              }
+            }
+          } else {
+            // modifiedInstances가 없으면 일반적인 시작일 체크
+            // 시작일 체크
+            if (todo.recurrenceRule.startDate) {
+              const startDate = new Date(todo.recurrenceRule.startDate);
+              startDate.setHours(0, 0, 0, 0);
+              if (selected < startDate) return false;
+            }
           }
 
           // 종료일 체크
@@ -163,6 +201,23 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
       .map(todo => {
         // 반복 일정이고 현재 날짜에 수정된 인스턴스가 있는 경우 시간 적용
         if (todo.recurrenceRule && todo.modifiedInstances) {
+          // 먼저 다른 날짜에서 이동된 인스턴스 확인
+          for (const [dateKey, instance] of Object.entries(todo.modifiedInstances)) {
+            if (instance.date) {
+              const modifiedDateKey = formatDateKey(instance.date);
+              if (modifiedDateKey === todayString) {
+                // 변경된 날짜로 이동한 일정인 경우
+                return {
+                  ...todo,
+                  date: instance.date,
+                  startTime: instance.startTime ?? todo.startTime,
+                  endTime: instance.endTime ?? todo.endTime,
+                };
+              }
+            }
+          }
+          
+          // 현재 날짜의 modifiedInstance 확인
           const modifiedInstance = todo.modifiedInstances[todayString];
           if (modifiedInstance) {
             // 수정된 인스턴스의 시간이 있으면 적용
@@ -170,6 +225,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
               ...todo,
               startTime: modifiedInstance.startTime ?? todo.startTime,
               endTime: modifiedInstance.endTime ?? todo.endTime,
+              date: modifiedInstance.date ?? todo.date,
             };
           }
         }
