@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { CategorySidebar } from './CategorySidebar';
 import { CategoryTodoList } from './CategoryTodoList';
-import { CategoryTimeline } from './CategoryTimeline';
+import { TodaySummary } from './CategoryTimeline';
 import { CategoryAnalytics } from './CategoryAnalytics';
 import type { Category, Todo } from '@/types/calendar';
 
@@ -109,8 +109,8 @@ export function DashboardLayout({ categories, todos }: DashboardLayoutProps) {
               categoryColor={selectedCategory.color}
             />
 
-            {/* Timeline */}
-            <CategoryTimeline
+            {/* Today Summary */}
+            <TodaySummary
               todos={filteredTodos}
               categoryColor={selectedCategory.color}
             />
