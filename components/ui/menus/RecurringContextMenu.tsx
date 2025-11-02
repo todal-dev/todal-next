@@ -26,6 +26,25 @@ export function RecurringContextMenu({
   onDeleteAfter,
 }: RecurringContextMenuProps) {
   const [deleteSubmenuOpen, setDeleteSubmenuOpen] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    // 다크 모드 상태 체크
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+    
+    checkDarkMode();
+    
+    // MutationObserver로 다크 모드 변경 감지
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (!isOpen) {
@@ -56,10 +75,11 @@ export function RecurringContextMenu({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.1 }}
-          className="fixed bg-warm-white dark:bg-dark-ocean-card rounded-md shadow-xl border border-gray-200 dark:border-gray-600 py-1 min-w-[180px] z-50"
+          className="fixed bg-white dark:bg-gray-700 rounded-md shadow-xl border border-gray-200 dark:border-gray-600 py-1 min-w-[180px] z-50"
           style={{
             left: `${x}px`,
             top: `${y}px`,
+            backgroundColor: isDarkMode ? '#374151' : '#FFFFFF',
           }}
           onClick={(e) => e.stopPropagation()}
         >
@@ -101,7 +121,10 @@ export function RecurringContextMenu({
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: 0.1 }}
-                  className="absolute left-full top-0 ml-1 bg-warm-white dark:bg-dark-ocean-card rounded-md shadow-xl border border-gray-200 dark:border-gray-600 py-1 min-w-[200px]"
+                  className="absolute left-full top-0 ml-1 bg-white dark:bg-gray-700 rounded-md shadow-xl border border-gray-200 dark:border-gray-600 py-1 min-w-[200px]"
+                  style={{
+                    backgroundColor: isDarkMode ? '#374151' : '#FFFFFF',
+                  }}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button

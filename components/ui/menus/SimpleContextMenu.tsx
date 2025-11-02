@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Edit, Trash2 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface SimpleContextMenuProps {
   isOpen: boolean;
@@ -21,6 +21,26 @@ export function SimpleContextMenu({
   onEdit,
   onDelete,
 }: SimpleContextMenuProps) {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    // 다크 모드 상태 체크
+    const checkDarkMode = () => {
+      setIsDarkMode(document.documentElement.classList.contains('dark'));
+    };
+    
+    checkDarkMode();
+    
+    // MutationObserver로 다크 모드 변경 감지
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     if (!isOpen) return;
 
@@ -47,10 +67,11 @@ export function SimpleContextMenu({
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.1 }}
-          className="fixed bg-warm-white dark:bg-dark-ocean-card rounded-md shadow-xl border border-gray-200 dark:border-gray-600 py-1 min-w-[180px] z-50"
+          className="fixed bg-white dark:bg-gray-700 rounded-md shadow-xl border border-gray-200 dark:border-gray-600 py-1 min-w-[180px] z-50"
           style={{
             left: `${x}px`,
             top: `${y}px`,
+            backgroundColor: isDarkMode ? '#374151' : '#FFFFFF',
           }}
           onClick={(e) => e.stopPropagation()}
         >
