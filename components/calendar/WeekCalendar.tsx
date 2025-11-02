@@ -356,18 +356,27 @@ export function BigCalendar() {
     originalEndTime: string,
     type: 'drag' | 'resize'
   ) => {
+    // 반복 인스턴스인 경우 원본 ID 추출
+    const recurringId = isRecurringInstance(todoId) ? extractRecurringId(todoId) : todoId;
+    const originalTodo = todos.find(t => t.id === recurringId);
+    
+    if (!originalTodo) return;
+    
     setPendingRecurringEdit({
       todoId,
       date,
       startTime,
       endTime,
+      recurrenceRule: originalTodo.recurrenceRule,
+      categoryId: originalTodo.categoryId,
+      text: originalTodo.text,
       originalDate,
       originalStartTime,
       originalEndTime,
       type,
     });
     setRecurringEditModalOpen(true);
-  }, []);
+  }, [todos]);
 
   // Resize functionality
   const { resizingTodo, handleResizeStart } = useResizeTodo({
@@ -835,12 +844,19 @@ export function BigCalendar() {
             const timestampPart = timeEditTodoId.substring(recurringId.length + 1);
             const eventDate = new Date(timestampPart);
             
+            // 원본 todo 찾기
+            const originalTodo = todos.find(t => t.id === recurringId);
+            if (!originalTodo) return;
+            
             // 모달 표시
             setPendingRecurringEdit({
               todoId: timeEditTodoId,
               date: todo.date,
               startTime,
               endTime,
+              recurrenceRule: originalTodo.recurrenceRule,
+              categoryId: originalTodo.categoryId,
+              text: originalTodo.text,
               originalDate: eventDate,
               originalStartTime: todo.startTime || '09:00',
               originalEndTime: todo.endTime || '10:00',
@@ -870,7 +886,7 @@ export function BigCalendar() {
         onEditThis={() => {
           if (!pendingRecurringEdit) return;
           
-          const { todoId, date, startTime, endTime, text, recurrenceRule, categoryId } = pendingRecurringEdit;
+          const { todoId, date, startTime, endTime, text } = pendingRecurringEdit;
           
           // dialog-edit 타입일 때는 todoId가 이미 원본 반복 일정 ID
           const recurringId = pendingRecurringEdit.type === 'dialog-edit' 

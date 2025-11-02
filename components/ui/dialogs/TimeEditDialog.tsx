@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { BaseDialog, DialogFooter } from './BaseDialog';
 import { TimeInput } from '../calendar/TimeInput';
 

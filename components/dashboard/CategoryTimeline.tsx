@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Circle, Clock, Plus, TrendingUp } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import type { Todo } from '@/types/calendar';

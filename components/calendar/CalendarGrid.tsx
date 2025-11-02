@@ -36,7 +36,7 @@ interface CalendarGridProps {
   handleToggleCompletion: (todoId: string) => void;
   handleContextMenu: (e: React.MouseEvent, todoId: string) => void;
   handleTodoDragStart: (e: React.MouseEvent, todoId: string, date: Date, startTime: string, endTime: string) => void;
-  handleResizeStart: (e: React.MouseEvent, todoId: string, direction: 'top' | 'bottom', startTime: string, endTime: string) => void;
+  handleResizeStart: (e: React.MouseEvent, todoId: string, direction: 'top' | 'bottom', startTime: string, endTime: string, date: Date) => void;
   isHoliday: (date: Date) => boolean;
 }
 
