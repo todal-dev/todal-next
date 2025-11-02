@@ -15,6 +15,7 @@ interface ContextMenuProps {
   onChangeCategory: () => void;
   onRename: () => void;
   onSetRecurrence: () => void;
+  showRecurrence?: boolean; // 반복 설정 옵션 표시 여부
 }
 
 export function ContextMenu({
@@ -28,6 +29,7 @@ export function ContextMenu({
   onChangeCategory,
   onRename,
   onSetRecurrence,
+  showRecurrence = true,
 }: ContextMenuProps) {
   useEffect(() => {
     if (!isOpen) return;
@@ -106,16 +108,18 @@ export function ContextMenu({
             복제
           </button>
 
-          <button
-            onClick={() => {
-              onSetRecurrence();
-              onClose();
-            }}
-            className="w-full px-4 py-2 text-left text-body-small hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center gap-2 text-gray-900 dark:text-gray-50 transition-colors"
-          >
-            <Repeat size={16} />
-            반복 설정
-          </button>
+          {showRecurrence && (
+            <button
+              onClick={() => {
+                onSetRecurrence();
+                onClose();
+              }}
+              className="w-full px-4 py-2 text-left text-body-small hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center gap-2 text-gray-900 dark:text-gray-50 transition-colors"
+            >
+              <Repeat size={16} />
+              반복 설정
+            </button>
+          )}
 
           <div className="border-t border-gray-200 dark:border-gray-600 my-1" />
 

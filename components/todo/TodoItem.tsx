@@ -233,17 +233,26 @@ const TodoItemComponent = ({
         />
 
         <div className="ml-auto flex items-center gap-2 flex-shrink-0">
-          {/* 반복 카테고리일 때는 카테고리 이름 표시 */}
+          {/* 반복 카테고리일 때는 시간과 카테고리 이름 표시 */}
           {isRecurringCategory && originalCategory ? (
-            <span
-              className="text-xs px-2 py-0.5 rounded"
-              style={{
-                backgroundColor: `${originalCategory.color}20`,
-                color: originalCategory.color,
-              }}
-            >
-              {originalCategory.name}
-            </span>
+            <>
+              {/* 시간 표시 */}
+              {hasTime && (
+                <span className="text-caption text-gray-400 dark:text-gray-500">
+                  {formatTimeWithoutSeconds(todo.startTime)}-{formatTimeWithoutSeconds(todo.endTime)}
+                </span>
+              )}
+              {/* 카테고리 이름 */}
+              <span
+                className="text-xs px-2 py-0.5 rounded"
+                style={{
+                  backgroundColor: `${originalCategory.color}20`,
+                  color: originalCategory.color,
+                }}
+              >
+                {originalCategory.name}
+              </span>
+            </>
           ) : parentId ? (
             // 하위 항목일 때는 시간 설정 불가
             null

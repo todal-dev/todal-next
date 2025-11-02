@@ -12,6 +12,7 @@ interface UseContextMenuProps {
   openDateDialog: (todoId: string, currentDate: Date) => void;
   openDuplicateDialog: (todoId: string, todoName: string) => void;
   openRecurringDialog: (todoId: string, action: 'edit' | 'delete') => void;
+  openConvertToRecurringDialog?: (todoId: string, text: string, startTime?: string, endTime?: string, categoryId?: string) => void;
   startEdit: (todoId: string, text: string) => void;
   finishEdit: () => void;
 }
@@ -35,6 +36,7 @@ export function useContextMenu({
   openDateDialog,
   openDuplicateDialog,
   openRecurringDialog,
+  openConvertToRecurringDialog,
   startEdit,
   finishEdit,
 }: UseContextMenuProps) {
@@ -119,9 +121,19 @@ export function useContextMenu({
   };
 
   const handleSetRecurrence = () => {
-    // This would open a recurrence settings dialog
-    // For now, just placeholder
-    console.log('Set recurrence for', contextMenu.todoId);
+    const todo = todos.find((t) => t.id === contextMenu.todoId);
+    if (!todo) return;
+
+    // 반복 할일이 아닌 경우에만 변환 가능
+    if (!todo.recurrenceRule && openConvertToRecurringDialog) {
+      openConvertToRecurringDialog(
+        todo.id,
+        todo.text,
+        todo.startTime,
+        todo.endTime,
+        todo.categoryId
+      );
+    }
   };
 
   return {

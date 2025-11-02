@@ -41,6 +41,7 @@ export function BigCalendar() {
     onToggleRecurringInstance,
     onSkipRecurringInstance,
     onDeleteRecurringAfter,
+    onConvertRegularToRecurring,
   } = useTodoContext();
 
   const { categories, onEditRecurring } = useCategoryContext();
@@ -79,6 +80,16 @@ export function BigCalendar() {
   const [editRecurringDialogOpen, setEditRecurringDialogOpen] = useState(false);
   const [selectedRecurringTodoId, setSelectedRecurringTodoId] = useState<string>('');
   const [selectedRecurringDate, setSelectedRecurringDate] = useState<Date | null>(null);
+
+  // 일반 할일을 반복으로 변환하기 위한 상태
+  const [convertingToRecurring, setConvertingToRecurring] = useState<{
+    todoId: string;
+    text: string;
+    startTime?: string;
+    endTime?: string;
+    categoryId?: string;
+  } | undefined>(undefined);
+  const [convertToRecurringDialogOpen, setConvertToRecurringDialogOpen] = useState(false);
 
   // Hour height with localStorage and zoom functionality
   const hourHeight = useHourHeight();
@@ -154,6 +165,16 @@ export function BigCalendar() {
     openDateDialog,
     openDuplicateDialog,
     openRecurringDialog,
+    openConvertToRecurringDialog: (todoId: string, text: string, startTime?: string, endTime?: string, categoryId?: string) => {
+      setConvertingToRecurring({
+        todoId,
+        text,
+        startTime: startTime || '09:00',
+        endTime: endTime || '10:00',
+        categoryId: categoryId || 'cat-etc',
+      });
+      setConvertToRecurringDialogOpen(true);
+    },
     startEdit,
     finishEdit: handleFinishEdit,
   });
@@ -526,6 +547,10 @@ export function BigCalendar() {
         onChangeCategory={handleChangeCategory}
         onRename={handleRename}
         onSetRecurrence={handleSetRecurrence}
+        showRecurrence={(() => {
+          const todo = todos.find(t => t.id === contextMenu.todoId);
+          return todo ? !todo.recurrenceRule : true;
+        })()}
       />
 
       {/* Recurring Context Menu - Only Edit and Delete */}
@@ -632,6 +657,38 @@ export function BigCalendar() {
           }
           return undefined;
         })() : undefined}
+      />
+
+      {/* Convert Regular to Recurring Dialog */}
+      <AddRecurringDialog
+        isOpen={convertToRecurringDialogOpen}
+        onClose={() => {
+          setConvertToRecurringDialogOpen(false);
+          setConvertingToRecurring(undefined);
+        }}
+        onConfirm={(text, startTime, endTime, recurrenceRule, categoryId) => {
+          if (convertingToRecurring && onConvertRegularToRecurring) {
+            onConvertRegularToRecurring(
+              convertingToRecurring.todoId,
+              text,
+              startTime,
+              endTime,
+              recurrenceRule,
+              categoryId
+            );
+          }
+          setConvertToRecurringDialogOpen(false);
+          setConvertingToRecurring(undefined);
+        }}
+        selectedDate={selectedDate}
+        categories={categories}
+        editingTodo={convertingToRecurring ? {
+          id: convertingToRecurring.todoId,
+          text: convertingToRecurring.text,
+          startTime: convertingToRecurring.startTime,
+          endTime: convertingToRecurring.endTime,
+          categoryId: convertingToRecurring.categoryId,
+        } : undefined}
       />
 
       {/* Mobile FAB - Only show on mobile */}

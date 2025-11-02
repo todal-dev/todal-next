@@ -101,6 +101,11 @@ const TodoBlockComponent = ({
       onMouseEnter={() => hasSubtasks && setShowSubtasks(true)}
       onMouseLeave={() => setShowSubtasks(false)}
        onMouseDown={(e) => {
+         // 우클릭(버튼 2) 또는 중간 버튼(버튼 1)은 드래그 시작하지 않음
+         if (e.button === 2 || e.button === 1) {
+           return;
+         }
+
          // Always stop propagation to prevent grid drag from starting
          e.stopPropagation();
  
@@ -151,7 +156,11 @@ const TodoBlockComponent = ({
         style={{
           background: 'linear-gradient(to top, transparent, rgba(0,0,0,0.15))',
         }}
-        onMouseDown={(e) => handleResizeStart(e, todo.id, 'top', todo.startTime!, todo.endTime!)}
+        onMouseDown={(e) => {
+          // 우클릭은 리사이즈 시작하지 않음
+          if (e.button === 2) return;
+          handleResizeStart(e, todo.id, 'top', todo.startTime!, todo.endTime!);
+        }}
         onTouchStart={(e) => {
           e.stopPropagation();
           const touch = e.touches[0];
@@ -244,7 +253,11 @@ const TodoBlockComponent = ({
         style={{
           background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.15))',
         }}
-        onMouseDown={(e) => handleResizeStart(e, todo.id, 'bottom', todo.startTime!, todo.endTime!)}
+        onMouseDown={(e) => {
+          // 우클릭은 리사이즈 시작하지 않음
+          if (e.button === 2) return;
+          handleResizeStart(e, todo.id, 'bottom', todo.startTime!, todo.endTime!);
+        }}
         onTouchStart={(e) => {
           e.stopPropagation();
           const touch = e.touches[0];

@@ -134,6 +134,34 @@ const CategorySectionComponent = ({
   // Get all todo IDs for this category
   const todoIds = category.items.map(item => item.id);
 
+  // 시간에서 초를 제거하는 헬퍼 함수 (HH:mm:ss -> HH:mm)
+  const formatTimeWithoutSeconds = (time?: string): string => {
+    if (!time) return '';
+    // HH:mm:ss 또는 HH:mm 형식을 HH:mm으로 변환
+    const parts = time.split(':');
+    if (parts.length >= 2) {
+      return `${parts[0]}:${parts[1]}`;
+    }
+    return time;
+  };
+
+  // 반복 카테고리의 시간 정보 추출 (중복 제거)
+  const getRecurringTimes = () => {
+    if (category.id !== 'cat-recurring') return [];
+    
+    const timesSet = new Set<string>();
+    category.items.forEach(todo => {
+      if (todo.startTime && todo.endTime) {
+        const timeStr = `${formatTimeWithoutSeconds(todo.startTime)}-${formatTimeWithoutSeconds(todo.endTime)}`;
+        timesSet.add(timeStr);
+      }
+    });
+    
+    return Array.from(timesSet).sort();
+  };
+
+  const recurringTimes = getRecurringTimes();
+
   return (
     <div ref={setNodeRef} style={style}>
       <div className="mb-4">
@@ -194,30 +222,38 @@ const CategorySectionComponent = ({
             </div>
           )}
 
-          <input
-            type="text"
-            defaultValue={category.name}
-            disabled={category.id === 'cat-recurring' || category.id === 'cat-etc'}
-            onMouseDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-            className={`font-semibold text-body-small bg-transparent text-gray-900 dark:text-gray-50 focus:outline-none border-0 focus:ring-0 cursor-text ${
-              category.id === 'cat-recurring' || category.id === 'cat-etc' ? 'cursor-default' : ''
-            }`}
-            size={Math.max(category.name.length, 5)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.currentTarget.blur();
-              }
-            }}
-            onBlur={(e) => {
-              const newName = e.currentTarget.value.trim();
-              if (newName && newName !== category.name) {
-                onEditCategory(category.id, newName);
-              } else if (!newName) {
-                e.currentTarget.value = category.name;
-              }
-            }}
-          />
+          <div className="flex items-center gap-2">
+            <input
+              type="text"
+              defaultValue={category.name}
+              disabled={category.id === 'cat-recurring' || category.id === 'cat-etc'}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              className={`font-semibold text-body-small bg-transparent text-gray-900 dark:text-gray-50 focus:outline-none border-0 focus:ring-0 cursor-text ${
+                category.id === 'cat-recurring' || category.id === 'cat-etc' ? 'cursor-default' : ''
+              }`}
+              size={Math.max(category.name.length, 5)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.currentTarget.blur();
+                }
+              }}
+              onBlur={(e) => {
+                const newName = e.currentTarget.value.trim();
+                if (newName && newName !== category.name) {
+                  onEditCategory(category.id, newName);
+                } else if (!newName) {
+                  e.currentTarget.value = category.name;
+                }
+              }}
+            />
+            {/* 반복 카테고리일 때 시간 정보 표시 */}
+            {category.id === 'cat-recurring' && recurringTimes.length > 0 && (
+              <span className="text-caption text-gray-400 dark:text-gray-500">
+                {recurringTimes.join(', ')}
+              </span>
+            )}
+          </div>
 
           <div className="flex-1" />
 
