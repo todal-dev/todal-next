@@ -44,7 +44,6 @@ export function BigCalendar() {
     onSkipRecurringInstance,
     onDeleteRecurringAfter,
     onConvertRegularToRecurring,
-    onConvertRecurringToRegular,
   } = useTodoContext();
 
   const { categories, onEditRecurring } = useCategoryContext();
