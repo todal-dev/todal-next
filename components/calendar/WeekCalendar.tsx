@@ -366,7 +366,7 @@ export function BigCalendar() {
   }, []);
 
   // Resize functionality
-  const { resizingTodo, handleResizeStart } = useResizeTodo({
+  const { resizingTodo, handleResizeStart, clearResizingState } = useResizeTodo({
     hourHeight,
     gridScrollRef,
     onEditTodo,
@@ -374,7 +374,7 @@ export function BigCalendar() {
   });
 
   // Todo drag functionality
-  const { draggingTodo, handleTodoDragStart } = useTodoDrag({
+  const { draggingTodo, handleTodoDragStart, clearDraggingState } = useTodoDrag({
     hourHeight,
     gridScrollRef,
     weekDays,
@@ -852,6 +852,9 @@ export function BigCalendar() {
         onClose={() => {
           setRecurringEditModalOpen(false);
           setPendingRecurringEdit(null);
+          // 모달 취소 시 드래그/리사이즈 상태 초기화하여 원래 위치로 복원
+          clearDraggingState();
+          clearResizingState();
         }}
         onEditThis={() => {
           if (!pendingRecurringEdit) return;
@@ -894,6 +897,11 @@ export function BigCalendar() {
             }
             onEditTodo(recurringId, updates);
           }
+          
+          // 상태 초기화
+          setPendingRecurringEdit(null);
+          clearDraggingState();
+          clearResizingState();
         }}
         onEditThisAndFuture={() => {
           if (!pendingRecurringEdit) return;
@@ -929,6 +937,11 @@ export function BigCalendar() {
             };
             onEditRecurring(recurringId, text || originalTodo.text, startTime, endTime, newRecurrenceRule, categoryId || originalTodo.categoryId);
           }
+          
+          // 상태 초기화
+          setPendingRecurringEdit(null);
+          clearDraggingState();
+          clearResizingState();
         }}
         onEditAll={() => {
           if (!pendingRecurringEdit) return;
@@ -964,6 +977,11 @@ export function BigCalendar() {
             };
             onEditRecurring(recurringId, text || originalTodo.text, startTime, endTime, newRecurrenceRule, categoryId || originalTodo.categoryId);
           }
+          
+          // 상태 초기화
+          setPendingRecurringEdit(null);
+          clearDraggingState();
+          clearResizingState();
         }}
       />
 

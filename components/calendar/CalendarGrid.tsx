@@ -3,6 +3,7 @@ import type { Todo, Category } from '@/types/calendar';
 import { getTodoBlockStyle, roundToQuarterHour } from '@/utils/calendarUtils';
 import { calculateEventLayout } from '@/utils/eventLayoutUtils';
 import { TodoBlock } from './TodoBlock';
+import { isRecurringInstance, extractRecurringId } from '@/utils/recurringUtils';
 
 interface CalendarGridProps {
   weekDays: Date[];
@@ -370,7 +371,20 @@ const CalendarGridComponent = ({
                 {draggingTodo &&
                   draggingTodo.currentDate.toDateString() === date.toDateString() &&
                   (() => {
-                    const todo = todos.find(t => t.id === draggingTodo.id);
+                    // 먼저 weekTodos에서 찾기 (반복일정 인스턴스 포함)
+                    let todo = dayTodos.find(t => t.id === draggingTodo.id);
+                    
+                    // weekTodos에서 찾지 못하면 todos에서 찾기
+                    if (!todo) {
+                      todo = todos.find(t => t.id === draggingTodo.id);
+                    }
+                    
+                    // 반복일정 인스턴스인 경우 원본 ID로 카테고리 정보 찾기
+                    if (!todo && isRecurringInstance(draggingTodo.id)) {
+                      const recurringId = extractRecurringId(draggingTodo.id);
+                      todo = todos.find(t => t.id === recurringId);
+                    }
+                    
                     if (!todo) return null;
 
                     const category = categories.find((c) => c.id === todo.categoryId);

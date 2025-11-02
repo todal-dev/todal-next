@@ -126,7 +126,7 @@ export function useResizeTodo({ hourHeight, gridScrollRef, onEditTodo, onPending
       const isRecurring = isRecurringInstance(todoId);
       
       if (isRecurring && onPendingRecurringEdit) {
-        // Show modal for recurring events
+        // Show modal for recurring events - 상태를 유지하여 모달이 열려있을 때도 새 위치 표시
         onPendingRecurringEdit(
           todoId,
           todoDate,
@@ -137,14 +137,16 @@ export function useResizeTodo({ hourHeight, gridScrollRef, onEditTodo, onPending
           endTime,
           'resize'
         );
+        // 모달이 열려있을 때는 상태를 유지 (모달에서 취소/저장 시 초기화)
+        // setResizingTodo(null) 호출하지 않음
       } else {
         // Apply the resize using local variables
         onEditTodo?.(todoId, {
           startTime: currentStartTime,
           endTime: currentEndTime,
         });
+        setResizingTodo(null);
       }
-      setResizingTodo(null);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
@@ -153,8 +155,14 @@ export function useResizeTodo({ hourHeight, gridScrollRef, onEditTodo, onPending
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  // 외부에서 상태를 초기화할 수 있도록 함수 제공
+  const clearResizingState = () => {
+    setResizingTodo(null);
+  };
+
   return {
     resizingTodo,
     handleResizeStart,
+    clearResizingState,
   };
 }
