@@ -229,9 +229,10 @@ const CategorySectionComponent = ({
               disabled={category.id === 'cat-recurring' || category.id === 'cat-etc'}
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
-              className={`font-semibold text-sm md:text-body-small bg-transparent text-gray-900 dark:text-gray-50 focus:outline-none border-0 focus:ring-0 cursor-text ${
+              className={`category-title-input font-semibold text-sm md:text-body-small !bg-transparent text-gray-900 dark:text-gray-50 focus:outline-none border-0 focus:ring-0 cursor-text ${
                 category.id === 'cat-recurring' || category.id === 'cat-etc' ? 'cursor-default' : ''
               }`}
+              style={{ backgroundColor: 'transparent', background: 'transparent' }}
               size={Math.max(category.name.length, 5)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {

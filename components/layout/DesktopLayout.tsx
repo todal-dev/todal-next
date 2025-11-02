@@ -101,7 +101,8 @@ const DesktopLayoutComponent = ({ todosByDate }: DesktopLayoutProps) => {
                       setAddingNewCategory(false);
                     }, 150);
                   }}
-                  className="w-32 font-semibold text-body-small bg-transparent text-gray-900 dark:text-gray-50 focus:outline-none border-0 focus:ring-0"
+                  className="category-title-input w-32 font-semibold text-body-small !bg-transparent text-gray-900 dark:text-gray-50 focus:outline-none border-0 focus:ring-0"
+                  style={{ backgroundColor: 'transparent', background: 'transparent' }}
                 />
               </motion.div>
             ) : (

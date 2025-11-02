@@ -140,10 +140,22 @@
   }
   
   /* 다크 모드에서 입력 필드 배경 강제 적용 */
-  html.dark input[type="text"],
+  html.dark input[type="text"]:not(.category-title-input):not(.todo-input),
   html.dark input[type="number"] {
     background-color: #2D3748 !important;
     color: #F9FAFB !important;
+  }
+  
+  /* 카테고리 제목 input은 배경 투명하게 */
+  html.dark input.category-title-input {
+    background-color: transparent !important;
+    background: transparent !important;
+  }
+  
+  /* 할일 목록 input은 배경 투명하게 */
+  html.dark input.todo-input {
+    background-color: transparent !important;
+    background: transparent !important;
   }
   
   html.dark input[type="text"]::placeholder,

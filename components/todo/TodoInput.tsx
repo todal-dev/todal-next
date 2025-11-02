@@ -93,7 +93,8 @@ export function TodoInput({
                   setValue('');
                 }, 150);
               }}
-              className="flex-1 text-body bg-transparent text-gray-900 dark:text-gray-50 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none border-0 focus:ring-0"
+              className="todo-input flex-1 text-body !bg-transparent text-gray-900 dark:text-gray-50 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none border-0 focus:ring-0"
+              style={{ backgroundColor: 'transparent', background: 'transparent' }}
             />
           </motion.div>
         )}

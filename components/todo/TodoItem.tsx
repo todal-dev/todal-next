@@ -138,11 +138,12 @@ const TodoItemComponent = ({
           placeholder="할일 입력..."
           onMouseDown={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()}
-          className={`text-sm md:text-body bg-transparent focus:outline-none border-0 focus:ring-0 cursor-text w-full min-w-[100px] max-w-full sm:max-w-[400px] overflow-hidden text-ellipsis transition-all leading-none ${
+          className={`todo-input text-sm md:text-body !bg-transparent focus:outline-none border-0 focus:ring-0 cursor-text w-full min-w-[100px] max-w-full sm:max-w-[400px] overflow-hidden text-ellipsis transition-all leading-none ${
             todo.completed
               ? 'line-through text-gray-400 dark:text-gray-500'
               : 'text-gray-900 dark:text-gray-50'
           }`}
+          style={{ backgroundColor: 'transparent', background: 'transparent' }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
