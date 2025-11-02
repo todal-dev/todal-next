@@ -20,7 +20,7 @@ interface TodoBlockProps {
   handleToggleCompletion: (todoId: string) => void;
   handleContextMenu: (e: React.MouseEvent, todoId: string) => void;
   handleTodoDragStart: (e: React.MouseEvent, todoId: string, date: Date, startTime: string, endTime: string) => void;
-  handleResizeStart: (e: React.MouseEvent, todoId: string, direction: 'top' | 'bottom', startTime: string, endTime: string) => void;
+  handleResizeStart: (e: React.MouseEvent, todoId: string, direction: 'top' | 'bottom', startTime: string, endTime: string, date: Date) => void;
   resizingTodo: { id: string; currentStartTime: string; currentEndTime: string } | null;
   draggingTodo: { id: string; currentDate: Date; currentStartTime: string; currentEndTime: string } | null;
 }
@@ -159,7 +159,7 @@ const TodoBlockComponent = ({
         onMouseDown={(e) => {
           // 우클릭은 리사이즈 시작하지 않음
           if (e.button === 2) return;
-          handleResizeStart(e, todo.id, 'top', todo.startTime!, todo.endTime!);
+          handleResizeStart(e, todo.id, 'top', todo.startTime!, todo.endTime!, date);
         }}
         onTouchStart={(e) => {
           e.stopPropagation();
@@ -169,7 +169,7 @@ const TodoBlockComponent = ({
             clientY: touch.clientY,
             bubbles: true,
           });
-          handleResizeStart(mouseEvent as any, todo.id, 'top', todo.startTime!, todo.endTime!);
+          handleResizeStart(mouseEvent as any, todo.id, 'top', todo.startTime!, todo.endTime!, date);
         }}
       />
 
@@ -256,7 +256,7 @@ const TodoBlockComponent = ({
         onMouseDown={(e) => {
           // 우클릭은 리사이즈 시작하지 않음
           if (e.button === 2) return;
-          handleResizeStart(e, todo.id, 'bottom', todo.startTime!, todo.endTime!);
+          handleResizeStart(e, todo.id, 'bottom', todo.startTime!, todo.endTime!, date);
         }}
         onTouchStart={(e) => {
           e.stopPropagation();
@@ -266,7 +266,7 @@ const TodoBlockComponent = ({
             clientY: touch.clientY,
             bubbles: true,
           });
-          handleResizeStart(mouseEvent as any, todo.id, 'bottom', todo.startTime!, todo.endTime!);
+          handleResizeStart(mouseEvent as any, todo.id, 'bottom', todo.startTime!, todo.endTime!, date);
         }}
       />
 

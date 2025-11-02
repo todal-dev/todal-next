@@ -223,6 +223,7 @@ export function useTodos(initialTodos: Todo[] = []) {
     if (updates.startTime !== undefined) dbUpdates.startTime = updates.startTime;
     if (updates.endTime !== undefined) dbUpdates.endTime = updates.endTime;
     if (updates.parentId !== undefined) dbUpdates.parentId = updates.parentId;
+    if (updates.modifiedInstances !== undefined) dbUpdates.modifiedInstances = updates.modifiedInstances;
     
     // 반복 할일 인스턴스 ID인 경우 원본 ID 추출
     const dbId = extractRecurringId(id);

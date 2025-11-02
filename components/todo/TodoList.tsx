@@ -19,9 +19,11 @@ import { CategorySection } from './CategorySection';
 import { Checkbox } from '@/components/ui/forms/Checkbox';
 import { AddRecurringDialog } from '@/components/ui/dialogs/AddRecurringDialog';
 import { ConvertRecurringToRegularModal } from '@/components/ui/dialogs/ConvertRecurringToRegularModal';
+import { RecurringEditModal } from '@/components/ui/dialogs/RecurringEditModal';
 import { DeleteRecurringModal } from '@/components/ui/dialogs/DeleteRecurringModal';
 import { useTodoContext } from '@/contexts/TodoContext';
 import { useCategoryContext } from '@/contexts/CategoryContext';
+import { formatDateKey } from '@/utils/calendarUtils';
 import type { Todo } from '@/types/calendar';
 
 interface RecurrenceRuleLocal {
@@ -44,6 +46,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
     onDeleteTodo,
     onToggleTodo,
     onEditTodo,
+    onUpdateTodo,
     onUpdateTodoTime,
     onMoveTodo,
     onToggleRecurringInstance,
@@ -94,6 +97,17 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
   } | undefined>(undefined);
   const [deleteRecurringModalOpen, setDeleteRecurringModalOpen] = useState(false);
   const [deletingRecurringId, setDeletingRecurringId] = useState<string>('');
+  
+  // 반복 일정 편집 모달 상태
+  const [recurringEditModalOpen, setRecurringEditModalOpen] = useState(false);
+  const [pendingRecurringEdit, setPendingRecurringEdit] = useState<{
+    id: string;
+    text: string;
+    startTime: string;
+    endTime: string;
+    recurrenceRule: any;
+    categoryId: string;
+  } | null>(null);
 
   // DnD sensors
   const sensors = useSensors(
@@ -238,13 +252,23 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
         categoryId
       );
       setConvertingToRecurring(undefined);
+      setRecurringDialogOpen(false);
     } else if (editingRecurring) {
-      onEditRecurring?.(editingRecurring.id, text, startTime, endTime, recurrenceRule, categoryId);
-      setEditingRecurring(undefined);
+      // 편집 모드일 때는 모달을 먼저 띄움
+      setPendingRecurringEdit({
+        id: editingRecurring.id,
+        text,
+        startTime,
+        endTime,
+        recurrenceRule,
+        categoryId,
+      });
+      setRecurringDialogOpen(false);
+      setRecurringEditModalOpen(true);
     } else {
       onAddRecurring?.(text, startTime, endTime, recurrenceRule, categoryId);
+      setRecurringDialogOpen(false);
     }
-    setRecurringDialogOpen(false);
   };
 
   const handleToggleRecurringInstance = (recurringId: string) => {
@@ -600,6 +624,76 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
             );
           }
           setConvertingRecurring(undefined);
+        }}
+      />
+
+      {/* Recurring Edit Modal */}
+      <RecurringEditModal
+        isOpen={recurringEditModalOpen}
+        onClose={() => {
+          setRecurringEditModalOpen(false);
+          setPendingRecurringEdit(null);
+          setEditingRecurring(undefined);
+        }}
+        onEditThis={() => {
+          if (!pendingRecurringEdit) return;
+          
+          const { id, text, startTime, endTime, recurrenceRule, categoryId } = pendingRecurringEdit;
+          const originalTodo = todos.find(t => t.id === id);
+          
+          if (originalTodo && onUpdateTodo) {
+            const eventDateKey = formatDateKey(selectedDate);
+            const modifiedInstances = originalTodo.modifiedInstances || {};
+            
+            // modifiedInstances에 예외 날짜 정보 추가
+            const newModifiedInstances = {
+              ...modifiedInstances,
+              [eventDateKey]: {
+                date: undefined, // 날짜는 변경하지 않음 (시간만 변경)
+                startTime: startTime !== originalTodo.startTime ? startTime : undefined,
+                endTime: endTime !== originalTodo.endTime ? endTime : undefined,
+              }
+            };
+            
+            // modifiedInstances 업데이트 (반복 일정은 유지)
+            onUpdateTodo(id, { 
+              modifiedInstances: newModifiedInstances,
+              text, // 텍스트도 업데이트
+            });
+          }
+          
+          setPendingRecurringEdit(null);
+          setEditingRecurring(undefined);
+        }}
+        onEditThisAndFuture={() => {
+          if (!pendingRecurringEdit) return;
+          
+          const { id, text, startTime, endTime, recurrenceRule, categoryId } = pendingRecurringEdit;
+          
+          // 이 일정 및 향후 일정 수정: 원본 반복 일정의 시작 날짜와 시간 업데이트
+          if (onEditRecurring) {
+            const newRecurrenceRule = {
+              ...recurrenceRule,
+              startDate: selectedDate, // 오늘부터 시작
+            };
+            onEditRecurring(id, text, startTime, endTime, newRecurrenceRule, categoryId);
+          }
+          
+          setPendingRecurringEdit(null);
+          setEditingRecurring(undefined);
+        }}
+        onEditAll={() => {
+          if (!pendingRecurringEdit) return;
+          
+          const { id, text, startTime, endTime, recurrenceRule, categoryId } = pendingRecurringEdit;
+          
+          // 모든 일정 수정: 원본 반복 일정의 시간 정보 업데이트
+          if (onEditRecurring) {
+            onEditRecurring(id, text, startTime, endTime, recurrenceRule, categoryId);
+          }
+          
+          setPendingRecurringEdit(null);
+          setEditingRecurring(undefined);
         }}
       />
 

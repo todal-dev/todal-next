@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { Copy, Trash2, MoveRight, Tag, Edit, Repeat } from 'lucide-react';
+import { Copy, Trash2, MoveRight, Tag, Edit, Repeat, Clock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 interface ContextMenuProps {
@@ -15,6 +15,7 @@ interface ContextMenuProps {
   onChangeCategory: () => void;
   onRename: () => void;
   onSetRecurrence: () => void;
+  onEditTime?: () => void; // 시간 편집 핸들러 추가
   showRecurrence?: boolean; // 반복 설정 옵션 표시 여부
 }
 
@@ -29,6 +30,7 @@ export function ContextMenu({
   onChangeCategory,
   onRename,
   onSetRecurrence,
+  onEditTime,
   showRecurrence = true,
 }: ContextMenuProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -117,6 +119,19 @@ export function ContextMenu({
             <MoveRight size={16} />
             날짜 이동
           </button>
+
+          {onEditTime && (
+            <button
+              onClick={() => {
+                onEditTime();
+                onClose();
+              }}
+              className="w-full px-4 py-2 text-left text-body-small hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center gap-2 text-gray-900 dark:text-gray-50 transition-colors"
+            >
+              <Clock size={16} />
+              시간 편집
+            </button>
+          )}
 
           <button
             onClick={() => {

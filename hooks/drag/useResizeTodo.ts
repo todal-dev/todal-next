@@ -1,11 +1,22 @@
 import { useState, RefObject } from 'react';
 import { timeToMinutes } from '@/utils/calendarUtils';
 import type { Todo } from '@/types/calendar';
+import { isRecurringInstance } from '@/utils/recurringUtils';
 
 interface UseResizeTodoProps {
   hourHeight: number;
   gridScrollRef: RefObject<HTMLDivElement | null>;
   onEditTodo?: (id: string, updates: Partial<Todo>) => void;
+  onPendingRecurringEdit?: (
+    todoId: string,
+    date: Date,
+    startTime: string,
+    endTime: string,
+    originalDate: Date,
+    originalStartTime: string,
+    originalEndTime: string,
+    type: 'drag' | 'resize'
+  ) => void;
 }
 
 export interface ResizingTodoState {
@@ -21,7 +32,7 @@ export interface ResizingTodoState {
  * Todo block resize functionality
  * Handles top and bottom resize with 15-minute snapping
  */
-export function useResizeTodo({ hourHeight, gridScrollRef, onEditTodo }: UseResizeTodoProps) {
+export function useResizeTodo({ hourHeight, gridScrollRef, onEditTodo, onPendingRecurringEdit }: UseResizeTodoProps) {
   const [resizingTodo, setResizingTodo] = useState<ResizingTodoState | null>(null);
 
   const handleResizeStart = (
@@ -29,7 +40,8 @@ export function useResizeTodo({ hourHeight, gridScrollRef, onEditTodo }: UseResi
     todoId: string,
     type: 'top' | 'bottom',
     startTime: string,
-    endTime: string
+    endTime: string,
+    todoDate: Date
   ) => {
     e.preventDefault();
     e.stopPropagation();
@@ -110,12 +122,28 @@ export function useResizeTodo({ hourHeight, gridScrollRef, onEditTodo }: UseResi
     };
 
     const handleMouseUp = () => {
-
-      // Apply the resize using local variables
-      onEditTodo?.(todoId, {
-        startTime: currentStartTime,
-        endTime: currentEndTime,
-      });
+      // Check if this is a recurring instance
+      const isRecurring = isRecurringInstance(todoId);
+      
+      if (isRecurring && onPendingRecurringEdit) {
+        // Show modal for recurring events
+        onPendingRecurringEdit(
+          todoId,
+          todoDate,
+          currentStartTime,
+          currentEndTime,
+          todoDate,
+          startTime,
+          endTime,
+          'resize'
+        );
+      } else {
+        // Apply the resize using local variables
+        onEditTodo?.(todoId, {
+          startTime: currentStartTime,
+          endTime: currentEndTime,
+        });
+      }
       setResizingTodo(null);
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);

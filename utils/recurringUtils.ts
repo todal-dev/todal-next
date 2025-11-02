@@ -217,7 +217,38 @@ export function generateRecurringEvents(todo: Todo, weekDays: Date[]): Todo[] {
       }
     }
 
+    // Check modified instances - 예외 날짜 처리
+    const weekDayKey = formatDateKey(weekDay);
+    const modifiedInstance = todo.modifiedInstances?.[weekDayKey];
+    
+    if (shouldInclude && modifiedInstance) {
+      // 예외 날짜: 원래 날짜는 건너뛰고, 수정된 날짜/시간으로 생성
+      const modifiedDate = modifiedInstance.date || weekDay;
+      const modifiedStartTime = modifiedInstance.startTime || todo.startTime;
+      const modifiedEndTime = modifiedInstance.endTime || todo.endTime;
+      
+      // 원래 날짜는 건너뛰기
+      shouldInclude = false;
+      
+      // 수정된 날짜가 현재 주간에 포함되는지 확인
+      const modifiedDateKey = formatDateKey(modifiedDate);
+      const isModifiedDateInWeek = weekDays.some(d => formatDateKey(d) === modifiedDateKey);
+      
+      if (isModifiedDateInWeek) {
+        // 수정된 날짜가 현재 주간에 있으면 예외 일정 생성
+        events.push({
+          ...todo,
+          id: `${todo.id}-${modifiedDate.toISOString()}`,
+          date: modifiedDate,
+          startTime: modifiedStartTime,
+          endTime: modifiedEndTime,
+        });
+        eventCount++; // 생성된 이벤트 카운트 증가
+      }
+    }
+    
     if (shouldInclude) {
+      // 일반 반복 일정
       events.push({
         ...todo,
         id: `${todo.id}-${weekDay.toISOString()}`,

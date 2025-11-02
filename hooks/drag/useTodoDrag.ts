@@ -1,6 +1,7 @@
 import { useState, RefObject } from 'react';
 import { timeToMinutes } from '@/utils/calendarUtils';
 import type { Todo } from '@/types/calendar';
+import { isRecurringInstance } from '@/utils/recurringUtils';
 
 interface UseTodoDragProps {
   hourHeight: number;
@@ -8,6 +9,16 @@ interface UseTodoDragProps {
   weekDays: Date[];
   onUpdateTodoDateTime?: (id: string, date: Date, startTime: string, endTime: string) => void;
   onEditTodo?: (id: string, updates: Partial<Todo>) => void;
+  onPendingRecurringEdit?: (
+    todoId: string,
+    date: Date,
+    startTime: string,
+    endTime: string,
+    originalDate: Date,
+    originalStartTime: string,
+    originalEndTime: string,
+    type: 'drag' | 'resize'
+  ) => void;
 }
 
 export interface DraggingTodoState {
@@ -31,6 +42,7 @@ export function useTodoDrag({
   weekDays,
   onUpdateTodoDateTime,
   onEditTodo,
+  onPendingRecurringEdit,
 }: UseTodoDragProps) {
   const [draggingTodo, setDraggingTodo] = useState<DraggingTodoState | null>(null);
 
@@ -156,16 +168,33 @@ export function useTodoDrag({
         cancelAnimationFrame(animationFrameId);
       }
 
-      // Apply the move using local variables
-      if (currentDate.toDateString() !== todoDate.toDateString()) {
-        // Date changed, use onUpdateTodoDateTime to update both date and time
-        onUpdateTodoDateTime?.(todoId, currentDate, currentStartTime, currentEndTime);
+      // Check if this is a recurring instance
+      const isRecurring = isRecurringInstance(todoId);
+      
+      if (isRecurring && onPendingRecurringEdit) {
+        // Show modal for recurring events
+        onPendingRecurringEdit(
+          todoId,
+          currentDate,
+          currentStartTime,
+          currentEndTime,
+          todoDate,
+          startTime,
+          endTime,
+          'drag'
+        );
       } else {
-        // Same date, just update time
-        onEditTodo?.(todoId, {
-          startTime: currentStartTime,
-          endTime: currentEndTime,
-        });
+        // Apply the move using local variables
+        if (currentDate.toDateString() !== todoDate.toDateString()) {
+          // Date changed, use onUpdateTodoDateTime to update both date and time
+          onUpdateTodoDateTime?.(todoId, currentDate, currentStartTime, currentEndTime);
+        } else {
+          // Same date, just update time
+          onEditTodo?.(todoId, {
+            startTime: currentStartTime,
+            endTime: currentEndTime,
+          });
+        }
       }
       setDraggingTodo(null);
       document.removeEventListener('mousemove', handleMouseMove);

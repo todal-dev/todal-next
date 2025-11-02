@@ -138,6 +138,14 @@ export async function fetchTodos(): Promise<Todo[]> {
       } : undefined,
       completedDates: todo.completed_dates || undefined,
       skippedDates: todo.skipped_dates || undefined,
+      modifiedInstances: todo.recurrence_rule?.modifiedInstances ? Object.entries(todo.recurrence_rule.modifiedInstances).reduce((acc, [key, value]: [string, any]) => {
+        acc[key] = {
+          date: value.date ? parseLocalDate(value.date) : undefined,
+          startTime: value.startTime,
+          endTime: value.endTime,
+        };
+        return acc;
+      }, {} as Record<string, { date?: Date; startTime?: string; endTime?: string }>) : undefined,
       subtasks: subtasks.map(st => ({
         id: st.id,
         text: st.text,
@@ -269,6 +277,7 @@ export async function updateTodo(
     completedDates?: string[]
     skippedDates?: string[]
     recurrenceRule?: RecurrenceRule
+    modifiedInstances?: Record<string, { date?: Date; startTime?: string; endTime?: string }>
   }
 ): Promise<{ success: boolean; error?: string }> {
   try {
@@ -310,6 +319,27 @@ export async function updateTodo(
         nthWeekday: updates.recurrenceRule.nthWeekday,
         exceptions: updates.recurrenceRule.exceptions,
       }
+    }
+    
+    // modifiedInstances를 recurrence_rule 안에 저장
+    if (updates.modifiedInstances !== undefined) {
+      // 현재 recurrence_rule 가져오기
+      const { data: currentTodo } = await supabase.from('todos').select('recurrence_rule').eq('id', id).single();
+      const currentRecurrenceRule = currentTodo?.recurrence_rule || {};
+      
+      // 기존 recurrence_rule과 병합 (modifiedInstances는 별도로 저장)
+      dbUpdates.recurrence_rule = {
+        ...currentRecurrenceRule,
+        ...(dbUpdates.recurrence_rule || {}),
+        modifiedInstances: Object.entries(updates.modifiedInstances).reduce((acc, [key, value]) => {
+          acc[key] = {
+            date: value.date ? formatLocalDate(value.date) : undefined,
+            startTime: value.startTime,
+            endTime: value.endTime,
+          };
+          return acc;
+        }, {} as Record<string, { date?: string; startTime?: string; endTime?: string }>),
+      };
     }
 
     const { error } = await supabase
