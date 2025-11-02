@@ -148,10 +148,10 @@ export function useResizeTodo({ hourHeight, gridScrollRef, onEditTodo, onPending
       } else {
         // 일반 할일은 변경사항이 있을 때만 업데이트
         if (timeChanged) {
-          onEditTodo?.(todoId, {
-            startTime: currentStartTime,
-            endTime: currentEndTime,
-          });
+        onEditTodo?.(todoId, {
+          startTime: currentStartTime,
+          endTime: currentEndTime,
+        });
         }
         setResizingTodo(null);
       }

@@ -1007,6 +1007,131 @@ export function BigCalendar() {
               }
             });
             
+            // 원래 시작 날짜부터 새로운 시작 날짜 직전까지의 모든 반복 일정에 대해 원래 시간 저장
+            const originalStartDate = originalTodo.recurrenceRule.startDate || originalTodo.date;
+            const originalStartDateObj = new Date(originalStartDate);
+            originalStartDateObj.setHours(0, 0, 0, 0);
+            
+            const newStartDateObj = new Date(newStartDate);
+            newStartDateObj.setHours(0, 0, 0, 0);
+            
+            // 원래 시작 날짜부터 새로운 시작 날짜 직전까지의 날짜 범위 생성
+            const dateRange: Date[] = [];
+            const currentDate = new Date(originalStartDateObj);
+            
+            while (currentDate < newStartDateObj) {
+              dateRange.push(new Date(currentDate));
+              currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            // 각 날짜에 대해 반복 규칙을 확인하여 일정이 있는 날짜에만 원래 시간 저장
+            dateRange.forEach((checkDate) => {
+              const dateKey = formatDateKey(checkDate);
+              
+              // 이미 modifiedInstances에 있는 날짜는 건너뛰기
+              if (preservedModifiedInstances[dateKey]) {
+                return;
+              }
+              
+              // 이 날짜에 반복 일정이 있는지 확인
+              const shouldInclude = (() => {
+                const { frequency, interval = 1, endDate, exceptions } = originalTodo.recurrenceRule || {};
+                const checkDateOnly = new Date(checkDate.getFullYear(), checkDate.getMonth(), checkDate.getDate());
+                const startDateOnly = new Date(originalStartDateObj.getFullYear(), originalStartDateObj.getMonth(), originalStartDateObj.getDate());
+                
+                // 종료일 확인
+                if (endDate) {
+                  const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+                  if (checkDateOnly > endDateOnly) {
+                    return false;
+                  }
+                }
+                
+                // 예외 날짜 확인
+                if (exceptions && exceptions.length > 0) {
+                  const dateKeyStr = formatDateKey(checkDate);
+                  if (exceptions.includes(dateKeyStr)) {
+                    return false;
+                  }
+                }
+                
+                if (frequency === 'daily') {
+                  const daysDiff = Math.floor(
+                    (checkDateOnly.getTime() - startDateOnly.getTime()) / (1000 * 60 * 60 * 24)
+                  );
+                  return daysDiff >= 0 && daysDiff % interval === 0;
+                } else if (frequency === 'weekly') {
+                  const daysOfWeek = originalTodo.recurrenceRule?.daysOfWeek;
+                  const dayOfWeekValue = checkDate.getDay() === 0 ? 7 : checkDate.getDay();
+                  
+                  if (daysOfWeek && daysOfWeek.length > 0) {
+                    if (daysOfWeek.includes(dayOfWeekValue)) {
+                      if (checkDateOnly >= startDateOnly) {
+                        const daysDiff = Math.floor(
+                          (checkDateOnly.getTime() - startDateOnly.getTime()) / (1000 * 60 * 60 * 24)
+                        );
+                        const weeksDiff = Math.floor(daysDiff / 7);
+                        return weeksDiff % interval === 0;
+                      }
+                    }
+                  } else {
+                    const weeksDiff = Math.floor(
+                      (checkDateOnly.getTime() - startDateOnly.getTime()) / (1000 * 60 * 60 * 24 * 7)
+                    );
+                    return (
+                      checkDate.getDay() === originalStartDateObj.getDay() &&
+                      weeksDiff >= 0 &&
+                      weeksDiff % interval === 0
+                    );
+                  }
+                } else if (frequency === 'monthly') {
+                  const monthsDiff =
+                    (checkDateOnly.getFullYear() - startDateOnly.getFullYear()) * 12 +
+                    (checkDateOnly.getMonth() - startDateOnly.getMonth());
+                  
+                  if (monthsDiff >= 0 && monthsDiff % interval === 0) {
+                    const { nthWeekday, monthDay } = originalTodo.recurrenceRule || {};
+                    
+                    if (nthWeekday) {
+                      // 매월 N번째 요일은 복잡하므로 일단 간단하게 처리
+                      return checkDate.getDate() === originalStartDateObj.getDate();
+                    } else if (monthDay) {
+                      return checkDate.getDate() === monthDay;
+                    } else {
+                      return checkDate.getDate() === originalStartDateObj.getDate();
+                    }
+                  }
+                } else if (frequency === 'yearly') {
+                  const yearsDiff = checkDateOnly.getFullYear() - startDateOnly.getFullYear();
+                  
+                  if (yearsDiff >= 0 && yearsDiff % interval === 0) {
+                    const { month } = originalTodo.recurrenceRule || {};
+                    const targetMonth = month !== undefined ? month - 1 : originalStartDateObj.getMonth();
+                    
+                    if (checkDate.getMonth() === targetMonth) {
+                      return checkDate.getDate() === originalStartDateObj.getDate();
+                    }
+                  }
+                }
+                
+                return false;
+              })();
+              
+              // 건너뛴 날짜는 제외
+              if (shouldInclude) {
+                const dateKeyStr = formatDateKey(checkDate);
+                const isSkipped = originalTodo.skippedDates?.includes(dateKeyStr);
+                
+                if (!isSkipped) {
+                  // 원래 시간을 modifiedInstances에 저장 (과거 일정 보존)
+                  preservedModifiedInstances[dateKey] = {
+                    startTime: originalTodo.startTime,
+                    endTime: originalTodo.endTime,
+                  };
+                }
+              }
+            });
+            
             // 새로운 반복 규칙 생성 (시작 날짜 변경)
             const cleanedRecurrenceRule = { ...recurrenceRule };
             delete (cleanedRecurrenceRule as any).modifiedInstances;
@@ -1019,11 +1144,19 @@ export function BigCalendar() {
             
             // onEditTodo를 사용하여 modifiedInstances 보존하면서 업데이트
             const updates: Partial<Todo> = {
-              startTime,
-              endTime,
               recurrenceRule: newRecurrenceRule,
               modifiedInstances: preservedModifiedInstances, // 과거 일정 보존
             };
+            
+            // 시작 시간이 변경된 경우에만 업데이트
+            if (startTime !== originalTodo.startTime) {
+              updates.startTime = startTime;
+            }
+            
+            // 종료 시간이 변경된 경우에만 업데이트
+            if (endTime !== originalTodo.endTime) {
+              updates.endTime = endTime;
+            }
             
             // 텍스트나 카테고리도 업데이트 가능
             if (text && text !== originalTodo.text) {
