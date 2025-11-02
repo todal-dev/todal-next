@@ -379,7 +379,7 @@ export function BigCalendar() {
   }, [todos]);
 
   // Resize functionality
-  const { resizingTodo, handleResizeStart } = useResizeTodo({
+  const { resizingTodo, handleResizeStart, clearResizingState } = useResizeTodo({
     hourHeight,
     gridScrollRef,
     onEditTodo,
@@ -387,7 +387,7 @@ export function BigCalendar() {
   });
 
   // Todo drag functionality
-  const { draggingTodo, handleTodoDragStart } = useTodoDrag({
+  const { draggingTodo, handleTodoDragStart, clearDraggingState } = useTodoDrag({
     hourHeight,
     gridScrollRef,
     weekDays,
@@ -882,6 +882,8 @@ export function BigCalendar() {
         onClose={() => {
           setRecurringEditModalOpen(false);
           setPendingRecurringEdit(null);
+          clearDraggingState();
+          clearResizingState();
         }}
         onEditThis={() => {
           if (!pendingRecurringEdit) return;
@@ -924,6 +926,11 @@ export function BigCalendar() {
             }
             onEditTodo(recurringId, updates);
           }
+          
+          setRecurringEditModalOpen(false);
+          setPendingRecurringEdit(null);
+          clearDraggingState();
+          clearResizingState();
         }}
         onEditThisAndFuture={() => {
           if (!pendingRecurringEdit) return;
@@ -959,6 +966,11 @@ export function BigCalendar() {
             };
             onEditRecurring(recurringId, text || originalTodo.text, startTime, endTime, newRecurrenceRule, categoryId || originalTodo.categoryId);
           }
+          
+          setRecurringEditModalOpen(false);
+          setPendingRecurringEdit(null);
+          clearDraggingState();
+          clearResizingState();
         }}
         onEditAll={() => {
           if (!pendingRecurringEdit) return;
@@ -994,6 +1006,11 @@ export function BigCalendar() {
             };
             onEditRecurring(recurringId, text || originalTodo.text, startTime, endTime, newRecurrenceRule, categoryId || originalTodo.categoryId);
           }
+          
+          setRecurringEditModalOpen(false);
+          setPendingRecurringEdit(null);
+          clearDraggingState();
+          clearResizingState();
         }}
       />
 
