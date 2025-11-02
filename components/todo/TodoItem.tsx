@@ -42,6 +42,8 @@ interface TodoItemProps {
   selectedDate: Date;
   activeDragId?: string | null;
   overTodoId?: string | null;
+  overCategoryId?: string | null;
+  originalCategoryId?: string | null;
   categories?: Category[];
 }
 
@@ -61,6 +63,8 @@ const TodoItemComponent = ({
   selectedDate,
   activeDragId = null,
   overTodoId = null,
+  overCategoryId = null,
+  originalCategoryId = null,
   categories = [],
 }: TodoItemProps) => {
   const [editingTime, setEditingTime] = useState(false);
@@ -100,19 +104,19 @@ const TodoItemComponent = ({
     },
   });
 
-  // 드래그 중 항상 원래 자리의 공간 제거
-  const shouldRemoveSpace = isDragging;
+  // 드래그 중 공간 제거 로직
+  // - 원래 자리로 돌아갈 때 (자기 자신 위 또는 원래 카테고리 위)는 공간 유지
+  // - 그 외에는 공간 제거
+  const isDraggingSelf = activeDragId === todo.id;
+  const isOverOriginalCategory = isDraggingSelf && overCategoryId === originalCategoryId;
+  const isOverSelf = overTodoId === todo.id;
+  const shouldRemoveSpace = isDragging && !(isDraggingSelf && (isOverSelf || isOverOriginalCategory));
   const style = getDraggableStyle(transform, transition, isDragging, 0, shouldRemoveSpace);
 
   const hasTime = todo.startTime && todo.endTime;
 
-  // 외부 wrapper div에도 공간 제거 스타일 적용
-  const wrapperStyle = shouldRemoveSpace
-    ? { paddingLeft: `${level * 24}px`, height: 0, minHeight: 0, maxHeight: 0, overflow: 'hidden' as const }
-    : { paddingLeft: `${level * 24}px` };
-
   return (
-    <div style={wrapperStyle}>
+    <div style={{ paddingLeft: `${level * 24}px` }}>
       <div
         ref={setNodeRef}
         style={style}
@@ -372,7 +376,7 @@ const TodoItemComponent = ({
         </div>
       </div>
 
-      {!shouldRemoveSpace && todo.subtasks && todo.subtasks.length > 0 && (
+      {todo.subtasks && todo.subtasks.length > 0 && (
         <div>
           {todo.subtasks.map((subtask, idx) => (
             <TodoItem
@@ -392,6 +396,8 @@ const TodoItemComponent = ({
               selectedDate={selectedDate}
               activeDragId={activeDragId}
               overTodoId={overTodoId}
+              overCategoryId={overCategoryId}
+              originalCategoryId={originalCategoryId}
               categories={categories}
             />
           ))}
@@ -417,6 +423,8 @@ export const TodoItem = memo(TodoItemComponent, (prevProps, nextProps) => {
     prevProps.siblings.length === nextProps.siblings.length &&
     prevProps.parentId === nextProps.parentId &&
     prevProps.activeDragId === nextProps.activeDragId &&
-    prevProps.overTodoId === nextProps.overTodoId
+    prevProps.overTodoId === nextProps.overTodoId &&
+    prevProps.overCategoryId === nextProps.overCategoryId &&
+    prevProps.originalCategoryId === nextProps.originalCategoryId
   );
 });

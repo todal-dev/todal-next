@@ -69,6 +69,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
   const [newCategoryColor, setNewCategoryColor] = useState('#3B82F6');
   const [recurringDialogOpen, setRecurringDialogOpen] = useState(false);
   const [activeDragId, setActiveDragId] = useState<string | null>(null);
+  const [originalCategoryId, setOriginalCategoryId] = useState<string | null>(null);
   const [overCategoryId, setOverCategoryId] = useState<string | null>(null);
   const [overTodoId, setOverTodoId] = useState<string | null>(null);
   const [editingRecurring, setEditingRecurring] = useState<{
@@ -288,6 +289,8 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
     // todo 타입만 추적 (카테고리는 제외)
     if (activeData?.type === 'todo') {
       setActiveDragId(active.id as string);
+      // 드래그 시작 시점의 원래 카테고리 ID 저장
+      setOriginalCategoryId(activeData.categoryId);
     }
   };
 
@@ -325,6 +328,7 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
 
     // 상태 초기화
     setActiveDragId(null);
+    setOriginalCategoryId(null);
     setOverCategoryId(null);
     setOverTodoId(null);
 
@@ -539,6 +543,8 @@ export function TodoList({ hideTitle = false }: TodoListProps) {
                 }
                 activeDragId={activeDragId}
                 overTodoId={overTodoId}
+                overCategoryId={overCategoryId}
+                originalCategoryId={originalCategoryId}
                 categories={categories}
               />
             ))}

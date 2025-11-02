@@ -55,6 +55,8 @@ interface CategorySectionProps {
   isDraggingTodoFromOtherCategory?: boolean;
   activeDragId?: string | null;
   overTodoId?: string | null;
+  overCategoryId?: string | null;
+  originalCategoryId?: string | null;
   categories?: SimplifiedCategory[];
 }
 
@@ -90,6 +92,8 @@ const CategorySectionComponent = ({
   isDraggingTodoFromOtherCategory = false,
   activeDragId = null,
   overTodoId = null,
+  overCategoryId = null,
+  originalCategoryId = null,
   categories = [],
 }: CategorySectionProps) => {
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
@@ -319,6 +323,8 @@ const CategorySectionComponent = ({
                 selectedDate={selectedDate}
                 activeDragId={activeDragId}
                 overTodoId={overTodoId}
+                overCategoryId={overCategoryId}
+                originalCategoryId={originalCategoryId}
                 categories={categories}
               />
             ))}
@@ -379,6 +385,8 @@ export const CategorySection = memo(CategorySectionComponent, (prevProps, nextPr
     prevProps.selectedDate.getTime() === nextProps.selectedDate.getTime() &&
     prevProps.isDraggingTodoFromOtherCategory === nextProps.isDraggingTodoFromOtherCategory &&
     prevProps.activeDragId === nextProps.activeDragId &&
-    prevProps.overTodoId === nextProps.overTodoId
+    prevProps.overTodoId === nextProps.overTodoId &&
+    prevProps.overCategoryId === nextProps.overCategoryId &&
+    prevProps.originalCategoryId === nextProps.originalCategoryId
   );
 });
