@@ -13,6 +13,7 @@ interface CalendarGridProps {
   hours: number[];
   dayNames: string[];
   currentTime?: Date; // optional로 변경 (현재 주가 아닐 때는 undefined)
+  selectedDate?: Date; // 선택된 날짜
   gridScrollRef: React.RefObject<HTMLDivElement | null>;
   creatingEvent: { date: Date; startTime: string; endTime: string; isEditing?: boolean } | null;
   editingEventText: string;
@@ -47,6 +48,7 @@ const CalendarGridComponent = ({
   hours,
   dayNames,
   currentTime,
+  selectedDate,
   gridScrollRef,
   creatingEvent,
   editingEventText,
@@ -95,6 +97,12 @@ const CalendarGridComponent = ({
                 date.getMonth() === new Date().getMonth() &&
                 date.getFullYear() === new Date().getFullYear();
               
+              const isSelected =
+                selectedDate &&
+                date.getDate() === selectedDate.getDate() &&
+                date.getMonth() === selectedDate.getMonth() &&
+                date.getFullYear() === selectedDate.getFullYear();
+              
               const isSunday = date.getDay() === 0;
               const isSaturday = date.getDay() === 6;
               const holiday = isHoliday(date);
@@ -103,12 +111,18 @@ const CalendarGridComponent = ({
                 <div
                   key={index}
                   className={`flex-1 text-center py-1.5 sm:py-2 md:py-3 border-r border-gray-200 dark:border-gray-600 flex flex-col items-center justify-center transition-colors ${
-                    isToday ? 'bg-primary-100 dark:bg-primary-900/50 ring-2 ring-inset ring-primary-200 dark:ring-primary-700' : ''
+                    isSelected
+                      ? 'bg-gradient-to-br from-primary-600 to-primary-700 dark:from-primary-500 dark:to-primary-600'
+                      : isToday
+                      ? 'bg-primary-100 dark:bg-primary-900/50 ring-2 ring-inset ring-primary-200 dark:ring-primary-700'
+                      : ''
                   }`}
                 >
                   <div 
                     className={`text-[9px] sm:text-[11px] md:text-caption font-medium mb-0.5 ${
-                      isToday
+                      isSelected
+                        ? 'text-white'
+                        : isToday
                         ? 'text-primary-700 dark:text-primary-300'
                         : isSunday || holiday 
                         ? 'text-red-500 dark:text-red-400' 
@@ -122,7 +136,9 @@ const CalendarGridComponent = ({
                   <div className="text-xs sm:text-sm md:text-h3 font-semibold">
                     <div
                       className={`${
-                        isToday 
+                        isSelected
+                          ? 'text-white'
+                          : isToday 
                           ? 'text-primary-700 dark:text-primary-300' 
                           : isSunday || holiday
                           ? 'text-red-500 dark:text-red-400'
@@ -180,6 +196,12 @@ const CalendarGridComponent = ({
               date.getDate() === currentTime.getDate() &&
               date.getMonth() === currentTime.getMonth() &&
               date.getFullYear() === currentTime.getFullYear();
+
+            const isSelected =
+              selectedDate &&
+              date.getDate() === selectedDate.getDate() &&
+              date.getMonth() === selectedDate.getMonth() &&
+              date.getFullYear() === selectedDate.getFullYear();
 
             const isDraggingOverThisDay = draggingTodo &&
               draggingTodo.currentDate.toDateString() === date.toDateString();

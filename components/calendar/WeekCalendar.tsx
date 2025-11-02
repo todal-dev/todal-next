@@ -68,6 +68,21 @@ export function BigCalendar() {
     return new Date(date.setDate(diff));
   });
 
+  // selectedDate가 변경되면 해당 날짜가 속한 주로 이동
+  useEffect(() => {
+    const date = new Date(selectedDate);
+    const day = date.getDay();
+    const diff = date.getDate() - day;
+    const weekStart = new Date(date);
+    weekStart.setDate(diff);
+    weekStart.setHours(0, 0, 0, 0);
+    
+    // 현재 주 시작일과 다를 때만 업데이트 (무한 루프 방지)
+    if (weekStart.getTime() !== currentWeekStart.getTime()) {
+      setCurrentWeekStart(weekStart);
+    }
+  }, [selectedDate]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Recurring context menu and modal states
   const [recurringContextMenu, setRecurringContextMenu] = useState<{
     isOpen: boolean;
@@ -510,6 +525,7 @@ export function BigCalendar() {
         hours={hours}
         dayNames={dayNames}
         currentTime={isCurrentWeek ? currentTime : undefined}
+        selectedDate={selectedDate}
         gridScrollRef={gridScrollRef}
         creatingEvent={creatingEvent}
         editingEventText={editingEventText}
