@@ -16,7 +16,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-md transition-all duration-normal touch-manipulation hover:scale-[1.02] active:scale-[0.98]';
+    'inline-flex items-center justify-center font-medium rounded-md transition-all duration-normal touch-manipulation hover:scale-[1.02] active:scale-[0.98] cursor-pointer';
 
   const variantStyles = {
     primary:

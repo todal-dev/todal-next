@@ -73,7 +73,7 @@ export function DashboardLayout({ categories, todos }: DashboardLayoutProps) {
           {/* Page Header */}
           <div className="flex items-center gap-4">
             <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-transform hover:scale-110"
+              className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg"
               style={{ 
                 backgroundColor: `${selectedCategory.color}20`,
                 border: `2px solid ${selectedCategory.color}`

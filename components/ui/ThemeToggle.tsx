@@ -9,7 +9,7 @@ export function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors touch-manipulation"
+      className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors touch-manipulation cursor-pointer"
       aria-label={theme === 'light' ? '다크 모드로 전환' : '라이트 모드로 전환'}
     >
       {theme === 'light' ? (

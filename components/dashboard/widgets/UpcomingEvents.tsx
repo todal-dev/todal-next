@@ -10,6 +10,11 @@ interface UpcomingEventsProps {
 }
 
 export function UpcomingEvents({ events }: UpcomingEventsProps) {
+  // 시간에서 초 제거하는 헬퍼 함수
+  const formatTime = (time: string) => {
+    return time.split(':').slice(0, 2).join(':');
+  };
+
   const getDateLabel = (date: Date) => {
     if (isToday(date)) return '오늘';
     if (isTomorrow(date)) return '내일';
@@ -83,8 +88,8 @@ export function UpcomingEvents({ events }: UpcomingEventsProps) {
                   {event.startTime && (
                     <div className="flex items-center gap-1">
                       <Clock size={12} />
-                      <span>{event.startTime}</span>
-                      {event.endTime && <span>- {event.endTime}</span>}
+                      <span>{formatTime(event.startTime)}</span>
+                      {event.endTime && <span>- {formatTime(event.endTime)}</span>}
                     </div>
                   )}
                 </div>

@@ -36,11 +36,9 @@ export function CategorySidebar({
       {/* Category List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {/* 전체 보기 */}
-        <motion.button
-          whileHover={{ scale: 1.02, y: -2 }}
-          whileTap={{ scale: 0.98 }}
+        <button
           onClick={() => onSelectCategory(null)}
-          className={`w-full text-left p-4 rounded-lg transition-all ${
+          className={`w-full text-left p-4 rounded-lg transition-colors cursor-pointer ${
             selectedCategoryId === null
               ? 'bg-primary-50 dark:bg-primary-900/30 border-2 border-primary dark:border-primary-600 shadow-md'
               : 'bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-600 hover:shadow-sm'
@@ -68,7 +66,7 @@ export function CategorySidebar({
               </>
             )}
           </div>
-        </motion.button>
+        </button>
 
         {/* 카테고리별 */}
         {categories.map((category) => {
@@ -76,12 +74,10 @@ export function CategorySidebar({
           const isSelected = selectedCategoryId === category.id;
 
           return (
-            <motion.button
+            <button
               key={category.id}
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
               onClick={() => onSelectCategory(category.id)}
-              className={`w-full text-left p-4 rounded-lg transition-all ${
+              className={`w-full text-left p-4 rounded-lg transition-colors cursor-pointer ${
                 isSelected
                   ? 'bg-primary-50 dark:bg-primary-900/30 border-2 border-primary dark:border-primary-600 shadow-md'
                   : 'bg-warm-white dark:bg-dark-ocean-card border border-gray-200 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 hover:shadow-sm'
@@ -130,7 +126,7 @@ export function CategorySidebar({
                   </>
                 )}
               </div>
-            </motion.button>
+            </button>
           );
         })}
       </div>

@@ -102,7 +102,7 @@ export function SearchBar({ categories, onSelectTodo }: SearchBarProps) {
         {query && (
           <button
             onClick={handleClear}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -126,7 +126,7 @@ export function SearchBar({ categories, onSelectTodo }: SearchBarProps) {
                 <button
                   key={todo.id}
                   onClick={() => handleSelectTodo(todo)}
-                  className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                  className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors cursor-pointer"
                 >
                   <div className="flex items-start gap-3">
                     {/* 카테고리 색상 점 */}

@@ -11,6 +11,11 @@ interface CategoryTimelineProps {
 }
 
 export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps) {
+  // 시간에서 초 제거하는 헬퍼 함수
+  const formatTime = (time: string) => {
+    return time.split(':').slice(0, 2).join(':');
+  };
+
   // 시간이 있는 할일만 필터링하고 그룹화 (useMemo로 최적화)
   const timelineData = useMemo(() => {
     const timedTodos = todos.filter(t => t.startTime && t.endTime);
@@ -43,7 +48,7 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
     const displayMinHour = Math.max(0, minHour - 1);
     const displayMaxHour = Math.min(23, Math.max(maxHour + 1, displayMinHour + 8));
 
-    return { todosByHour, displayMinHour, displayMaxHour };
+    return { todosByHour, displayMinHour, displayMaxHour, timedTodosCount: timedTodos.length };
   }, [todos]);
 
   if (!timelineData) {
@@ -58,7 +63,7 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
     );
   }
 
-  const { todosByHour, displayMinHour, displayMaxHour } = timelineData;
+  const { todosByHour, displayMinHour, displayMaxHour, timedTodosCount } = timelineData;
 
   return (
     <div className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 transition-colors">
@@ -66,7 +71,7 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
       <div className="p-6 border-b border-gray-200 dark:border-gray-600">
         <h3 className="text-h3 text-gray-900 dark:text-gray-50">⏰ 시간대별 타임라인</h3>
         <p className="text-body-small text-gray-400 dark:text-gray-500 mt-1">
-          {timedTodos.length}개의 일정
+          {timedTodosCount}개의 일정
         </p>
       </div>
 
@@ -118,7 +123,7 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
 
                                 {/* Todo Card */}
                                 <div 
-                                  className={`p-3 rounded-lg border-l-4 transition-all hover:shadow-sm ${
+                                  className={`p-3 rounded-lg border-l-4 transition-all ${
                                     todo.completed ? 'bg-gray-50 dark:bg-gray-800 opacity-60' : 'bg-warm-white dark:bg-dark-ocean-card'
                                   }`}
                                   style={{ 
@@ -144,7 +149,7 @@ export function CategoryTimeline({ todos, categoryColor }: CategoryTimelineProps
                                         {todo.text}
                                       </p>
                                       <p className="text-caption text-gray-400 dark:text-gray-500 mt-1">
-                                        {todo.startTime} - {todo.endTime} ({duration.toFixed(1)}h)
+                                        {todo.startTime ? formatTime(todo.startTime) : ''} - {todo.endTime ? formatTime(todo.endTime) : ''} ({duration.toFixed(1)}h)
                                       </p>
                                     </div>
                                   </div>

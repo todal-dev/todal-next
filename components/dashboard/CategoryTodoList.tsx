@@ -13,6 +13,11 @@ interface CategoryTodoListProps {
 }
 
 export function CategoryTodoList({ todos, categoryName, categoryColor }: CategoryTodoListProps) {
+  // 시간에서 초 제거하는 헬퍼 함수
+  const formatTime = (time: string) => {
+    return time.split(':').slice(0, 2).join(':');
+  };
+
   // 날짜별로 그룹화
   const todosByDate = todos.reduce((acc, todo) => {
     const dateKey = format(todo.date, 'yyyy-MM-dd');
@@ -92,12 +97,11 @@ export function CategoryTodoList({ todos, categoryName, categoryColor }: Categor
                       key={todo.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      whileHover={{ x: 4 }}
                       transition={{ delay: index * 0.05 }}
                       className={`flex items-center gap-3 p-3 rounded-lg transition-all ${
                         todo.completed 
                           ? 'bg-gray-50 dark:bg-gray-800' 
-                          : 'hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer'
+                          : ''
                       }`}
                     >
                       {/* Checkbox */}
@@ -105,7 +109,7 @@ export function CategoryTodoList({ todos, categoryName, categoryColor }: Categor
                         {todo.completed ? (
                           <CheckCircle2 className="w-6 h-6 text-primary dark:text-primary-100" />
                         ) : (
-                          <Circle className="w-6 h-6 text-gray-300 dark:text-gray-600 hover:text-primary dark:hover:text-primary-400 transition-colors" />
+                          <Circle className="w-6 h-6 text-gray-300 dark:text-gray-600" />
                         )}
                       </div>
 
@@ -122,7 +126,7 @@ export function CategoryTodoList({ todos, categoryName, categoryColor }: Categor
                           <div className="flex items-center gap-1 mt-1 text-caption text-gray-400 dark:text-gray-500">
                             <Clock className="w-3 h-3" />
                             <span>
-                              {todo.startTime} {todo.endTime && `- ${todo.endTime}`}
+                              {todo.startTime ? formatTime(todo.startTime) : ''} {todo.endTime && `- ${formatTime(todo.endTime)}`}
                             </span>
                           </div>
                         )}

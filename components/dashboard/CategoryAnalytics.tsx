@@ -80,13 +80,12 @@ export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsPro
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          whileHover={{ y: -2, scale: 1.01 }}
           transition={{ type: "spring", stiffness: 300, damping: 20 }}
-          className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 p-6 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-500 transition-all cursor-pointer"
+          className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 p-6 transition-all"
         >
           <div className="flex items-center gap-3 mb-3">
             <div 
-              className="w-12 h-12 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+              className="w-12 h-12 rounded-full flex items-center justify-center"
               style={{ backgroundColor: `${categoryColor}20` }}
             >
               <CheckCircle2 className="w-6 h-6" style={{ color: categoryColor }} />
@@ -105,12 +104,11 @@ export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsPro
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          whileHover={{ y: -2, scale: 1.01 }}
           transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 20 }}
-          className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 p-6 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-500 transition-all cursor-pointer"
+          className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 p-6 transition-all"
         >
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center transition-transform hover:scale-110">
+            <div className="w-12 h-12 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center">
               <Clock className="w-6 h-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
@@ -127,12 +125,11 @@ export function CategoryAnalytics({ todos, categoryColor }: CategoryAnalyticsPro
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          whileHover={{ y: -2, scale: 1.01 }}
           transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
-          className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 p-6 hover:shadow-lg hover:border-gray-300 dark:hover:border-gray-500 transition-all cursor-pointer"
+          className="bg-warm-white dark:bg-dark-ocean-card rounded-lg border border-gray-200 dark:border-gray-600 p-6 transition-all"
         >
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center transition-transform hover:scale-110">
+            <div className="w-12 h-12 rounded-full bg-purple-50 dark:bg-purple-900/30 flex items-center justify-center">
               <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
