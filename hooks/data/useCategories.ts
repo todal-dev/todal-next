@@ -73,7 +73,18 @@ export function useCategories(
 
   // Edit category name (Optimistic Update)
   const handleEditCategory = useCallback(async (id: string, name: string) => {
+    // 고정 카테고리는 수정 불가
     if (id === 'cat-recurring' || id === 'cat-etc') {
+      return;
+    }
+    
+    // 기본 카테고리(cat1, cat2, cat3 등)는 DB에 저장되지 않으므로 로컬 상태만 업데이트
+    const isDefaultCategory = id.startsWith('cat') && !id.includes('-');
+    if (isDefaultCategory) {
+      // 기본 카테고리는 로컬 상태만 업데이트 (DB 업데이트 시도하지 않음)
+      setCategories(prev => prev.map(cat =>
+        cat.id === id ? { ...cat, name } : cat
+      ));
       return;
     }
     
@@ -93,6 +104,21 @@ export function useCategories(
 
   // Change category color (Optimistic Update)
   const handleChangeColor = useCallback(async (id: string, color: string) => {
+    // 고정 카테고리는 수정 불가
+    if (id === 'cat-recurring' || id === 'cat-etc') {
+      return;
+    }
+    
+    // 기본 카테고리(cat1, cat2, cat3 등)는 DB에 저장되지 않으므로 로컬 상태만 업데이트
+    const isDefaultCategory = id.startsWith('cat') && !id.includes('-');
+    if (isDefaultCategory) {
+      // 기본 카테고리는 로컬 상태만 업데이트 (DB 업데이트 시도하지 않음)
+      setCategories(prev => prev.map(cat =>
+        cat.id === id ? { ...cat, color } : cat
+      ));
+      return;
+    }
+    
     // 1. 즉시 로컬 상태 업데이트 (UI 즉시 반영)
     setCategories(prev => prev.map(cat =>
       cat.id === id ? { ...cat, color } : cat
